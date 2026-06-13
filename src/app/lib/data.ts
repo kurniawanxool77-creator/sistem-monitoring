@@ -13,10 +13,17 @@ export interface SubBidangData {
   kegiatan: KegiatanTemplate[];
 }
 
+export interface SubKegiatanData {
+  id: string;
+  nama: string;
+  pagu: number;
+}
+
 export interface KegiatanTemplate {
   id: string;
   nama: string;
   pagu: number;
+  subKegiatan?: SubKegiatanData[];
 }
 
 // Sumber: E-controlling 2026 Rekap Progres Agenda – Sekretariat DPRD Provinsi Jawa Tengah

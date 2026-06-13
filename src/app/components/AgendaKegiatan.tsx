@@ -16,6 +16,7 @@ const INITIAL_FORM = {
   bidangId: '',
   subBidangId: '',
   kegiatanTemplateId: '',
+  subKegiatanId: '',
   customSteps: [
     'Persiapan Dokumen',
     'Koordinasi Internal',
@@ -41,6 +42,10 @@ export function AgendaKegiatan() {
   const [updateProgressFor, setUpdateProgressFor] = useState<string | null>(null);
   const [modalInitialPanel, setModalInitialPanel] = useState<'progress' | 'realisasi' | 'edit'>('progress');
   const [form, setForm] = useState(INITIAL_FORM);
+  
+  // State untuk "Tambah Baru" inline
+  const [newInputMode, setNewInputMode] = useState<'none' | 'subBidang' | 'kegiatan' | 'subKegiatan'>('none');
+  const [newInputValue, setNewInputValue] = useState('');
 
   const [kegiatans, setKegiatans] = useState<Kegiatan[]>(() => {
     if (typeof window !== 'undefined') {
@@ -122,17 +127,56 @@ export function AgendaKegiatan() {
 
   const selectedBidang = masterBidang.find((b) => b.id === form.bidangId);
   const selectedSubBidang = selectedBidang?.subBidang.find((s) => s.id === form.subBidangId);
+  const selectedKegiatan = selectedSubBidang?.kegiatan.find((k) => k.id === form.kegiatanTemplateId);
+  const selectedSubKegiatan = selectedKegiatan?.subKegiatan?.find((sk) => sk.id === form.subKegiatanId);
+
+  // Perhitungan Pagu Otomatis
+  const currentPagu = form.subKegiatanId ? (selectedSubKegiatan?.pagu || 0) 
+                    : form.kegiatanTemplateId ? (selectedKegiatan?.pagu || 0) 
+                    : form.subBidangId ? (selectedSubBidang?.paguDefault || 0) : 0;
 
   function handleBidangChange(id: string) {
-    setForm((f) => ({ ...f, bidangId: id, subBidangId: '', kegiatanTemplateId: '', paguAnggaran: 0 }));
+    setForm((f) => ({ ...f, bidangId: id, subBidangId: '', kegiatanTemplateId: '', subKegiatanId: '', paguAnggaran: 0 }));
   }
-  function handleSubBidangChange(id: string) {
-    const sub = selectedBidang?.subBidang.find((s) => s.id === id);
-    setForm((f) => ({ ...f, subBidangId: id, kegiatanTemplateId: '', paguAnggaran: sub?.paguDefault ?? 0 }));
+  
+  function handleSelectChange(type: 'subBidang' | 'kegiatan' | 'subKegiatan', value: string) {
+    if (value === 'NEW') {
+      setNewInputMode(type);
+      setNewInputValue('');
+    } else {
+      if (type === 'subBidang') {
+        setForm((f) => ({ ...f, subBidangId: value, kegiatanTemplateId: '', subKegiatanId: '' }));
+      } else if (type === 'kegiatan') {
+        setForm((f) => ({ ...f, kegiatanTemplateId: value, subKegiatanId: '' }));
+      } else if (type === 'subKegiatan') {
+        setForm((f) => ({ ...f, subKegiatanId: value }));
+      }
+    }
   }
-  function handleKegiatanTemplateChange(id: string) {
-    const kt = selectedSubBidang?.kegiatan.find((k) => k.id === id);
-    setForm((f) => ({ ...f, kegiatanTemplateId: id, paguAnggaran: kt?.pagu ?? selectedSubBidang?.paguDefault ?? 0 }));
+
+  function saveNewItem() {
+    if (!newInputValue.trim()) return;
+    const newId = `new-${Date.now()}`;
+    
+    if (newInputMode === 'subBidang' && selectedBidang) {
+      selectedBidang.subBidang.push({ id: newId, nama: newInputValue, paguDefault: 0, kegiatan: [] });
+      setForm((f) => ({ ...f, subBidangId: newId, kegiatanTemplateId: '', subKegiatanId: '' }));
+    } else if (newInputMode === 'kegiatan' && selectedSubBidang) {
+      selectedSubBidang.kegiatan.push({ id: newId, nama: newInputValue, pagu: 0, subKegiatan: [] });
+      setForm((f) => ({ ...f, kegiatanTemplateId: newId, subKegiatanId: '' }));
+    } else if (newInputMode === 'subKegiatan' && selectedKegiatan) {
+      if (!selectedKegiatan.subKegiatan) selectedKegiatan.subKegiatan = [];
+      selectedKegiatan.subKegiatan.push({ id: newId, nama: newInputValue, pagu: 0 });
+      setForm((f) => ({ ...f, subKegiatanId: newId }));
+    }
+    
+    setNewInputMode('none');
+    setNewInputValue('');
+  }
+
+  function cancelNewItem() {
+    setNewInputMode('none');
+    setNewInputValue('');
   }
   function addStepRow() {
     setForm((f) => ({
@@ -465,8 +509,8 @@ export function AgendaKegiatan() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
               </div>
 
-              {/* Bidang / Sub Bidang / Kegiatan */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Bidang / Sub Bidang / Kegiatan / Sub Kegiatan */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
                   <select value={form.bidangId} onChange={(e) => handleBidangChange(e.target.value)}
@@ -475,23 +519,62 @@ export function AgendaKegiatan() {
                     {masterBidang.map((b) => <option key={b.id} value={b.id}>{b.nama}</option>)}
                   </select>
                 </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Sub Bidang <span className="text-red-500">*</span></label>
-                  <select value={form.subBidangId} onChange={(e) => handleSubBidangChange(e.target.value)}
-                    disabled={!form.bidangId}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400">
-                    <option value="">Pilih Sub Bidang</option>
-                    {selectedBidang?.subBidang.map((s) => <option key={s.id} value={s.id}>{s.nama}</option>)}
-                  </select>
+                  {newInputMode === 'subBidang' ? (
+                    <div className="flex gap-2">
+                      <input autoFocus type="text" value={newInputValue} onChange={(e) => setNewInputValue(e.target.value)}
+                        placeholder="Nama Sub Bidang baru..." className="flex-1 px-3 py-2.5 border border-blue-400 rounded-lg" />
+                      <button onClick={saveNewItem} className="px-3 bg-blue-600 text-white rounded-lg"><Check className="w-4 h-4" /></button>
+                      <button onClick={cancelNewItem} className="px-3 bg-gray-200 text-gray-600 rounded-lg"><X className="w-4 h-4" /></button>
+                    </div>
+                  ) : (
+                    <select value={form.subBidangId} onChange={(e) => handleSelectChange('subBidang', e.target.value)} disabled={!form.bidangId}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
+                      <option value="">Pilih Sub Bidang</option>
+                      {selectedBidang?.subBidang.map((s) => <option key={s.id} value={s.id}>{s.nama}</option>)}
+                      <option value="NEW" className="text-blue-600 font-bold">+ Tambah Baru...</option>
+                    </select>
+                  )}
                 </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kegiatan <span className="text-red-500">*</span></label>
-                  <select value={form.kegiatanTemplateId} onChange={(e) => handleKegiatanTemplateChange(e.target.value)}
-                    disabled={!form.subBidangId}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400">
-                    <option value="">Pilih Kegiatan</option>
-                    {selectedSubBidang?.kegiatan.map((k) => <option key={k.id} value={k.id}>{k.nama}</option>)}
-                  </select>
+                  {newInputMode === 'kegiatan' ? (
+                    <div className="flex gap-2">
+                      <input autoFocus type="text" value={newInputValue} onChange={(e) => setNewInputValue(e.target.value)}
+                        placeholder="Nama Kegiatan baru..." className="flex-1 px-3 py-2.5 border border-blue-400 rounded-lg" />
+                      <button onClick={saveNewItem} className="px-3 bg-blue-600 text-white rounded-lg"><Check className="w-4 h-4" /></button>
+                      <button onClick={cancelNewItem} className="px-3 bg-gray-200 text-gray-600 rounded-lg"><X className="w-4 h-4" /></button>
+                    </div>
+                  ) : (
+                    <select value={form.kegiatanTemplateId} onChange={(e) => handleSelectChange('kegiatan', e.target.value)} disabled={!form.subBidangId}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
+                      <option value="">Pilih Kegiatan</option>
+                      {selectedSubBidang?.kegiatan.map((k) => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                      <option value="NEW" className="text-blue-600 font-bold">+ Tambah Baru...</option>
+                    </select>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Sub Kegiatan <span className="text-gray-400 font-normal">(opsional)</span></label>
+                  {newInputMode === 'subKegiatan' ? (
+                    <div className="flex gap-2">
+                      <input autoFocus type="text" value={newInputValue} onChange={(e) => setNewInputValue(e.target.value)}
+                        placeholder="Nama Sub Kegiatan baru..." className="flex-1 px-3 py-2.5 border border-blue-400 rounded-lg" />
+                      <button onClick={saveNewItem} className="px-3 bg-blue-600 text-white rounded-lg"><Check className="w-4 h-4" /></button>
+                      <button onClick={cancelNewItem} className="px-3 bg-gray-200 text-gray-600 rounded-lg"><X className="w-4 h-4" /></button>
+                    </div>
+                  ) : (
+                    <select value={form.subKegiatanId} onChange={(e) => handleSelectChange('subKegiatan', e.target.value)} disabled={!form.kegiatanTemplateId}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
+                      <option value="">Tidak ada / Sesuai Kegiatan</option>
+                      {selectedKegiatan?.subKegiatan?.map((k) => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                      <option value="NEW" className="text-blue-600 font-bold">+ Tambah Baru...</option>
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -577,9 +660,9 @@ export function AgendaKegiatan() {
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
                     <input type="text" readOnly
-                      value={form.paguAnggaran > 0 ? form.paguAnggaran.toLocaleString('id-ID') : ''}
-                      placeholder="Terisi otomatis"
-                      className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg bg-blue-50 text-gray-700 cursor-not-allowed text-sm" />
+                      value={currentPagu > 0 ? currentPagu.toLocaleString('id-ID') : ''}
+                      placeholder="Terisi otomatis berdasarkan hierarki"
+                      className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg bg-blue-50/50 text-blue-800 font-bold cursor-not-allowed text-sm" />
                   </div>
                 </div>
                 <div>
