@@ -498,16 +498,7 @@ export function AgendaKegiatan() {
             </div>
 
             <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
-              {/* Nama */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Nama Kegiatan <span className="text-red-500">*</span>
-                </label>
-                <input type="text" value={form.namaKegiatan}
-                  onChange={(e) => setForm((f) => ({ ...f, namaKegiatan: e.target.value }))}
-                  placeholder="Masukkan nama kegiatan..."
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-              </div>
+
 
               {/* Bidang / Sub Bidang / Kegiatan / Sub Kegiatan */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
