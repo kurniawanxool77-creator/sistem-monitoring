@@ -136,6 +136,13 @@ export function AgendaKegiatan() {
                     : form.subBidangId ? (selectedSubBidang?.paguDefault || 0) 
                     : form.bidangId ? (selectedBidang?.pagu || 0) : 0;
 
+  let activeLevelLabel = '';
+  if (form.subKegiatanId && selectedSubKegiatan) activeLevelLabel = 'dari Sub Kegiatan';
+  else if (form.kegiatanTemplateId && selectedKegiatan) activeLevelLabel = 'dari Kegiatan';
+  else if (form.subBidangId && selectedSubBidang) activeLevelLabel = 'dari Sub Bidang';
+  else if (form.bidangId && selectedBidang) activeLevelLabel = 'dari Bidang';
+  else activeLevelLabel = 'pilih data...';
+
   function handleBidangChange(id: string) {
     setForm((f) => ({ ...f, bidangId: id, subBidangId: '', kegiatanTemplateId: '', subKegiatanId: '', paguAnggaran: 0 }));
   }
@@ -647,13 +654,13 @@ export function AgendaKegiatan() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Pagu Anggaran <span className="text-blue-500 text-xs font-normal">(otomatis)</span>
+                    Pagu Anggaran <span className="text-blue-500 text-xs font-normal">({activeLevelLabel})</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
                     <input type="text" readOnly
                       value={currentPagu > 0 ? currentPagu.toLocaleString('id-ID') : ''}
-                      placeholder="Terisi otomatis berdasarkan hierarki"
+                      placeholder="Menunggu pilihan hierarki..."
                       className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg bg-blue-50/50 text-blue-800 font-bold cursor-not-allowed text-sm" />
                   </div>
                 </div>
