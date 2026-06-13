@@ -132,8 +132,8 @@ export function RoleAkses() {
                   <td className="py-4 px-4 text-sm text-gray-600">{user.email}</td>
                   <td className="py-4 px-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === 'Superadmin'
-                        ? 'bg-purple-100 text-purple-700'
-                        : 'bg-blue-100 text-blue-700'
+                      ? 'bg-purple-100 text-purple-700'
+                      : 'bg-blue-100 text-blue-700'
                       }`}>
                       {user.role}
                     </span>
@@ -265,9 +265,10 @@ export function RoleAkses() {
                 <select className="w-full px-4 py-2 border border-gray-300 rounded-lg">
                   <option>Pilih Bidang</option>
                   <option>Sekretariat DPRD</option>
-                  <option>Komisi A</option>
-                  <option>Komisi B</option>
-                  <option>Komisi C</option>
+                  <option>Humas</option>
+                  <option>Persidangan</option>
+                  <option>Umum</option>
+                  <option>Keuangan</option>
                 </select>
               </div>
             </div>

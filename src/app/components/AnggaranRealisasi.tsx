@@ -29,6 +29,8 @@ export function AnggaranRealisasi() {
   const [showPaguModal, setShowPaguModal] = useState(false);
   const [paguTotal, setPaguTotal] = useState(PAGU_TOTAL);
   const [paguInput, setPaguInput] = useState('');
+  const [tahunAnggaran, setTahunAnggaran] = useState<number>(2026);
+  const [tahunAnggaranInput, setTahunAnggaranInput] = useState<number>(2026);
   const [realisasiArr, setRealisasiArr] = useState<number[]>([...INITIAL_REALISASI]);
   const [expandedKode, setExpandedKode] = useState<Set<string>>(new Set(['1', '2', '3', '4', '5']));
 
@@ -75,7 +77,12 @@ export function AnggaranRealisasi() {
 
   function handleSavePagu() {
     const val = Number(paguInput.replace(/\D/g, ''));
-    if (val > 0) { setPaguTotal(val); setPaguInput(''); setShowPaguModal(false); }
+    if (val > 0) { 
+      setPaguTotal(val); 
+      setTahunAnggaran(tahunAnggaranInput);
+      setPaguInput(''); 
+      setShowPaguModal(false); 
+    }
   }
 
   function handleSaveRealisasi() {
@@ -98,7 +105,7 @@ export function AnggaranRealisasi() {
       <div className="flex items-center justify-between">
 
         <div className="flex gap-2">
-          <button onClick={() => setShowPaguModal(true)}
+          <button onClick={() => { setPaguInput(String(paguTotal)); setTahunAnggaranInput(tahunAnggaran); setShowPaguModal(true); }}
             className="flex items-center gap-2 border border-blue-300 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 text-sm font-semibold transition-colors">
             <DollarSign className="w-4 h-4" /> Set Pagu Anggaran
           </button>
@@ -112,7 +119,7 @@ export function AnggaranRealisasi() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Pagu', value: formatRp(paguTotal, true), sub: 'Tahun 2026', color: 'from-blue-500 to-blue-600', icon: <DollarSign className="w-6 h-6" /> },
+          { label: 'Total Pagu', value: formatRp(paguTotal, true), sub: `Tahun ${tahunAnggaran}`, color: 'from-blue-500 to-blue-600', icon: <DollarSign className="w-6 h-6" /> },
           { label: 'Total Realisasi', value: formatRp(totalRealisasi, true), sub: `${pctSerapan}% terserap`, color: 'from-emerald-500 to-emerald-600', icon: <TrendingUp className="w-6 h-6" /> },
           { label: 'Sisa Anggaran', value: formatRp(totalSisa, true), sub: `${(100 - parseFloat(pctSerapan)).toFixed(1)}% tersisa`, color: 'from-amber-500 to-amber-600', icon: <PieChartIcon className="w-6 h-6" /> },
           { label: 'Status Serapan', value: parseFloat(pctSerapan) >= 40 ? 'On Track' : 'Perlu Perhatian', sub: `Pagu/bln: ${formatRp(Math.round(paguTotal / 12), true)}`, color: parseFloat(pctSerapan) >= 40 ? 'from-purple-500 to-purple-600' : 'from-red-500 to-red-600', icon: <TrendingUp className="w-6 h-6" /> },
@@ -262,9 +269,9 @@ export function AnggaranRealisasi() {
                   );
                 })}
 
-                {/* Total row */}
+                 {/* Total row */}
                 <tr className="bg-blue-50 font-bold border-t-2 border-blue-200">
-                  <td colSpan={2} className="py-3 px-4 text-blue-800">TOTAL TAHUN 2026</td>
+                  <td colSpan={2} className="py-3 px-4 text-blue-800">TOTAL TAHUN {tahunAnggaran}</td>
                   <td className="py-3 px-4 text-right text-blue-800">{formatRp(paguTotal, true)}</td>
                   <td className="py-3 px-4 text-right text-blue-600">—</td>
                   <td className="py-3 px-4 text-right text-emerald-700">{formatRp(totalRealisasi, true)}</td>
@@ -399,10 +406,20 @@ export function AnggaranRealisasi() {
             <div className="p-6 space-y-4">
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                Masukkan total pagu anggaran 1x. Sistem akan otomatis membagi per 12 bulan.
+                Masukkan total pagu anggaran dan pilih tahun anggaran.
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Total Pagu Anggaran 2026</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tahun Anggaran</label>
+                <select value={tahunAnggaranInput}
+                  onChange={(e) => setTahunAnggaranInput(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  {[2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Total Pagu Anggaran</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">Rp</span>
                   <input type="number" value={paguInput}
@@ -417,7 +434,9 @@ export function AnggaranRealisasi() {
                   </div>
                 )}
               </div>
-              <div className="text-xs text-gray-500">Pagu saat ini: <span className="font-bold text-gray-700">{formatRp(paguTotal)}</span></div>
+              <div className="text-xs text-gray-500">
+                Pagu saat ini: <span className="font-bold text-gray-700">{formatRp(paguTotal)}</span> ({tahunAnggaran})
+              </div>
             </div>
             <div className="flex gap-3 px-6 pb-6">
               <button onClick={() => setShowPaguModal(false)}
@@ -448,7 +467,7 @@ export function AnggaranRealisasi() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                   <option value={-1}>Pilih Bulan</option>
                   {BULAN_NAMES.map((b, i) => (
-                    <option key={b} value={i}>{b} 2026 — Target: {formatRp(Math.round(paguTotal / 12), true)}</option>
+                    <option key={b} value={i}>{b} {tahunAnggaran} — Target: {formatRp(Math.round(paguTotal / 12), true)}</option>
                   ))}
                 </select>
               </div>
