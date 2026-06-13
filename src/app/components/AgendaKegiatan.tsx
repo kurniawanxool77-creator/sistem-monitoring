@@ -133,7 +133,8 @@ export function AgendaKegiatan() {
   // Perhitungan Pagu Otomatis
   const currentPagu = form.subKegiatanId ? (selectedSubKegiatan?.pagu || 0) 
                     : form.kegiatanTemplateId ? (selectedKegiatan?.pagu || 0) 
-                    : form.subBidangId ? (selectedSubBidang?.paguDefault || 0) : 0;
+                    : form.subBidangId ? (selectedSubBidang?.paguDefault || 0) 
+                    : form.bidangId ? (selectedBidang?.pagu || 0) : 0;
 
   function handleBidangChange(id: string) {
     setForm((f) => ({ ...f, bidangId: id, subBidangId: '', kegiatanTemplateId: '', subKegiatanId: '', paguAnggaran: 0 }));

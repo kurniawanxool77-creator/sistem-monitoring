@@ -3,6 +3,7 @@
 export interface BidangData {
   id: string;
   nama: string;
+  pagu: number;
   subBidang: SubBidangData[];
 }
 
@@ -31,6 +32,7 @@ export const masterBidang: BidangData[] = [
   {
     id: 'bid-1',
     nama: 'Sekretariat DPRD',
+    pagu: 168_376_593_000,
     subBidang: [
       {
         id: 'sub-1',
@@ -65,6 +67,7 @@ export const masterBidang: BidangData[] = [
   {
     id: 'bid-2',
     nama: 'Bagian Umum',
+    pagu: 58_216_639_000,
     subBidang: [
       {
         id: 'sub-4',
@@ -127,6 +130,7 @@ export const masterBidang: BidangData[] = [
   {
     id: 'bid-3',
     nama: 'Bagian Humas',
+    pagu: 231_584_388_000,
     subBidang: [
       {
         id: 'sub-9',
@@ -152,6 +156,7 @@ export const masterBidang: BidangData[] = [
   {
     id: 'bid-4',
     nama: 'Bagian Persidangan',
+    pagu: 97_960_085_000,
     subBidang: [
       {
         id: 'sub-11',
@@ -216,6 +221,7 @@ export const masterBidang: BidangData[] = [
   {
     id: 'bid-5',
     nama: 'Keuangan',
+    pagu: 168_376_593_000,
     subBidang: [
       {
         id: 'sub-17',
