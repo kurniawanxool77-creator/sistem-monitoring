@@ -491,17 +491,7 @@ export function UpdateProgressModal({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Status</label>
-                  <select value={editForm.status}
-                    onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value as any }))}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                    <option value="Belum Mulai">Belum Mulai</option>
-                    <option value="Berjalan">Berjalan</option>
-                    <option value="Terlambat">Terlambat</option>
-                    <option value="Selesai">Selesai</option>
-                  </select>
-                </div>
+
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Deskripsi</label>
@@ -548,21 +538,7 @@ export function UpdateProgressModal({
                             placeholder={`Nama tahapan ${idx + 1}`}
                             className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
                           />
-                          {/* Checkbox for selesai */}
-                          <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                            <input
-                              type="checkbox"
-                              checked={step.selesai}
-                              onChange={(e) => {
-                                const updated = editFormSteps.map((s, sIdx) => 
-                                  sIdx === idx ? { ...s, selesai: e.target.checked } : s
-                                );
-                                setEditFormSteps(updated);
-                              }}
-                              className="w-3.5 h-3.5 text-amber-500 border-gray-300 rounded focus:ring-amber-500 cursor-pointer"
-                            />
-                            <span className="text-xs text-gray-600 font-medium">Selesai</span>
-                          </label>
+
                           {/* Delete button */}
                           {editFormSteps.length > 1 && (
                             <button
