@@ -240,7 +240,7 @@ export function ProgressKegiatan() {
                 DASHBOARD MONITORING: {selectedBagian}
               </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Menampilkan rincian progres cabang bagian dan daftar perkegiatannya.
+                Menampilkan rincian progres sub bidang dan daftar perkegiatannya.
               </p>
             </div>
           </div>
@@ -255,13 +255,13 @@ export function ProgressKegiatan() {
             Rincian Perkegiatan {selectedBagian.replace('Bagian ', '').toUpperCase()}:
           </span>
           <div className="flex items-center gap-3">
-            {/* Cabang Filter */}
+            {/* Sub Bidang Filter */}
             <select
               value={filterSubBagian}
               onChange={(e) => setFilterSubBagian(e.target.value)}
               className="text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
             >
-              <option value="Semua">Semua Cabang</option>
+              <option value="Semua">Semua Sub Bidang</option>
               {uniqueSubBagian.map((sub) => (
                 <option key={sub} value={sub}>{sub}</option>
               ))}
@@ -299,7 +299,7 @@ export function ProgressKegiatan() {
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                  Cabang Bidang
+                  Sub Bidang
                 </th>
                 <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
                   Nama Kegiatan
