@@ -18,7 +18,6 @@ export function UraianKegiatanTable() {
   const [expandedBulanan, setExpandedBulanan] = useState<Set<string>>(new Set());
 
   // Filter state
-  const [filterOPD, setFilterOPD] = useState('Semua OPD');
   const [filterBidang, setFilterBidang] = useState('Semua Bidang');
 
   function toggleExpand(kode: string) {
@@ -71,13 +70,6 @@ export function UraianKegiatanTable() {
           <Filter className="w-4 h-4" /> Filter Uraian Kegiatan
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">OPD</label>
-            <select value={filterOPD} onChange={e => setFilterOPD(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white">
-              <option>Semua OPD</option>
-              <option>Sekretariat DPRD</option>
-            </select>
-          </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">Bidang</label>
             <select value={filterBidang} onChange={e => setFilterBidang(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white">
