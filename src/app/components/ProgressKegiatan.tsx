@@ -74,7 +74,7 @@ export function ProgressKegiatan() {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('kegiatan_list_data');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) {}
+        try { return JSON.parse(saved); } catch (e) { }
       }
     }
     return kegiatanList;
@@ -88,7 +88,7 @@ export function ProgressKegiatan() {
       );
       const done = newSteps.filter((s) => s.selesai).length;
       const newProgress = Math.round((done / newSteps.length) * 100);
-      
+
       let newStatus = k.status;
       if (newProgress === 100) {
         newStatus = 'Selesai';
@@ -139,9 +139,9 @@ export function ProgressKegiatan() {
 
   // Get active kegiatan data for selected department
   const currentDeptKegiatans = kegiatans.filter((k) => k.bidang === selectedBagian);
-  
+
   // Calculate average progress for selected department
-  const selectedBagianProgress = currentDeptKegiatans.length > 0 
+  const selectedBagianProgress = currentDeptKegiatans.length > 0
     ? Math.round(currentDeptKegiatans.reduce((acc, k) => acc + k.progress, 0) / currentDeptKegiatans.length)
     : 0;
 
@@ -158,20 +158,17 @@ export function ProgressKegiatan() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Progres Kegiatan & Dashboard Bidang</h1>
-        <p className="text-sm text-gray-500 mt-1">Pemantauan Capaian Fisik Perkegiatan dan Cabang Sub-Bagian Masing-Masing</p>
-      </div>
+
 
       {/* Grid of Department Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5">
         {CARDS_ORDER.map((bagianNama, index) => {
           const config = CARDS_CONFIG[bagianNama];
           if (!config) return null;
-          
+
           const IconComponent = config.icon;
           const isSelected = selectedBagian === bagianNama;
-          
+
           // Calculate stats for this card
           const cardKegiatans = kegiatans.filter((k) => k.bidang === bagianNama);
           const uniqueSubDepts = Array.from(new Set(cardKegiatans.map((k) => k.subBidang)));
@@ -187,27 +184,30 @@ export function ProgressKegiatan() {
                 setFilterSubBagian('Semua');
                 setFilterStatus('Semua');
               }}
-              className={`p-4 bg-white rounded-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between h-32 ${
-                isSelected 
-                  ? config.borderActive 
+              className={`p-2.5 bg-white rounded-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between h-24 ${isSelected
+                  ? config.borderActive
                   : 'border-gray-200 hover:border-blue-400 hover:shadow-sm'
-              }`}
+                }`}
             >
               {/* Top part: Icon + Title & Desc */}
-              <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${config.iconBg} ${config.iconText}`}>
-                  <IconComponent className="w-5 h-5" />
+              <div className="flex items-start gap-1.5">
+                <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${config.iconBg} ${config.iconText}`}>
+                  <IconComponent className="w-3 h-3" />
                 </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-bold text-gray-900 truncate">{index + 1}. {config.label}</div>
-                  <div className="text-xs text-gray-500 truncate mt-0.5">{config.desc}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-bold text-gray-900 leading-tight truncate" title={`${index + 1}. ${config.label}`}>
+                    {index + 1}. {config.label}
+                  </div>
+                  <div className="text-[8.5px] text-gray-400 truncate mt-0.5" title={config.desc}>
+                    {config.desc}
+                  </div>
                 </div>
               </div>
 
               {/* Bottom part: Stats */}
-              <div className="flex items-center justify-between border-t border-gray-100 pt-2.5 mt-2">
-                <span className="text-xs text-gray-500 font-medium">Cabang: {uniqueSubDepts.length} Sub-Bagian</span>
-                <span className="text-sm font-bold text-blue-600">{progressVal}% Progres</span>
+              <div className="flex items-center justify-between border-t border-gray-100 pt-1 mt-1">
+                <span className="text-[8.5px] text-gray-400 font-medium">Cabang: {uniqueSubDepts.length} Sub-Bagian</span>
+                <span className="text-[9.5px] font-bold text-blue-600">{progressVal}% Progres</span>
               </div>
             </div>
           );
@@ -323,11 +323,10 @@ export function ProgressKegiatan() {
                       <div className="flex items-center gap-3">
                         <div className="w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden flex-shrink-0">
                           <div
-                            className={`h-1.5 rounded-full transition-all duration-500 ${
-                              k.progress === 100 ? 'bg-emerald-500' :
-                              k.progress >= 60 ? 'bg-blue-500' :
-                              k.progress >= 30 ? 'bg-amber-500' : 'bg-red-400'
-                            }`}
+                            className={`h-1.5 rounded-full transition-all duration-500 ${k.progress === 100 ? 'bg-emerald-500' :
+                                k.progress >= 60 ? 'bg-blue-500' :
+                                  k.progress >= 30 ? 'bg-amber-500' : 'bg-red-400'
+                              }`}
                             style={{ width: `${k.progress}%` }}
                           />
                         </div>
@@ -335,23 +334,21 @@ export function ProgressKegiatan() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        k.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
-                        k.status === 'Berjalan' ? 'bg-blue-100 text-blue-700' :
-                        k.status === 'Terlambat' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${k.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
+                          k.status === 'Berjalan' ? 'bg-blue-100 text-blue-700' :
+                            k.status === 'Terlambat' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-700'
+                        }`}>
                         {k.status}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => setUpdateProgressFor(k.id)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105 shadow-sm ${
-                          k.status === 'Selesai' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' :
-                          k.status === 'Terlambat' ? 'bg-red-500 hover:bg-red-600 shadow-red-200' :
-                          'bg-blue-600 hover:bg-blue-700 shadow-blue-200'
-                        }`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105 shadow-sm ${k.status === 'Selesai' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' :
+                            k.status === 'Terlambat' ? 'bg-red-500 hover:bg-red-600 shadow-red-200' :
+                              'bg-blue-600 hover:bg-blue-700 shadow-blue-200'
+                          }`}
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
                         Update Progress
