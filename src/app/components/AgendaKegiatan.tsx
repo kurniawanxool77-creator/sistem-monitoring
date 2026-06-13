@@ -186,6 +186,44 @@ export function AgendaKegiatan() {
     setNewInputMode('none');
     setNewInputValue('');
   }
+
+  function handleSimpanAgenda() {
+    if (!form.bidangId) {
+      alert("Pilih Bidang terlebih dahulu");
+      return;
+    }
+
+    const agendaName = selectedSubKegiatan?.nama || selectedKegiatan?.nama || selectedSubBidang?.nama || selectedBidang?.nama || 'Agenda Baru';
+
+    const newAgenda: Kegiatan = {
+      id: `agenda-${Date.now()}`,
+      nama: agendaName,
+      bidang: selectedBidang?.nama || '',
+      subBidang: selectedSubBidang?.nama || '',
+      penanggungJawab: form.penanggungJawab || 'Belum ada PJ',
+      tanggalMulai: form.tanggalMulai || new Date().toISOString().split('T')[0],
+      tanggalSelesai: form.tanggalSelesai || new Date().toISOString().split('T')[0],
+      status: 'Belum Mulai',
+      progress: 0,
+      paguAnggaran: currentPagu,
+      realisasiAnggaran: Number(form.anggaranKegiatan) || 0,
+      deskripsi: `Sumber Dana: ${form.sumberDana}`,
+      step: 'Persiapan',
+      steps: form.customSteps.map((stepName, idx) => ({
+        id: `step-${Date.now()}-${idx}`,
+        nama: stepName,
+        selesai: false
+      }))
+    };
+
+    const updatedKegiatans = [newAgenda, ...kegiatans];
+    setKegiatans(updatedKegiatans);
+    localStorage.setItem('kegiatan_list_data', JSON.stringify(updatedKegiatans));
+    
+    setShowAddModal(false);
+    setForm(INITIAL_FORM);
+  }
+
   function addStepRow() {
     setForm((f) => ({
       ...f,
@@ -731,7 +769,7 @@ export function AgendaKegiatan() {
                 className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm font-medium">
                 Batal
               </button>
-              <button onClick={() => { setShowAddModal(false); setForm(INITIAL_FORM); }}
+              <button onClick={handleSimpanAgenda}
                 className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
                 Simpan Kegiatan
               </button>
