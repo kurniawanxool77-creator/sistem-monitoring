@@ -11,6 +11,7 @@ import {
   PAGU_TOTAL, BULAN_SINGKAT, BULAN_NAMES, buildMonthlyBudget,
   realisasiPerBulan as INITIAL_REALISASI, uraianAnggaran,
 } from '../lib/data';
+import { DetailSSKView } from './DetailSSKView';
 
 function formatRp(n: number, short = false) {
   if (short) {
@@ -345,106 +346,8 @@ export function AnggaranRealisasi() {
 
         {/* ── TAB: URAIAN ── */}
         {activeTab === 'uraian' && (
-          <div>
-            {/* Uraian header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
-              <div className="flex gap-2">
-                <button onClick={() => setExpandedKode(new Set(uraianAnggaran.map((u) => u.kode)))}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 border border-blue-200 rounded-lg hover:bg-blue-50">
-                  Expand Semua
-                </button>
-                <button onClick={() => setExpandedKode(new Set(['1', '2', '3', '4', '5']))}
-                  className="text-xs text-gray-600 hover:text-gray-700 font-medium px-2 py-1 border border-gray-200 rounded-lg hover:bg-gray-50">
-                  Collapse
-                </button>
-              </div>
-              <div className="text-xs text-gray-500">
-                Total Target: <span className="font-bold text-gray-700">{formatRp(uraianTotal, true)}</span>
-                {' · '}
-                Realisasi: <span className="font-bold text-emerald-700">{formatRp(uraianRealisasiTotal, true)}</span>
-                {' · '}
-                <span className={`font-bold ${uraianRealisasiTotal / uraianTotal >= 0.7 ? 'text-emerald-700' : 'text-amber-600'}`}>
-                  {uraianTotal > 0 ? Math.round((uraianRealisasiTotal / uraianTotal) * 100) : 0}%
-                </span>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600 w-24">Kode</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Uraian Kegiatan</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-600">Target</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-600">Realisasi</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-600 w-40">% Capaian</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {uraianAnggaran.filter((u) => isVisible(u.kode)).map((u) => {
-                    const pct = u.target > 0 ? Math.round((u.realisasi / u.target) * 100) : 0;
-                    const hasChildren = uraianAnggaran.some((x) => x.kode.startsWith(u.kode + '.') && x.kode.split('.').length === u.kode.split('.').length + 1);
-                    const isExpanded = expandedKode.has(u.kode);
-                    const indent = (u.level - 1) * 20;
-
-                    return (
-                      <tr key={u.kode}
-                        className={`border-b border-gray-100 ${u.level === 1 ? 'bg-blue-50 font-bold' :
-                            u.level === 2 ? 'bg-gray-50 font-semibold' :
-                              u.level === 3 ? 'hover:bg-gray-50' :
-                                'hover:bg-gray-50 text-gray-600'
-                          }`}>
-                        {/* Kode */}
-                        <td className="py-2.5 px-4 text-xs font-mono text-gray-500 whitespace-nowrap"
-                          style={{ paddingLeft: 16 + indent }}>
-                          {u.kode}
-                        </td>
-
-                        {/* Uraian with expand toggle */}
-                        <td className="py-2.5 px-4" style={{ paddingLeft: 16 + indent }}>
-                          <div className="flex items-center gap-2">
-                            {hasChildren ? (
-                              <button onClick={() => toggleExpand(u.kode)}
-                                className="w-5 h-5 flex-shrink-0 flex items-center justify-center rounded hover:bg-gray-200 text-gray-500 transition-colors">
-                                {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                              </button>
-                            ) : (
-                              <span className="w-5 h-5 flex-shrink-0" />
-                            )}
-                            <span className={`${u.level === 1 ? 'text-blue-800' : u.level === 2 ? 'text-gray-800' : 'text-gray-700'}`}>
-                              {u.uraian}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Target */}
-                        <td className="py-2.5 px-4 text-right tabular-nums text-gray-700">
-                          {formatRp(u.target, true)}
-                        </td>
-
-                        {/* Realisasi */}
-                        <td className={`py-2.5 px-4 text-right tabular-nums font-medium ${pct >= 80 ? 'text-emerald-700' : pct >= 60 ? 'text-blue-700' : 'text-amber-600'
-                          }`}>
-                          {formatRp(u.realisasi, true)}
-                        </td>
-
-                        {/* % Capaian */}
-                        <td className="py-2.5 px-4">
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-gray-100 rounded-full h-1.5 min-w-[60px]">
-                              <div className={`h-1.5 rounded-full transition-all ${pct >= 80 ? 'bg-emerald-500' : pct >= 60 ? 'bg-blue-500' : 'bg-amber-400'
-                                }`} style={{ width: `${Math.min(pct, 100)}%` }} />
-                            </div>
-                            <span className={`text-xs font-bold min-w-[36px] text-right ${pct >= 80 ? 'text-emerald-700' : pct >= 60 ? 'text-blue-700' : 'text-amber-600'
-                              }`}>{pct}%</span>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+          <div className="pt-4">
+            <DetailSSKView />
           </div>
         )}
       </div>

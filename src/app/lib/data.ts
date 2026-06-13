@@ -796,3 +796,67 @@ export const uraianAnggaran: UraianAnggaran[] = [
   { kode: '4.7.1', uraian: 'Koordinasi dan Konsultasi Pelaksanaan Tugas DPRD',             level: 3, target: 21_311_005_000,    realisasi: 11_006_994_211 },
   { kode: '4.7.1.1', uraian: 'Dokumen hasil Koordinasi dan Konsultasi Pelaksanaan Tugas', level: 4, target: 21_311_005_000,    realisasi: 11_006_994_211 },
 ];
+
+// ─── DATA DETAIL SUB-SUB KEGIATAN (SSK) MOCKUP ────────────────────────────
+
+export interface SSKBulanan {
+  target: number;
+  realisasi: number;
+}
+
+export interface DetailSSK {
+  id: string;
+  kodeSubKegiatan: string; // referensi ke uraianAnggaran level 4
+  opd: string;
+  bidang: string;
+  program: string;
+  kegiatan: string;
+  subKegiatan: string;
+  paguApbd: number;
+  totalRab: number;
+  paguVerifikasi: number;
+  uraianSsk: string;
+  indikator: string;
+  jenis: string;
+  sumberAnggaran: string;
+  jenisIku: string;
+  bobot: number;
+  statusSesuai: boolean;
+  statusSelesai: boolean;
+  bulanan: SSKBulanan[]; // Array 12 elemen (Jan-Des)
+}
+
+export const detailSSKMock: DetailSSK = {
+  id: 'ssk-1',
+  kodeSubKegiatan: '4.3.3.1', // Mock kode level 4
+  opd: 'Sekretariat DPRD',
+  bidang: 'Bagian Persidangan',
+  program: 'PROGRAM DUKUNGAN PELAKSANAAN TUGAS...',
+  kegiatan: 'Pengawasan Penyelenggaraan Pemerinta...',
+  subKegiatan: 'Pengawasan Urusan Pemerintahan Bidang Kesejahteraan Rakyat',
+  paguApbd: 1850000000,
+  totalRab: 1850000000,
+  paguVerifikasi: 1850000000,
+  uraianSsk: 'laporan hasil Pengawasan Urusan Pemerintahan Bidang Kesejahteraan Rakyat',
+  indikator: 'Jumlah Laporan Pengawasan Urusan Pemerintahan Bidang Kesejahteraan Rakyat',
+  jenis: 'NON FISIK',
+  sumberAnggaran: 'PAD & DAU',
+  jenisIku: 'Indeks Reformasi Birokrasi',
+  bobot: 100,
+  statusSesuai: false,
+  statusSelesai: false,
+  bulanan: [
+    { target: 5.41, realisasi: 9.17 },
+    { target: 8.49, realisasi: 8.83 },
+    { target: 5.57, realisasi: 0.47 },
+    { target: 6.22, realisasi: 6.22 },
+    { target: 5.85, realisasi: 6.55 },
+    { target: 8.27, realisasi: 0 },
+    { target: 6.22, realisasi: 0 },
+    { target: 8.49, realisasi: 0 },
+    { target: 6.88, realisasi: 0 },
+    { target: 11.18, realisasi: 0 },
+    { target: 10.85, realisasi: 0 },
+    { target: 15.27, realisasi: 0 }
+  ]
+};
