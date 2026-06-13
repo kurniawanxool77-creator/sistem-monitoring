@@ -12,6 +12,7 @@ import {
   realisasiPerBulan as INITIAL_REALISASI, uraianAnggaran,
 } from '../lib/data';
 import { DetailSSKView } from './DetailSSKView';
+import { UraianKegiatanTable } from './UraianKegiatanTable';
 
 function formatRp(n: number, short = false) {
   if (short) {
@@ -347,7 +348,7 @@ export function AnggaranRealisasi() {
         {/* ── TAB: URAIAN ── */}
         {activeTab === 'uraian' && (
           <div className="pt-4">
-            <DetailSSKView />
+            <UraianKegiatanTable />
           </div>
         )}
       </div>
