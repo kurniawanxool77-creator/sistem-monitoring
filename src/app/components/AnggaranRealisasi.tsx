@@ -96,10 +96,7 @@ export function AnggaranRealisasi() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Anggaran & Realisasi</h1>
-          <p className="text-sm text-gray-600 mt-1">Monitoring anggaran Sekretariat DPRD — input 1x, realisasi otomatis per bulan</p>
-        </div>
+
         <div className="flex gap-2">
           <button onClick={() => setShowPaguModal(true)}
             className="flex items-center gap-2 border border-blue-300 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 text-sm font-semibold transition-colors">
@@ -186,11 +183,10 @@ export function AnggaranRealisasi() {
             { key: 'uraian', label: '📋 Uraian Kegiatan' },
           ] as { key: TabKey; label: string }[]).map((tab) => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all ${
-                activeTab === tab.key
+              className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all ${activeTab === tab.key
                   ? 'border-blue-600 text-blue-700 bg-blue-50'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}>
+                }`}>
               {tab.label}
             </button>
           ))}
@@ -246,9 +242,8 @@ export function AnggaranRealisasi() {
                       </td>
                       <td className="py-3 px-4 text-center">
                         {hasData ? (
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                            onTrack ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${onTrack ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                            }`}>
                             {onTrack ? 'On Track' : 'Kurang'}
                           </span>
                         ) : (
@@ -277,9 +272,8 @@ export function AnggaranRealisasi() {
                     <span className="text-base font-black text-blue-700">{pctSerapan}%</span>
                   </td>
                   <td className="py-3 px-4 text-center">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                      parseFloat(pctSerapan) >= 40 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                    }`}>{statusSerapan}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${parseFloat(pctSerapan) >= 40 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                      }`}>{statusSerapan}</span>
                   </td>
                   <td />
                 </tr>
@@ -298,7 +292,7 @@ export function AnggaranRealisasi() {
                   className="text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 border border-blue-200 rounded-lg hover:bg-blue-50">
                   Expand Semua
                 </button>
-                <button onClick={() => setExpandedKode(new Set(['1','2','3','4','5']))}
+                <button onClick={() => setExpandedKode(new Set(['1', '2', '3', '4', '5']))}
                   className="text-xs text-gray-600 hover:text-gray-700 font-medium px-2 py-1 border border-gray-200 rounded-lg hover:bg-gray-50">
                   Collapse
                 </button>
@@ -334,12 +328,11 @@ export function AnggaranRealisasi() {
 
                     return (
                       <tr key={u.kode}
-                        className={`border-b border-gray-100 ${
-                          u.level === 1 ? 'bg-blue-50 font-bold' :
-                          u.level === 2 ? 'bg-gray-50 font-semibold' :
-                          u.level === 3 ? 'hover:bg-gray-50' :
-                          'hover:bg-gray-50 text-gray-600'
-                        }`}>
+                        className={`border-b border-gray-100 ${u.level === 1 ? 'bg-blue-50 font-bold' :
+                            u.level === 2 ? 'bg-gray-50 font-semibold' :
+                              u.level === 3 ? 'hover:bg-gray-50' :
+                                'hover:bg-gray-50 text-gray-600'
+                          }`}>
                         {/* Kode */}
                         <td className="py-2.5 px-4 text-xs font-mono text-gray-500 whitespace-nowrap"
                           style={{ paddingLeft: 16 + indent }}>
@@ -369,9 +362,8 @@ export function AnggaranRealisasi() {
                         </td>
 
                         {/* Realisasi */}
-                        <td className={`py-2.5 px-4 text-right tabular-nums font-medium ${
-                          pct >= 80 ? 'text-emerald-700' : pct >= 60 ? 'text-blue-700' : 'text-amber-600'
-                        }`}>
+                        <td className={`py-2.5 px-4 text-right tabular-nums font-medium ${pct >= 80 ? 'text-emerald-700' : pct >= 60 ? 'text-blue-700' : 'text-amber-600'
+                          }`}>
                           {formatRp(u.realisasi, true)}
                         </td>
 
@@ -379,13 +371,11 @@ export function AnggaranRealisasi() {
                         <td className="py-2.5 px-4">
                           <div className="flex items-center gap-2">
                             <div className="flex-1 bg-gray-100 rounded-full h-1.5 min-w-[60px]">
-                              <div className={`h-1.5 rounded-full transition-all ${
-                                pct >= 80 ? 'bg-emerald-500' : pct >= 60 ? 'bg-blue-500' : 'bg-amber-400'
-                              }`} style={{ width: `${Math.min(pct, 100)}%` }} />
+                              <div className={`h-1.5 rounded-full transition-all ${pct >= 80 ? 'bg-emerald-500' : pct >= 60 ? 'bg-blue-500' : 'bg-amber-400'
+                                }`} style={{ width: `${Math.min(pct, 100)}%` }} />
                             </div>
-                            <span className={`text-xs font-bold min-w-[36px] text-right ${
-                              pct >= 80 ? 'text-emerald-700' : pct >= 60 ? 'text-blue-700' : 'text-amber-600'
-                            }`}>{pct}%</span>
+                            <span className={`text-xs font-bold min-w-[36px] text-right ${pct >= 80 ? 'text-emerald-700' : pct >= 60 ? 'text-blue-700' : 'text-amber-600'
+                              }`}>{pct}%</span>
                           </div>
                         </td>
                       </tr>

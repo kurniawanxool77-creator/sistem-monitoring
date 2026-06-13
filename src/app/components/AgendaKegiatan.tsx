@@ -46,7 +46,7 @@ export function AgendaKegiatan() {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('kegiatan_list_data');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) {}
+        try { return JSON.parse(saved); } catch (e) { }
       }
     }
     return kegiatanList;
@@ -65,7 +65,7 @@ export function AgendaKegiatan() {
       );
       const done = newSteps.filter((s) => s.selesai).length;
       const newProgress = Math.round((done / newSteps.length) * 100);
-      
+
       let newStatus = k.status;
       if (newProgress === 100) {
         newStatus = 'Selesai';
@@ -155,10 +155,7 @@ export function AgendaKegiatan() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Agenda & Kegiatan</h1>
-          <p className="text-sm text-gray-600 mt-1">Kelola seluruh kegiatan dan agenda DPRD</p>
-        </div>
+
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -248,21 +245,19 @@ export function AgendaKegiatan() {
                         {new Date(kegiatan.tanggalSelesai).toLocaleDateString('id-ID')}
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                          kegiatan.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
-                          kegiatan.status === 'Berjalan' ? 'bg-blue-100 text-blue-700' :
-                          kegiatan.status === 'Terlambat' ? 'bg-red-100 text-red-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>{kegiatan.status}</span>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${kegiatan.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
+                            kegiatan.status === 'Berjalan' ? 'bg-blue-100 text-blue-700' :
+                              kegiatan.status === 'Terlambat' ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-700'
+                          }`}>{kegiatan.status}</span>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2 min-w-[100px]">
                           <div className="flex-1 bg-gray-100 rounded-full h-2">
-                            <div className={`h-2 rounded-full transition-all duration-500 ${
-                              progress === 100 ? 'bg-emerald-500' :
-                              progress >= 60 ? 'bg-blue-500' :
-                              progress >= 30 ? 'bg-amber-500' : 'bg-red-400'
-                            }`} style={{ width: `${progress}%` }} />
+                            <div className={`h-2 rounded-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' :
+                                progress >= 60 ? 'bg-blue-500' :
+                                  progress >= 30 ? 'bg-amber-500' : 'bg-red-400'
+                              }`} style={{ width: `${progress}%` }} />
                           </div>
                           <span className="text-sm font-semibold text-gray-800 min-w-[36px] text-right">{progress}%</span>
                         </div>
@@ -355,32 +350,30 @@ export function AgendaKegiatan() {
                                     style={{ minWidth: 64 }}
                                   >
                                     {/* Circle */}
-                                    <div className={`w-11 h-11 rounded-full flex items-center justify-center border-4 transition-all duration-300 shadow-sm group-hover:scale-110 ${
-                                      isDone
+                                    <div className={`w-11 h-11 rounded-full flex items-center justify-center border-4 transition-all duration-300 shadow-sm group-hover:scale-110 ${isDone
                                         ? isLast
                                           ? 'bg-emerald-600 border-emerald-600 text-white shadow-emerald-200 shadow-md'
                                           : 'bg-blue-600 border-blue-600 text-white shadow-blue-200 shadow-md'
                                         : isCurrent
-                                        ? 'bg-white border-blue-500 text-blue-600 shadow-blue-100 shadow-md animate-pulse'
-                                        : 'bg-white border-gray-300 text-gray-400 group-hover:border-blue-300'
-                                    }`}>
+                                          ? 'bg-white border-blue-500 text-blue-600 shadow-blue-100 shadow-md animate-pulse'
+                                          : 'bg-white border-gray-300 text-gray-400 group-hover:border-blue-300'
+                                      }`}>
                                       {isDone
                                         ? isLast
                                           ? <FileCheck className="w-5 h-5" />
                                           : <Check className="w-5 h-5" strokeWidth={3} />
                                         : <span className="text-xs font-black">
-                                            {String.fromCharCode(65 + idx)}
-                                          </span>
+                                          {String.fromCharCode(65 + idx)}
+                                        </span>
                                       }
                                     </div>
 
                                     {/* Label */}
                                     <div className="mt-2 text-center" style={{ maxWidth: 72 }}>
-                                      <div className={`text-[11px] font-semibold leading-tight ${
-                                        isDone
+                                      <div className={`text-[11px] font-semibold leading-tight ${isDone
                                           ? isLast ? 'text-emerald-700' : 'text-blue-700'
                                           : isCurrent ? 'text-blue-600' : 'text-gray-400'
-                                      }`}>
+                                        }`}>
                                         {isLast ? 'Finish' : step.nama.split(' ').slice(0, 2).join(' ')}
                                       </div>
                                       {isCurrent && (
@@ -521,9 +514,8 @@ export function AgendaKegiatan() {
                     const isLast = idx === form.customSteps.length - 1;
                     return (
                       <div key={idx} className="flex items-center gap-1 flex-shrink-0">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${
-                          isLast ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'bg-blue-100 border-blue-400 text-blue-700'
-                        }`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${isLast ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'bg-blue-100 border-blue-400 text-blue-700'
+                          }`}>
                           {isLast ? '✔' : String.fromCharCode(65 + idx)}
                         </div>
                         {!isLast && <ChevronRight className="w-3 h-3 text-gray-300" />}
@@ -537,18 +529,16 @@ export function AgendaKegiatan() {
                     const isLast = idx === form.customSteps.length - 1;
                     return (
                       <div key={idx} className="flex items-center gap-2">
-                        <div className={`w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${
-                          isLast ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
-                        }`}>
+                        <div className={`w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${isLast ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
                           {isLast ? '✔' : String.fromCharCode(65 + idx)}
                         </div>
                         <input type="text" value={step}
                           onChange={(e) => updateStepName(idx, e.target.value)}
                           readOnly={isLast}
                           placeholder={isLast ? 'Verifikasi Dokumen' : `Nama tahap ${idx + 1}...`}
-                          className={`flex-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            isLast ? 'border-emerald-300 bg-emerald-50 text-emerald-700 cursor-default' : 'border-gray-300'
-                          }`}
+                          className={`flex-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isLast ? 'border-emerald-300 bg-emerald-50 text-emerald-700 cursor-default' : 'border-gray-300'
+                            }`}
                         />
                         {!isLast && form.customSteps.length > 2 && (
                           <button type="button" onClick={() => removeStepRow(idx)}

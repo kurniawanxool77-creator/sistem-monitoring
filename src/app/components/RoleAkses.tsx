@@ -43,10 +43,7 @@ export function RoleAkses() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Role & Akses Pengguna</h1>
-          <p className="text-sm text-gray-600 mt-1">Kelola pengguna dan hak akses sistem</p>
-        </div>
+
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -134,11 +131,10 @@ export function RoleAkses() {
                   </td>
                   <td className="py-4 px-4 text-sm text-gray-600">{user.email}</td>
                   <td className="py-4 px-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      user.role === 'Superadmin' 
-                        ? 'bg-purple-100 text-purple-700' 
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === 'Superadmin'
+                        ? 'bg-purple-100 text-purple-700'
                         : 'bg-blue-100 text-blue-700'
-                    }`}>
+                      }`}>
                       {user.role}
                     </span>
                   </td>

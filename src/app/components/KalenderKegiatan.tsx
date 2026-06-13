@@ -85,13 +85,7 @@ export function KalenderKegiatan() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Kalender Kegiatan</h1>
-          <p className="text-sm text-gray-600 mt-1">Lihat jadwal kegiatan dalam tampilan kalender</p>
-        </div>
-      </div>
+
 
       {/* Filters & Controls */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -103,7 +97,7 @@ export function KalenderKegiatan() {
             >
               <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
-            
+
             <div className="flex items-center gap-3">
               <CalendarIcon className="w-5 h-5 text-gray-600" />
               <h2 className="text-xl font-bold text-gray-900">
@@ -125,11 +119,12 @@ export function KalenderKegiatan() {
               onChange={(e) => setFilterBagian(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="semua">Semua Bagian</option>
+              <option value="semua">Semua Bidang</option>
               <option value="sekretariat">Sekretariat DPRD</option>
-              <option value="komisi-a">Komisi A</option>
-              <option value="komisi-b">Komisi B</option>
-              <option value="komisi-c">Komisi C</option>
+              <option value="humas">Humas</option>
+              <option value="persidangan">Persidangan</option>
+              <option value="umum">Umum</option>
+              <option value="keuangan">Keuangan</option>
             </select>
 
             <div className="flex gap-2">

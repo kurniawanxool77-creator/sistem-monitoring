@@ -9,10 +9,7 @@ export function LaporanKegiatan() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Laporan Kegiatan</h1>
-        <p className="text-sm text-gray-600 mt-1">Generate dan export laporan kegiatan</p>
-      </div>
+
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -33,11 +30,12 @@ export function LaporanKegiatan() {
               onChange={(e) => setFilterBagian(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="semua">Semua Bagian</option>
+              <option value="semua">Semua Bidang</option>
               <option value="sekretariat">Sekretariat DPRD</option>
-              <option value="komisi-a">Komisi A</option>
-              <option value="komisi-b">Komisi B</option>
-              <option value="komisi-c">Komisi C</option>
+              <option value="humas">Humas</option>
+              <option value="persidangan">Persidangan</option>
+              <option value="umum">Umum</option>
+              <option value="Keuangan">Keuangan</option>
             </select>
           </div>
           <div>
@@ -96,17 +94,7 @@ export function LaporanKegiatan() {
           <div className="bg-white p-8 rounded shadow-sm">
             {/* Report Header */}
             <div className="text-center mb-8 pb-6 border-b-2 border-gray-300">
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-blue-900 rounded-lg flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-10 h-10 text-white" fill="currentColor">
-                    <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <h3 className="text-xl font-bold text-gray-900">SEKRETARIAT DPRD</h3>
-                  <p className="text-sm text-gray-600">Provinsi Jawa Tengah</p>
-                </div>
-              </div>
+
               <h1 className="text-2xl font-bold text-gray-900 mb-2">LAPORAN KEGIATAN</h1>
               <p className="text-gray-600">Periode: Juni 2025</p>
             </div>

@@ -119,7 +119,7 @@ export const masterBidang: BidangData[] = [
   },
   {
     id: 'bid-3',
-    nama: 'Bagian Hubungan Masyarakat',
+    nama: 'Bagian Humas',
     subBidang: [
       {
         id: 'sub-9',
@@ -284,7 +284,7 @@ export interface Bagian {
 // Progress berdasarkan Realisasi Fisik S/D Mei 2026 (sumber: E-Controlling 2026)
 export const bagianList: Bagian[] = [
   { id: '1', nama: 'Sekretariat DPRD', progress: 100, warna: 'bg-blue-500' },
-  { id: '2', nama: 'Bagian Hubungan Masyarakat', progress: 54, warna: 'bg-orange-500' },
+  { id: '2', nama: 'Bagian Humas', progress: 54, warna: 'bg-orange-500' },
   { id: '3', nama: 'Bagian Umum', progress: 42, warna: 'bg-emerald-500' },
   { id: '4', nama: 'Bagian Persidangan', progress: 37, warna: 'bg-purple-500' },
   { id: '5', nama: 'Keuangan', progress: 42, warna: 'bg-amber-500' },
@@ -317,7 +317,7 @@ export const kegiatanList: Kegiatan[] = [
   {
     id: '2',
     nama: 'Publikasi & Dokumentasi Kegiatan',
-    bidang: 'Bagian Hubungan Masyarakat',
+    bidang: 'Bagian Humas',
     subBidang: 'Humas & Publikasi',
     penanggungJawab: 'Kepala Humas',
     tanggalMulai: '2025-05-20',
@@ -430,7 +430,7 @@ export const kegiatanList: Kegiatan[] = [
   {
     id: '7',
     nama: 'Siaran Pers & Media Sosial DPRD',
-    bidang: 'Bagian Hubungan Masyarakat',
+    bidang: 'Bagian Humas',
     subBidang: 'Humas & Publikasi',
     penanggungJawab: 'Kepala Humas',
     tanggalMulai: '2025-06-05',
@@ -591,7 +591,7 @@ export const kegiatanPerBagian: Record<string, { id: string; nama: string; tangg
     { id: 'k3', nama: 'Evaluasi Kinerja Perangkat Daerah', tanggal: '1 Jan – 31 Des 2026', progress: 100, status: 'Selesai', step: 'Closed' },
     { id: 'ka', nama: 'Penyediaan Gaji dan Tunjangan ASN', tanggal: '1 Jan – 31 Des 2026', progress: 100, status: 'Selesai', step: 'Closed' },
   ],
-  'Bagian Hubungan Masyarakat': [
+  'Bagian Humas': [
     { id: 'k2', nama: 'Penyelenggaraan Hubungan Masyarakat', tanggal: '1 Jan – 31 Des 2026', progress: 41, status: 'Berjalan', step: 'Pelaksanaan' },
     { id: 'k7', nama: 'Penyusunan Bahan Komunikasi dan Publikasi', tanggal: '1 Jan – 31 Des 2026', progress: 53, status: 'Berjalan', step: 'Pelaksanaan' },
     { id: 'kb', nama: 'Penyusunan Program Kerja DPRD', tanggal: '1 Jan – 31 Des 2026', progress: 55, status: 'Berjalan', step: 'Pelaksanaan' },
@@ -748,8 +748,8 @@ export const uraianAnggaran: UraianAnggaran[] = [
   { kode: '2.7.1', uraian: 'Penyediaan Pakaian Dinas dan Atribut DPRD',                    level: 3, target: 1_392_880_000,     realisasi: 506_170_000 },
   { kode: '2.7.2', uraian: 'Pelaksanaan Medical Check Up DPRD',                            level: 3, target: 566_121_000,        realisasi: 0 },
 
-  // ── 3. BAGIAN HUBUNGAN MASYARAKAT ─────────────────────────────────────────
-  { kode: '3',     uraian: 'Bagian Hubungan Masyarakat',                                    level: 1, target: 231_584_388_000,   realisasi: 121_817_534_227 },
+  // ── 3. BAGIAN HUMAS ─────────────────────────────────────────
+  { kode: '3',     uraian: 'Bagian Humas',                                    level: 1, target: 231_584_388_000,   realisasi: 121_817_534_227 },
   { kode: '3.1',   uraian: 'Peningkatan Kapasitas DPRD',                                   level: 2, target: 130_044_388_000,   realisasi: 68_041_841_227 },
   { kode: '3.1.1', uraian: 'Penyediaan Kelompok Pakar dan Tim Ahli',                       level: 3, target: 1_939_086_000,     realisasi: 776_400_000 },
   { kode: '3.1.1.1', uraian: 'Orang dalam kelompok pakar dan tim ahli',                    level: 4, target: 1_939_086_000,     realisasi: 776_400_000 },

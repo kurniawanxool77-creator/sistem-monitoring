@@ -8,10 +8,7 @@ export function LaporanAnggaran() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Laporan Anggaran</h1>
-        <p className="text-sm text-gray-600 mt-1">Generate dan export laporan anggaran & realisasi</p>
-      </div>
+
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -26,9 +23,10 @@ export function LaporanAnggaran() {
             >
               <option value="semua">Semua Bidang</option>
               <option value="sekretariat">Sekretariat DPRD</option>
-              <option value="komisi-a">Komisi A</option>
-              <option value="komisi-b">Komisi B</option>
-              <option value="komisi-c">Komisi C</option>
+              <option value="humas">Humas</option>
+              <option value="persidangan">Persidangan</option>
+              <option value="umum">Umum</option>
+              <option value="Keuangan">Keuangan</option>
             </select>
           </div>
           <div>
@@ -82,15 +80,8 @@ export function LaporanAnggaran() {
             {/* Report Header */}
             <div className="text-center mb-8 pb-6 border-b-2 border-gray-300">
               <div className="flex items-center justify-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-blue-900 rounded-lg flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-10 h-10 text-white" fill="currentColor">
-                    <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <h3 className="text-xl font-bold text-gray-900">SEKRETARIAT DPRD</h3>
-                  <p className="text-sm text-gray-600">Provinsi Jawa Tengah</p>
-                </div>
+
+
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">LAPORAN ANGGARAN & REALISASI</h1>
               <p className="text-gray-600">Periode: Tahun Anggaran 2025</p>
@@ -141,14 +132,28 @@ export function LaporanAnggaran() {
                     <td className="py-2 px-3 border text-center">85%</td>
                   </tr>
                   <tr>
-                    <td className="py-2 px-3 border">Komisi A</td>
+                    <td className="py-2 px-3 border">Humas</td>
                     <td className="py-2 px-3 border text-right">Rp 3.500.000.000</td>
                     <td className="py-2 px-3 border text-right">Rp 2.450.000.000</td>
                     <td className="py-2 px-3 border text-right">Rp 1.050.000.000</td>
                     <td className="py-2 px-3 border text-center">70%</td>
                   </tr>
                   <tr>
-                    <td className="py-2 px-3 border">Komisi B</td>
+                    <td className="py-2 px-3 border">Persidangan</td>
+                    <td className="py-2 px-3 border text-right">Rp 3.200.000.000</td>
+                    <td className="py-2 px-3 border text-right">Rp 2.560.000.000</td>
+                    <td className="py-2 px-3 border text-right">Rp 640.000.000</td>
+                    <td className="py-2 px-3 border text-center">80%</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-3 border">Umum</td>
+                    <td className="py-2 px-3 border text-right">Rp 3.200.000.000</td>
+                    <td className="py-2 px-3 border text-right">Rp 2.560.000.000</td>
+                    <td className="py-2 px-3 border text-right">Rp 640.000.000</td>
+                    <td className="py-2 px-3 border text-center">80%</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-3 border">Keuangan</td>
                     <td className="py-2 px-3 border text-right">Rp 3.200.000.000</td>
                     <td className="py-2 px-3 border text-right">Rp 2.560.000.000</td>
                     <td className="py-2 px-3 border text-right">Rp 640.000.000</td>
