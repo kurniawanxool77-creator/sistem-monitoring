@@ -107,13 +107,16 @@ export function AnggaranRealisasi() {
   function handleSavePagu() {
     const val = Number(paguInput.replace(/\D/g, ''));
     if (val > 0) { 
-      setYearlyData(prev => ({
-        ...prev,
-        [tahunAnggaranInput]: {
-          ...prev[tahunAnggaranInput],
-          pagu: val
-        }
-      }));
+      setYearlyData(prev => {
+        const existing = prev[tahunAnggaranInput] || { pagu: 0, realisasi: Array(12).fill(0) };
+        return {
+          ...prev,
+          [tahunAnggaranInput]: {
+            pagu: val,
+            realisasi: existing.realisasi
+          }
+        };
+      });
       setSelectedYear(tahunAnggaranInput);
       setPaguInput(''); 
       setShowPaguModal(false); 
@@ -149,7 +152,7 @@ export function AnggaranRealisasi() {
           <label className="text-sm font-bold text-slate-700">Tahun Anggaran:</label>
           <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}
             className="px-3.5 py-1.5 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm text-slate-800">
-            {Object.keys(yearlyData).map(y => (
+            {Object.keys(yearlyData).map(Number).sort((a, b) => a - b).map(y => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
@@ -170,7 +173,7 @@ export function AnggaranRealisasi() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Pagu', value: formatRp(paguTotal, true), sub: `Tahun ${tahunAnggaran}`, color: 'from-blue-500 to-blue-600', icon: <DollarSign className="w-6 h-6" /> },
+          { label: 'Total Pagu', value: formatRp(paguTotal, true), sub: `Tahun ${selectedYear}`, color: 'from-blue-500 to-blue-600', icon: <DollarSign className="w-6 h-6" /> },
           { label: 'Total Realisasi', value: formatRp(totalRealisasi, true), sub: `${pctSerapan}% terserap`, color: 'from-emerald-500 to-emerald-600', icon: <TrendingUp className="w-6 h-6" /> },
           { label: 'Sisa Anggaran', value: formatRp(totalSisa, true), sub: `${(100 - parseFloat(pctSerapan)).toFixed(1)}% tersisa`, color: 'from-amber-500 to-amber-600', icon: <PieChartIcon className="w-6 h-6" /> },
           { label: 'Status Serapan', value: parseFloat(pctSerapan) >= 40 ? 'On Track' : 'Perlu Perhatian', sub: `Pagu/bln: ${formatRp(Math.round(paguTotal / 12), true)}`, color: parseFloat(pctSerapan) >= 40 ? 'from-purple-500 to-purple-600' : 'from-red-500 to-red-600', icon: <TrendingUp className="w-6 h-6" /> },
