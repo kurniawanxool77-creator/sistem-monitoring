@@ -810,6 +810,33 @@ export const uraianAnggaran: UraianAnggaran[] = [
   { kode: '4.7.1.1', uraian: 'Dokumen hasil Koordinasi dan Konsultasi Pelaksanaan Tugas', level: 4, target: 21_311_005_000,    realisasi: 11_006_994_211 },
 ];
 
+// ── SSOT Wrapper & Helper Functions ──────────────────────────────────────────
+export let uraianAnggaranData = [...uraianAnggaran];
+
+export function addUraianItem(newItem: UraianAnggaran) {
+  uraianAnggaranData = [...uraianAnggaranData, newItem];
+}
+
+export function addRealisasi(kode: string, amount: number) {
+  let currentKode = kode;
+  const newData = [...uraianAnggaranData];
+  
+  while (currentKode) {
+    const index = newData.findIndex(u => u.kode === currentKode);
+    if (index !== -1) {
+      newData[index] = {
+        ...newData[index],
+        realisasi: newData[index].realisasi + amount
+      };
+    }
+    const parts = currentKode.split('.');
+    parts.pop();
+    currentKode = parts.join('.');
+  }
+  
+  uraianAnggaranData = newData;
+}
+
 // ─── DATA DETAIL SUB-SUB KEGIATAN (SSK) MOCKUP ────────────────────────────
 
 export interface SSKBulanan {

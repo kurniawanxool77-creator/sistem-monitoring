@@ -4,7 +4,7 @@ import {
   Plus, Search, Edit, Trash2, Eye, X, UserPlus, Minus,
   Check, CheckCircle2, FileCheck, ChevronRight, RefreshCw,
 } from 'lucide-react';
-import { kegiatanList, masterBidang, sumberDanaList, KegiatanStep, Kegiatan } from '../lib/data';
+import { kegiatanList, sumberDanaList, KegiatanStep, Kegiatan, uraianAnggaranData, addUraianItem, addRealisasi } from '../lib/data';
 import { UpdateProgressModal } from './UpdateProgressModal';
 
 function formatRupiah(n: number) {
@@ -125,16 +125,23 @@ export function AgendaKegiatan() {
     return matchSearch && matchStatus && matchBagian;
   });
 
-  const selectedBidang = masterBidang.find((b) => b.id === form.bidangId);
-  const selectedSubBidang = selectedBidang?.subBidang.find((s) => s.id === form.subBidangId);
-  const selectedKegiatan = selectedSubBidang?.kegiatan.find((k) => k.id === form.kegiatanTemplateId);
-  const selectedSubKegiatan = selectedKegiatan?.subKegiatan?.find((sk) => sk.id === form.subKegiatanId);
+  const listBidang = uraianAnggaranData.filter(u => u.level === 1);
+  const selectedBidang = listBidang.find(u => u.kode === form.bidangId);
+
+  const listSubBidang = form.bidangId ? uraianAnggaranData.filter(u => u.level === 2 && u.kode.startsWith(`${form.bidangId}.`)) : [];
+  const selectedSubBidang = listSubBidang.find(u => u.kode === form.subBidangId);
+
+  const listKegiatan = form.subBidangId ? uraianAnggaranData.filter(u => u.level === 3 && u.kode.startsWith(`${form.subBidangId}.`)) : [];
+  const selectedKegiatan = listKegiatan.find(u => u.kode === form.kegiatanTemplateId);
+
+  const listSubKegiatan = form.kegiatanTemplateId ? uraianAnggaranData.filter(u => u.level === 4 && u.kode.startsWith(`${form.kegiatanTemplateId}.`)) : [];
+  const selectedSubKegiatan = listSubKegiatan.find(u => u.kode === form.subKegiatanId);
 
   // Perhitungan Pagu Otomatis
-  const currentPagu = form.subKegiatanId ? (selectedSubKegiatan?.pagu || 0) 
-                    : form.kegiatanTemplateId ? (selectedKegiatan?.pagu || 0) 
-                    : form.subBidangId ? (selectedSubBidang?.paguDefault || 0) 
-                    : form.bidangId ? (selectedBidang?.pagu || 0) : 0;
+  const currentPagu = form.subKegiatanId ? (selectedSubKegiatan?.target || 0) 
+                    : form.kegiatanTemplateId ? (selectedKegiatan?.target || 0) 
+                    : form.subBidangId ? (selectedSubBidang?.target || 0) 
+                    : form.bidangId ? (selectedBidang?.target || 0) : 0;
 
   let activeLevelLabel = '';
   if (form.subKegiatanId && selectedSubKegiatan) activeLevelLabel = 'dari Sub Kegiatan';
@@ -164,18 +171,47 @@ export function AgendaKegiatan() {
 
   function saveNewItem() {
     if (!newInputValue.trim()) return;
-    const newId = `new-${Date.now()}`;
+    
+    let parentKode = '';
+    let newLevel = 1;
+    let listSiblings: any[] = [];
     
     if (newInputMode === 'subBidang' && selectedBidang) {
-      selectedBidang.subBidang.push({ id: newId, nama: newInputValue, paguDefault: 0, kegiatan: [] });
-      setForm((f) => ({ ...f, subBidangId: newId, kegiatanTemplateId: '', subKegiatanId: '' }));
+      parentKode = form.bidangId;
+      newLevel = 2;
+      listSiblings = listSubBidang;
     } else if (newInputMode === 'kegiatan' && selectedSubBidang) {
-      selectedSubBidang.kegiatan.push({ id: newId, nama: newInputValue, pagu: 0, subKegiatan: [] });
-      setForm((f) => ({ ...f, kegiatanTemplateId: newId, subKegiatanId: '' }));
+      parentKode = form.subBidangId;
+      newLevel = 3;
+      listSiblings = listKegiatan;
     } else if (newInputMode === 'subKegiatan' && selectedKegiatan) {
-      if (!selectedKegiatan.subKegiatan) selectedKegiatan.subKegiatan = [];
-      selectedKegiatan.subKegiatan.push({ id: newId, nama: newInputValue, pagu: 0 });
-      setForm((f) => ({ ...f, subKegiatanId: newId }));
+      parentKode = form.kegiatanTemplateId;
+      newLevel = 4;
+      listSiblings = listSubKegiatan;
+    }
+
+    if (parentKode) {
+       let maxSuffix = 0;
+       listSiblings.forEach(s => {
+          const parts = s.kode.split('.');
+          const suffix = parseInt(parts[parts.length - 1], 10);
+          if (!isNaN(suffix) && suffix > maxSuffix) {
+            maxSuffix = suffix;
+          }
+       });
+       const newKode = `${parentKode}.${maxSuffix + 1}`;
+       
+       addUraianItem({
+         kode: newKode,
+         uraian: newInputValue,
+         level: newLevel,
+         target: 0,
+         realisasi: 0
+       });
+
+       if (newInputMode === 'subBidang') setForm((f) => ({ ...f, subBidangId: newKode, kegiatanTemplateId: '', subKegiatanId: '' }));
+       else if (newInputMode === 'kegiatan') setForm((f) => ({ ...f, kegiatanTemplateId: newKode, subKegiatanId: '' }));
+       else if (newInputMode === 'subKegiatan') setForm((f) => ({ ...f, subKegiatanId: newKode }));
     }
     
     setNewInputMode('none');
@@ -193,20 +229,22 @@ export function AgendaKegiatan() {
       return;
     }
 
-    const agendaName = selectedSubKegiatan?.nama || selectedKegiatan?.nama || selectedSubBidang?.nama || selectedBidang?.nama || 'Agenda Baru';
+    const agendaName = selectedSubKegiatan?.uraian || selectedKegiatan?.uraian || selectedSubBidang?.uraian || selectedBidang?.uraian || 'Agenda Baru';
+    const finalKode = form.subKegiatanId || form.kegiatanTemplateId || form.subBidangId || form.bidangId;
+    const realisasi = Number(form.anggaranKegiatan) || 0;
 
     const newAgenda: Kegiatan = {
       id: `agenda-${Date.now()}`,
       nama: agendaName,
-      bidang: selectedBidang?.nama || '',
-      subBidang: selectedSubBidang?.nama || '',
+      bidang: selectedBidang?.uraian || '',
+      subBidang: selectedSubBidang?.uraian || '',
       penanggungJawab: form.penanggungJawab || 'Belum ada PJ',
       tanggalMulai: form.tanggalMulai || new Date().toISOString().split('T')[0],
       tanggalSelesai: form.tanggalSelesai || new Date().toISOString().split('T')[0],
       status: 'Belum Mulai',
       progress: 0,
       paguAnggaran: currentPagu,
-      realisasiAnggaran: Number(form.anggaranKegiatan) || 0,
+      realisasiAnggaran: realisasi,
       deskripsi: `Sumber Dana: ${form.sumberDana}`,
       step: 'Persiapan',
       steps: form.customSteps.map((stepName, idx) => ({
@@ -215,6 +253,10 @@ export function AgendaKegiatan() {
         selesai: false
       }))
     };
+
+    if (finalKode && realisasi > 0) {
+       addRealisasi(finalKode, realisasi);
+    }
 
     const updatedKegiatans = [newAgenda, ...kegiatans];
     setKegiatans(updatedKegiatans);
@@ -553,7 +595,7 @@ export function AgendaKegiatan() {
                   <select value={form.bidangId} onChange={(e) => handleBidangChange(e.target.value)}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">Pilih Bidang</option>
-                    {masterBidang.map((b) => <option key={b.id} value={b.id}>{b.nama}</option>)}
+                    {listBidang.map((b) => <option key={b.kode} value={b.kode}>{b.uraian}</option>)}
                   </select>
                 </div>
 
@@ -570,7 +612,7 @@ export function AgendaKegiatan() {
                     <select value={form.subBidangId} onChange={(e) => handleSelectChange('subBidang', e.target.value)} disabled={!form.bidangId}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
                       <option value="">Pilih Sub Bidang</option>
-                      {selectedBidang?.subBidang.map((s) => <option key={s.id} value={s.id}>{s.nama}</option>)}
+                      {listSubBidang.map((s) => <option key={s.kode} value={s.kode}>{s.uraian}</option>)}
                       <option value="NEW" className="text-blue-600 font-bold">+ Tambah Baru...</option>
                     </select>
                   )}
@@ -589,7 +631,7 @@ export function AgendaKegiatan() {
                     <select value={form.kegiatanTemplateId} onChange={(e) => handleSelectChange('kegiatan', e.target.value)} disabled={!form.subBidangId}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
                       <option value="">Pilih Kegiatan</option>
-                      {selectedSubBidang?.kegiatan.map((k) => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                      {listKegiatan.map((k) => <option key={k.kode} value={k.kode}>{k.uraian}</option>)}
                       <option value="NEW" className="text-blue-600 font-bold">+ Tambah Baru...</option>
                     </select>
                   )}
@@ -608,7 +650,7 @@ export function AgendaKegiatan() {
                     <select value={form.subKegiatanId} onChange={(e) => handleSelectChange('subKegiatan', e.target.value)} disabled={!form.kegiatanTemplateId}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
                       <option value="">Tidak ada / Sesuai Kegiatan</option>
-                      {selectedKegiatan?.subKegiatan?.map((k) => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                      {listSubKegiatan.map((k) => <option key={k.kode} value={k.kode}>{k.uraian}</option>)}
                       <option value="NEW" className="text-blue-600 font-bold">+ Tambah Baru...</option>
                     </select>
                   )}
