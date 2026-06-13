@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Filter, TrendingDown, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, TrendingDown, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { uraianAnggaran, UraianAnggaran } from '../lib/data';
 
 function formatRp(n: number, short = false) {
@@ -16,7 +16,6 @@ const BULAN_SINGKAT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Ok
 export function UraianKegiatanTable() {
   const [expandedKode, setExpandedKode] = useState<Set<string>>(new Set(['1', '2', '3', '4', '5']));
   const [expandedBulanan, setExpandedBulanan] = useState<Set<string>>(new Set());
-  const [filterBidang, setFilterBidang] = useState('Semua Bidang');
 
   function toggleExpand(kode: string) {
     setExpandedKode((prev) => {
@@ -41,13 +40,7 @@ export function UraianKegiatanTable() {
     return expandedKode.has(parent) && isVisible(parent);
   }
 
-  const filteredData = uraianAnggaran.filter(u => {
-    if (filterBidang !== 'Semua Bidang') {
-      const bidangKode = uraianAnggaran.find(x => x.level === 1 && x.uraian === filterBidang)?.kode;
-      if (bidangKode && !u.kode.startsWith(bidangKode)) return false;
-    }
-    return true;
-  });
+  const filteredData = uraianAnggaran;
 
   const uraianTotal = filteredData.reduce((a, u) => u.level === 1 ? a + u.target : a, 0);
   const uraianRealisasiTotal = filteredData.reduce((a, u) => u.level === 1 ? a + u.realisasi : a, 0);
@@ -70,15 +63,16 @@ export function UraianKegiatanTable() {
           <TrendingDown className="w-4 h-4 text-blue-600" />
           Sisa Anggaran per Bidang / Bagian
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+        <div className="flex flex-wrap justify-center gap-3">
           {bidangList.map(b => {
             const sisa = b.target - b.realisasi;
             const pct = b.target > 0 ? Math.round((b.realisasi / b.target) * 100) : 0;
+
             const sisaPct = 100 - pct;
             const isKritis = sisaPct < 15;
             const isAman = sisaPct >= 40;
             return (
-              <div key={b.kode}
+              <div key={b.kode} style={{ minWidth: '200px', maxWidth: '240px', flex: '1 1 200px' }}
                 className={`rounded-xl border p-4 flex flex-col gap-2 shadow-sm transition-all ${
                   isKritis
                     ? 'bg-red-50 border-red-200'
@@ -133,24 +127,6 @@ export function UraianKegiatanTable() {
 
       {/* ── TABEL DETAIL ── */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-
-        {/* Filter */}
-        <div className="p-4 bg-slate-50 border-b border-slate-200">
-          <div className="flex items-center gap-2 mb-3 text-slate-700 font-bold">
-            <Filter className="w-4 h-4" /> Filter Uraian Kegiatan
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Bidang</label>
-              <select value={filterBidang} onChange={e => setFilterBidang(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white">
-                <option>Semua Bidang</option>
-                {uraianAnggaran.filter(u => u.level === 1).map(u => (
-                  <option key={u.kode} value={u.uraian}>{u.uraian}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
 
         {/* Table Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white">
