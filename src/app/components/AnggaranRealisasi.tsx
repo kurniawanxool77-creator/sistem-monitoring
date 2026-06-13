@@ -325,7 +325,7 @@ export function AnggaranRealisasi() {
 
                  {/* Total row */}
                 <tr className="bg-blue-50 font-bold border-t-2 border-blue-200">
-                  <td colSpan={2} className="py-3 px-4 text-blue-800">TOTAL TAHUN {tahunAnggaran}</td>
+                  <td colSpan={2} className="py-3 px-4 text-blue-800">TOTAL TAHUN {selectedYear}</td>
                   <td className="py-3 px-4 text-right text-blue-800">{formatRp(paguTotal, true)}</td>
                   <td className="py-3 px-4 text-right text-blue-600">—</td>
                   <td className="py-3 px-4 text-right text-emerald-700">{formatRp(totalRealisasi, true)}</td>
