@@ -770,11 +770,12 @@ export function AgendaKegiatan() {
               {/* Penanggung Jawab */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Penanggung Jawab <span className="text-red-500">*</span></label>
-                <select value={form.penanggungJawab} onChange={(e) => setForm(f => ({...f, penanggungJawab: e.target.value}))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option value="">Pilih Penanggung Jawab...</option>
-                  {anggotaData.map(a => <option key={a.id} value={a.nama}>{a.nama} ({a.jabatan})</option>)}
-                </select>
+                <input list="anggota-list" value={form.penanggungJawab} onChange={(e) => setForm(f => ({...f, penanggungJawab: e.target.value}))}
+                  placeholder="Ketik untuk mencari penanggung jawab..."
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                <datalist id="anggota-list">
+                  {anggotaData.map(a => <option key={a.id} value={a.nama}>{a.nama} - {a.jabatan}</option>)}
+                </datalist>
               </div>
 
               {/* Anggota */}
@@ -792,8 +793,8 @@ export function AgendaKegiatan() {
                       <div className="w-6 h-6 flex-shrink-0 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold flex items-center justify-center">
                         {idx + 1}
                       </div>
-                      <input type="text" value={anggota} onChange={(e) => updateAnggota(idx, e.target.value)}
-                        placeholder={`Nama anggota ${idx + 1}...`}
+                      <input list="anggota-list" type="text" value={anggota} onChange={(e) => updateAnggota(idx, e.target.value)}
+                        placeholder={`Ketik nama anggota ${idx + 1}...`}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                       {form.anggota.length > 1 && (
                         <button type="button" onClick={() => removeAnggota(idx)}

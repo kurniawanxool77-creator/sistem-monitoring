@@ -470,12 +470,13 @@ export function UpdateProgressModal({
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Penanggung Jawab</label>
-                  <select value={editForm.penanggungJawab}
+                  <input list="modal-anggota-list" type="text" value={editForm.penanggungJawab}
                     onChange={(e) => setEditForm((f) => ({ ...f, penanggungJawab: e.target.value }))}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                    <option value="">Pilih Penanggung Jawab...</option>
-                    {anggotaData.map(a => <option key={a.id} value={a.nama}>{a.nama} ({a.jabatan})</option>)}
-                  </select>
+                    placeholder="Ketik untuk mencari penanggung jawab..."
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
+                  <datalist id="modal-anggota-list">
+                    {anggotaData.map(a => <option key={a.id} value={a.nama}>{a.nama} - {a.jabatan}</option>)}
+                  </datalist>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
