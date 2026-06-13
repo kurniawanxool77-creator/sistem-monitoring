@@ -54,7 +54,7 @@ const allSubKegiatan = uraianAnggaran
     // Find parent kegiatan (level 3)
     const parentKode = u.kode.split('.').slice(0, 3).join('.');
     const parentKegiatan = uraianAnggaran.find(x => x.kode === parentKode);
-    
+
     // Find parent sub bidang (level 2)
     const subBidangKode = u.kode.split('.').slice(0, 2).join('.');
     const parentSubBidang = uraianAnggaran.find(x => x.kode === subBidangKode);
@@ -420,18 +420,6 @@ export function MasterData() {
         </div>
       </div>
 
-      {/* Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 flex items-start gap-4">
-        <Database className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
-        <div>
-          <h3 className="font-bold text-blue-900 mb-1">Tentang Master Data</h3>
-          <p className="text-sm text-blue-800">
-            Data bidang, sub bidang, dan kegiatan bersumber dari dokumen <strong>E-Controlling 2026 –
-              Rekap Progres Agenda Sekretariat DPRD Provinsi Jawa Tengah</strong>.
-            Total anggaran: <strong>Rp 559,4 Miliar</strong> — Kepala SKPD: <strong>AGUNG HARIYADI, SE, MM</strong>.
-          </p>
-        </div>
-      </div>
 
       {/* Add Modal */}
       {showAddModal && (
@@ -439,7 +427,7 @@ export function MasterData() {
           <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-lg font-bold text-gray-900">
-                Tambah {activeTab === 'bidang' ? 'Bidang' : activeTab === 'subBidang' ? 'Sub Bidang' : activeTab === 'kegiatan' ? 'Kegiatan' : 'Anggota'}
+                Tambah {activeTab === 'bidang' ? 'Bidang' : activeTab === 'subBidang' ? 'Sub Bidang' : activeTab === 'kegiatan' ? 'Kegiatan' : activeTab === 'subKegiatan' ? 'Sub Kegiatan' : 'Anggota'}
               </h2>
               <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-gray-100 rounded-xl text-gray-500">
                 <X className="w-5 h-5" />
@@ -471,13 +459,6 @@ export function MasterData() {
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Sub Bidang <span className="text-red-500">*</span></label>
                     <input type="text" placeholder="Nama sub bidang..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Pagu Default</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
-                      <input type="number" placeholder="0" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                    </div>
-                  </div>
                 </>
               )}
               {activeTab === 'kegiatan' && (
@@ -499,12 +480,32 @@ export function MasterData() {
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Kegiatan <span className="text-red-500">*</span></label>
                     <input type="text" placeholder="Nama kegiatan..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                   </div>
+                </>
+              )}
+              {activeTab === 'subKegiatan' && (
+                <>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Pagu Anggaran <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
-                      <input type="number" placeholder="0" className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                    </div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
+                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                      <option value="">Pilih Bidang</option>
+                      {masterBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Sub Bidang <span className="text-red-500">*</span></label>
+                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                      <option value="">Pilih Sub Bidang</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kegiatan <span className="text-red-500">*</span></label>
+                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                      <option value="">Pilih Kegiatan</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Sub Kegiatan <span className="text-red-500">*</span></label>
+                    <input type="text" placeholder="Nama sub kegiatan..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                   </div>
                 </>
               )}
