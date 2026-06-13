@@ -137,11 +137,11 @@ export function AgendaKegiatan() {
   const listSubKegiatan = form.kegiatanTemplateId ? uraianAnggaranData.filter(u => u.level === 4 && u.kode.startsWith(`${form.kegiatanTemplateId}.`)) : [];
   const selectedSubKegiatan = listSubKegiatan.find(u => u.kode === form.subKegiatanId);
 
-  // Perhitungan Pagu Otomatis
-  const currentPagu = form.subKegiatanId ? (selectedSubKegiatan?.target || 0) 
-                    : form.kegiatanTemplateId ? (selectedKegiatan?.target || 0) 
-                    : form.subBidangId ? (selectedSubBidang?.target || 0) 
-                    : form.bidangId ? (selectedBidang?.target || 0) : 0;
+  // Perhitungan Sisa Anggaran (Pagu - Realisasi)
+  const currentPagu = form.subKegiatanId ? ((selectedSubKegiatan?.target || 0) - (selectedSubKegiatan?.realisasi || 0))
+                    : form.kegiatanTemplateId ? ((selectedKegiatan?.target || 0) - (selectedKegiatan?.realisasi || 0))
+                    : form.subBidangId ? ((selectedSubBidang?.target || 0) - (selectedSubBidang?.realisasi || 0))
+                    : form.bidangId ? ((selectedBidang?.target || 0) - (selectedBidang?.realisasi || 0)) : 0;
 
   let activeLevelLabel = '';
   if (form.subKegiatanId && selectedSubKegiatan) activeLevelLabel = 'dari Sub Kegiatan';
@@ -734,7 +734,7 @@ export function AgendaKegiatan() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Pagu Anggaran <span className="text-blue-500 text-xs font-normal">({activeLevelLabel})</span>
+                    Sisa Anggaran <span className="text-blue-500 text-xs font-normal">({activeLevelLabel})</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
