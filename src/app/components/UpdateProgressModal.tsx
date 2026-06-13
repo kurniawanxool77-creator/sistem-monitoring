@@ -52,7 +52,7 @@ function nowTime() {
   return new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 }
 
-type ActivePanel = 'progress' | 'realisasi' | 'edit';
+type ActivePanel = 'progress' | 'edit';
 
 export function UpdateProgressModal({
   kegiatan,
@@ -208,13 +208,7 @@ export function UpdateProgressModal({
       color: 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600',
       activeColor: 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200',
     },
-    {
-      key: 'realisasi',
-      label: 'Input Realisasi',
-      icon: <DollarSign className="w-4 h-4" />,
-      color: 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600',
-      activeColor: 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-200',
-    },
+
     {
       key: 'edit',
       label: 'Edit Kegiatan',
@@ -456,104 +450,7 @@ export function UpdateProgressModal({
               </div>
             )}
 
-            {/* ── TAB: INPUT REALISASI ── */}
-            {activePanel === 'realisasi' && (
-              <div className="p-6 space-y-5">
-                <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                  <DollarSign className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-sm font-bold text-emerald-800">Input Realisasi Anggaran</div>
-                    <div className="text-xs text-emerald-600 mt-0.5">
-                      Pagu: {formatRp(kegiatan.paguAnggaran)} · Realisasi saat ini: {formatRp(kegiatan.realisasiAnggaran)}{' '}
-                      <span className="font-bold">({Math.round((kegiatan.realisasiAnggaran / kegiatan.paguAnggaran) * 100)}%)</span>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Mini monthly bar */}
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
-                  <div className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">Serapan Per Bulan (Tahun 2026)</div>
-                  <div className="grid grid-cols-6 gap-2">
-                    {['Jan','Feb','Mar','Apr','Mei','Jun'].map((bln, i) => {
-                      const pct = [72, 65, 80, 55, 90, 42][i];
-                      return (
-                        <div key={bln} className="flex flex-col items-center gap-1">
-                          <div className="w-full h-16 bg-gray-100 rounded-lg flex items-end overflow-hidden">
-                            <div className={`w-full rounded-t-lg transition-all ${pct >= 80 ? 'bg-emerald-500' : pct >= 60 ? 'bg-blue-500' : 'bg-amber-400'}`}
-                              style={{ height: `${pct}%` }} />
-                          </div>
-                          <span className="text-[10px] text-gray-500 font-medium">{bln}</span>
-                          <span className="text-[10px] font-bold text-gray-700">{pct}%</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Form input */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bulan <span className="text-red-500">*</span></label>
-                      <select value={realisasiForm.bulan}
-                        onChange={(e) => setRealisasiForm((f) => ({ ...f, bulan: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                        <option value="">Pilih Bulan</option>
-                        {['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'].map((b) => (
-                          <option key={b} value={b}>{b} 2026</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tanggal Realisasi <span className="text-red-500">*</span></label>
-                      <input type="date" value={realisasiForm.tanggal}
-                        onChange={(e) => setRealisasiForm((f) => ({ ...f, tanggal: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nominal Realisasi <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">Rp</span>
-                      <input type="number" value={realisasiForm.nominal}
-                        onChange={(e) => setRealisasiForm((f) => ({ ...f, nominal: e.target.value }))}
-                        placeholder="0"
-                        className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
-                    </div>
-                    {realisasiForm.nominal && (
-                      <div className="text-xs text-emerald-600 font-medium mt-1">
-                        = {formatRp(Number(realisasiForm.nominal))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Upload Bukti (SPJ / Kwitansi)</label>
-                    <div onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-gray-200 hover:border-emerald-300 rounded-xl p-4 text-center cursor-pointer hover:bg-emerald-50 transition-all">
-                      <Upload className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-                      <p className="text-xs text-gray-500">Klik untuk upload SPJ / Kwitansi</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Uraian Pengeluaran</label>
-                    <textarea value={realisasiForm.keterangan}
-                      onChange={(e) => setRealisasiForm((f) => ({ ...f, keterangan: e.target.value }))}
-                      placeholder="Jelaskan uraian pengeluaran anggaran..."
-                      rows={3}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none" />
-                  </div>
-                </div>
-
-                <button onClick={handleSaveRealisasi}
-                  disabled={!realisasiForm.bulan || !realisasiForm.nominal}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-emerald-200 transition-all">
-                  <Save className="w-4 h-4" /> Simpan Realisasi
-                </button>
-              </div>
-            )}
 
             {/* ── TAB: EDIT KEGIATAN ── */}
             {activePanel === 'edit' && (
