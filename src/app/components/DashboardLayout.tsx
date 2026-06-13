@@ -86,8 +86,8 @@ export function DashboardLayout() {
         {/* Logo */}
         <div className="p-4 border-b border-neutral-900">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0 p-0.5">
-              <img src={logoJateng} alt="Logo Jawa Tengah" className="w-full h-full object-contain" />
+            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+              <img src={logoJateng} alt="Logo Jawa Tengah" className="w-full h-full object-contain drop-shadow-sm" />
             </div>
             {sidebarOpen && (
               <div>
