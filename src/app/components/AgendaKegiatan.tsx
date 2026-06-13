@@ -4,7 +4,7 @@ import {
   Plus, Search, Edit, Trash2, Eye, X, UserPlus, Minus,
   Check, CheckCircle2, FileCheck, ChevronRight, RefreshCw,
 } from 'lucide-react';
-import { kegiatanList, sumberDanaList, KegiatanStep, Kegiatan, uraianAnggaranData, addUraianItem, addRealisasi } from '../lib/data';
+import { kegiatanList, sumberDanaList, KegiatanStep, Kegiatan, uraianAnggaranData, addUraianItem, addRealisasi, anggotaData } from '../lib/data';
 import { UpdateProgressModal } from './UpdateProgressModal';
 
 function formatRupiah(n: number) {
@@ -770,10 +770,11 @@ export function AgendaKegiatan() {
               {/* Penanggung Jawab */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Penanggung Jawab <span className="text-red-500">*</span></label>
-                <input type="text" value={form.penanggungJawab}
-                  onChange={(e) => setForm((f) => ({ ...f, penanggungJawab: e.target.value }))}
-                  placeholder="Nama penanggung jawab..."
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                <select value={form.penanggungJawab} onChange={(e) => setForm(f => ({...f, penanggungJawab: e.target.value}))}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option value="">Pilih Penanggung Jawab...</option>
+                  {anggotaData.map(a => <option key={a.id} value={a.nama}>{a.nama} ({a.jabatan})</option>)}
+                </select>
               </div>
 
               {/* Anggota */}

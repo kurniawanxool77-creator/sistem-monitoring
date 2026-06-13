@@ -4,7 +4,7 @@ import {
   FileText, RefreshCw, DollarSign, Edit3,
   Plus, Trash2, Save, ChevronRight, AlertCircle,
 } from 'lucide-react';
-import { Kegiatan, KegiatanStep } from '../lib/data';
+import { Kegiatan, KegiatanStep, anggotaData } from '../lib/data';
 
 interface LogItem {
   id: string;
@@ -280,9 +280,8 @@ export function UpdateProgressModal({
                     const isCurrent = idx === currentStepIdx;
                     const isLast = idx === steps.length - 1;
                     return (
-                      <button
+                      <div
                         key={step.id}
-                        onClick={() => { handleMarkStep(step); }}
                         className={`relative w-full flex items-start gap-3 p-2 rounded-xl text-left transition-all group ${
                           isCurrent ? 'bg-blue-50 hover:bg-blue-100' :
                           isDone ? 'hover:bg-emerald-50' : 'hover:bg-gray-100'
@@ -313,7 +312,7 @@ export function UpdateProgressModal({
                             <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px] font-semibold">✓ Selesai</span>
                           )}
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -471,9 +470,12 @@ export function UpdateProgressModal({
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Penanggung Jawab</label>
-                  <input type="text" value={editForm.penanggungJawab}
+                  <select value={editForm.penanggungJawab}
                     onChange={(e) => setEditForm((f) => ({ ...f, penanggungJawab: e.target.value }))}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                    <option value="">Pilih Penanggung Jawab...</option>
+                    {anggotaData.map(a => <option key={a.id} value={a.nama}>{a.nama} ({a.jabatan})</option>)}
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

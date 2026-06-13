@@ -1,5 +1,16 @@
 // Mock data untuk sistem dashboard monitoring DPRD
 
+export const anggotaData = [
+  { id: '1', nama: 'AGUNG HARIYADI, SE, MM', jabatan: 'Sekretaris DPRD', bidang: 'Sekretariat DPRD' },
+  { id: '2', nama: 'Drs. Bambang Setiawan, M.Si', jabatan: 'Kepala Bagian Umum', bidang: 'Bagian Umum' },
+  { id: '3', nama: 'Hj. Sri Wahyuni, S.H', jabatan: 'Kepala Bagian Hubungan Masyarakat', bidang: 'Bagian Humas' },
+  { id: '4', nama: 'Ir. Eko Nugroho, M.T', jabatan: 'Kepala Bagian Persidangan', bidang: 'Bagian Persidangan' },
+  { id: '5', nama: 'Dra. Endah Kusumastuti', jabatan: 'Kepala Sub Bagian Keuangan', bidang: 'Keuangan' },
+  { id: '6', nama: 'Ahmad Fauzi, S.E', jabatan: 'Bendahara Pengeluaran', bidang: 'Keuangan' },
+  { id: '7', nama: 'Yuliana Dewi, A.Md', jabatan: 'Staf Persidangan', bidang: 'Bagian Persidangan' },
+  { id: '8', nama: 'Rudi Hartanto, S.Sos', jabatan: 'Staf Hubungan Masyarakat', bidang: 'Bagian Humas' },
+];
+
 export interface BidangData {
   id: string;
   nama: string;
