@@ -82,9 +82,9 @@ export function DashboardLayout() {
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-[#1e3a5f] text-white flex flex-col transition-all duration-300`}>
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-neutral-950 text-white flex flex-col transition-all duration-300`}>
         {/* Logo */}
-        <div className="p-4 border-b border-blue-800">
+        <div className="p-4 border-b border-neutral-900">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0 p-0.5">
               <img src={logoJateng} alt="Logo Jawa Tengah" className="w-full h-full object-contain" />
@@ -92,7 +92,7 @@ export function DashboardLayout() {
             {sidebarOpen && (
               <div>
                 <div className="text-sm font-bold">SEKRETARIAT DPRD</div>
-                <div className="text-xs text-blue-300">Provinsi Jawa Tengah</div>
+                <div className="text-xs text-neutral-400">Provinsi Jawa Tengah</div>
               </div>
             )}
           </div>
@@ -103,7 +103,7 @@ export function DashboardLayout() {
           {menuItems.map((section, idx) => (
             <div key={idx} className="mb-6">
               {sidebarOpen && (
-                <div className="px-4 mb-2 text-xs font-semibold text-blue-300 uppercase tracking-wider">
+                <div className="px-4 mb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                   {section.section}
                 </div>
               )}
@@ -115,8 +115,8 @@ export function DashboardLayout() {
                     <Link
                       key={item.path}
                       to={item.path}
-                      className={`flex items-center gap-3 px-4 py-3 hover:bg-blue-800 transition-colors ${
-                        isActive ? 'bg-blue-700 border-l-4 border-white' : ''
+                      className={`flex items-center gap-3 px-4 py-3 hover:bg-neutral-900 transition-colors ${
+                        isActive ? 'bg-neutral-800 border-l-4 border-white' : ''
                       }`}
                       title={!sidebarOpen ? item.label : undefined}
                     >
@@ -131,10 +131,10 @@ export function DashboardLayout() {
         </nav>
 
         {/* User Section */}
-        <div className="p-4 border-t border-blue-800">
+        <div className="p-4 border-t border-neutral-900">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 hover:bg-blue-800 rounded-lg transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2 hover:bg-neutral-900 rounded-lg transition-colors"
             title={!sidebarOpen ? 'Logout' : undefined}
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
