@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import {
-  RefreshCw, Building2, Wallet, Megaphone, Gavel, Archive, HelpCircle,
+  RefreshCw, Building2, Wallet, Megaphone, Gavel, Archive, HelpCircle, RotateCcw,
 } from 'lucide-react';
 import { kegiatanList, Kegiatan } from '../lib/data';
 import { UpdateProgressModal } from './UpdateProgressModal';
@@ -262,6 +262,18 @@ export function ProgressKegiatan() {
               <option value="Selesai">Selesai</option>
               <option value="Terlambat">Terlambat</option>
             </select>
+
+            <button
+              onClick={() => {
+                localStorage.removeItem('kegiatan_list_data');
+                window.location.reload();
+              }}
+              className="text-xs font-semibold text-gray-500 hover:text-red-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none hover:bg-red-50 hover:border-red-200 transition-colors flex items-center gap-1 cursor-pointer"
+              title="Reset data ke default"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Reset Data
+            </button>
           </div>
         </div>
 

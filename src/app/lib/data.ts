@@ -283,7 +283,7 @@ export interface Bagian {
 
 // Progress berdasarkan Realisasi Fisik S/D Mei 2026 (sumber: E-Controlling 2026)
 export const bagianList: Bagian[] = [
-  { id: '1', nama: 'Sekretariat DPRD', progress: 40, warna: 'bg-blue-500' },
+  { id: '1', nama: 'Sekretariat DPRD', progress: 100, warna: 'bg-blue-500' },
   { id: '2', nama: 'Bagian Hubungan Masyarakat', progress: 54, warna: 'bg-orange-500' },
   { id: '3', nama: 'Bagian Umum', progress: 42, warna: 'bg-emerald-500' },
   { id: '4', nama: 'Bagian Persidangan', progress: 37, warna: 'bg-purple-500' },
@@ -299,19 +299,19 @@ export const kegiatanList: Kegiatan[] = [
     penanggungJawab: 'Rapat Paripurna',
     tanggalMulai: '2025-05-12',
     tanggalSelesai: '2025-07-12',
-    status: 'Berjalan',
-    progress: 65,
+    status: 'Selesai',
+    progress: 100,
     paguAnggaran: 450000000,
-    realisasiAnggaran: 292500000,
+    realisasiAnggaran: 450000000,
     deskripsi: 'Pembahasan dan persetujuan Raperda APBD untuk periode 2025-2029',
-    step: 'Pelaksanaan',
+    step: 'Closed',
     steps: [
       { id: 's1-1', nama: 'Persiapan Dokumen Raperda', selesai: true },
       { id: 's1-2', nama: 'Koordinasi dengan Komisi', selesai: true },
       { id: 's1-3', nama: 'Rapat Pembahasan Internal', selesai: true },
-      { id: 's1-4', nama: 'Sidang Paripurna', selesai: false },
-      { id: 's1-5', nama: 'Pengesahan Raperda', selesai: false },
-      { id: 's1-6', nama: 'Verifikasi Dokumen', selesai: false },
+      { id: 's1-4', nama: 'Sidang Paripurna', selesai: true },
+      { id: 's1-5', nama: 'Pengesahan Raperda', selesai: true },
+      { id: 's1-6', nama: 'Verifikasi Dokumen', selesai: true },
     ],
   },
   {
@@ -345,18 +345,18 @@ export const kegiatanList: Kegiatan[] = [
     penanggungJawab: 'Pimpinan DPRD',
     tanggalMulai: '2025-06-09',
     tanggalSelesai: '2025-06-30',
-    status: 'Berjalan',
-    progress: 30,
+    status: 'Selesai',
+    progress: 100,
     paguAnggaran: 150000000,
-    realisasiAnggaran: 45000000,
+    realisasiAnggaran: 150000000,
     deskripsi: 'Koordinasi rutin pimpinan DPRD',
-    step: 'Persiapan',
+    step: 'Closed',
     steps: [
       { id: 's3-1', nama: 'Penyiapan Agenda Rapat', selesai: true },
-      { id: 's3-2', nama: 'Undangan & Konfirmasi Peserta', selesai: false },
-      { id: 's3-3', nama: 'Pelaksanaan Rapat', selesai: false },
-      { id: 's3-4', nama: 'Notulensi & Tindak Lanjut', selesai: false },
-      { id: 's3-5', nama: 'Verifikasi Dokumen', selesai: false },
+      { id: 's3-2', nama: 'Undangan & Konfirmasi Peserta', selesai: true },
+      { id: 's3-3', nama: 'Pelaksanaan Rapat', selesai: true },
+      { id: 's3-4', nama: 'Notulensi & Tindak Lanjut', selesai: true },
+      { id: 's3-5', nama: 'Verifikasi Dokumen', selesai: true },
     ],
   },
   {
@@ -587,9 +587,9 @@ export const agendaHariIni = [
 
 export const kegiatanPerBagian: Record<string, { id: string; nama: string; tanggal: string; progress: number; status: string; step: string }[]> = {
   'Sekretariat DPRD': [
-    { id: 'k1', nama: 'Penyusunan Dokumen Perencanaan Perangkat Daerah', tanggal: '1 Jan – 31 Des 2026', progress: 68, status: 'Berjalan', step: 'Pelaksanaan' },
-    { id: 'k3', nama: 'Evaluasi Kinerja Perangkat Daerah', tanggal: '1 Jan – 31 Des 2026', progress: 60, status: 'Berjalan', step: 'Pelaksanaan' },
-    { id: 'ka', nama: 'Penyediaan Gaji dan Tunjangan ASN', tanggal: '1 Jan – 31 Des 2026', progress: 42, status: 'Berjalan', step: 'Pelaksanaan' },
+    { id: 'k1', nama: 'Penyusunan Dokumen Perencanaan Perangkat Daerah', tanggal: '1 Jan – 31 Des 2026', progress: 100, status: 'Selesai', step: 'Closed' },
+    { id: 'k3', nama: 'Evaluasi Kinerja Perangkat Daerah', tanggal: '1 Jan – 31 Des 2026', progress: 100, status: 'Selesai', step: 'Closed' },
+    { id: 'ka', nama: 'Penyediaan Gaji dan Tunjangan ASN', tanggal: '1 Jan – 31 Des 2026', progress: 100, status: 'Selesai', step: 'Closed' },
   ],
   'Bagian Hubungan Masyarakat': [
     { id: 'k2', nama: 'Penyelenggaraan Hubungan Masyarakat', tanggal: '1 Jan – 31 Des 2026', progress: 41, status: 'Berjalan', step: 'Pelaksanaan' },
@@ -615,7 +615,7 @@ export const kegiatanPerBagian: Record<string, { id: string; nama: string; tangg
 };
 
 export const kegiatanPrioritas = [
-  { id: '1', nama: 'Pembahasan Raperda APBD 2025-2029', komisi: 'Pimpinan', tanggal: '12 Mei 2025', progress: 65, status: 'Berjalan' as const },
+  { id: '1', nama: 'Pembahasan Raperda APBD 2025-2029', komisi: 'Pimpinan', tanggal: '12 Mei 2025', progress: 100, status: 'Selesai' as const },
   { id: '2', nama: 'Publikasi & Dokumentasi Kegiatan', komisi: 'Komisi A', tanggal: '20 Mei 2025', progress: 45, status: 'Berjalan' as const },
 ];
 
