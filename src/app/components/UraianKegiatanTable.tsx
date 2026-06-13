@@ -11,11 +11,10 @@ function formatRp(n: number, short = false) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 }
 
-const BULAN_SINGKAT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+
 
 export function UraianKegiatanTable() {
   const [expandedKode, setExpandedKode] = useState<Set<string>>(new Set(['1', '2', '3', '4', '5']));
-  const [expandedBulanan, setExpandedBulanan] = useState<Set<string>>(new Set());
 
   function toggleExpand(kode: string) {
     setExpandedKode((prev) => {
@@ -25,13 +24,7 @@ export function UraianKegiatanTable() {
     });
   }
 
-  function toggleBulanan(kode: string) {
-    setExpandedBulanan((prev) => {
-      const next = new Set(prev);
-      next.has(kode) ? next.delete(kode) : next.add(kode);
-      return next;
-    });
-  }
+
 
   function isVisible(kode: string) {
     const parts = kode.split('.');
@@ -46,10 +39,7 @@ export function UraianKegiatanTable() {
   const uraianRealisasiTotal = filteredData.reduce((a, u) => u.level === 1 ? a + u.realisasi : a, 0);
   const sisaTotal = uraianTotal - uraianRealisasiTotal;
 
-  const generateMonthlyTarget = (target: number) => {
-    const perBulan = Math.floor(target / 12);
-    return Array(12).fill(perBulan);
-  };
+
 
   // Ambil data per Bidang (level 1) untuk kartu ringkasan
   const bidangList = uraianAnggaran.filter(u => u.level === 1);
@@ -173,8 +163,6 @@ export function UraianKegiatanTable() {
                 const hasChildren = uraianAnggaran.some((x) => x.kode.startsWith(u.kode + '.') && x.kode.split('.').length === u.kode.split('.').length + 1);
                 const isExpanded = expandedKode.has(u.kode);
                 const indent = (u.level - 1) * 20;
-                const showMonthlyToggle = u.level === 1 || u.level === 2;
-                const isBulananExpanded = expandedBulanan.has(u.kode);
 
                 return (
                   <React.Fragment key={u.kode}>
@@ -204,11 +192,6 @@ export function UraianKegiatanTable() {
                             <span className={`${u.level === 1 ? 'text-blue-800' : u.level === 2 ? 'text-slate-800' : 'text-slate-700'}`}>
                               {u.uraian}
                             </span>
-                            {showMonthlyToggle && (
-                              <button onClick={() => toggleBulanan(u.kode)} className="mt-1 text-left text-[11px] font-semibold text-blue-500 hover:text-blue-700 flex items-center gap-1">
-                                {isBulananExpanded ? 'Sembunyikan Target Bulanan' : 'Lihat Target Bulanan'}
-                              </button>
-                            )}
                           </div>
                         </div>
                       </td>
@@ -246,24 +229,6 @@ export function UraianKegiatanTable() {
                       </td>
                     </tr>
 
-                    {/* Bulanan breakdown */}
-                    {showMonthlyToggle && isBulananExpanded && (
-                      <tr>
-                        <td colSpan={6} className="p-0 border-b border-slate-200">
-                          <div className="bg-slate-50 p-4 pl-16">
-                            <div className="text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">Target Bulanan ({u.uraian})</div>
-                            <div className="grid grid-cols-6 lg:grid-cols-12 gap-2">
-                              {generateMonthlyTarget(u.target).map((tgt, i) => (
-                                <div key={i} className="bg-white p-2 rounded border border-slate-200 text-center shadow-sm">
-                                  <div className="text-[10px] font-semibold text-slate-500 mb-1">{BULAN_SINGKAT[i]}</div>
-                                  <div className="text-[11px] font-bold text-slate-800 tabular-nums" title={formatRp(tgt)}>{formatRp(tgt, true)}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
                   </React.Fragment>
                 );
               })}
