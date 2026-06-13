@@ -27,12 +27,41 @@ export function AnggaranRealisasi() {
   const [activeTab, setActiveTab] = useState<TabKey>('bulanan');
   const [showInputModal, setShowInputModal] = useState(false);
   const [showPaguModal, setShowPaguModal] = useState(false);
-  const [paguTotal, setPaguTotal] = useState(PAGU_TOTAL);
+  const [selectedYear, setSelectedYear] = useState<number>(2026);
+  const [yearlyData, setYearlyData] = useState<Record<number, { pagu: number; realisasi: number[] }>>({
+    2024: { 
+      pagu: 520_000_000_000, 
+      realisasi: [
+        40_000_000_000, 42_000_000_000, 38_000_000_000, 45_000_000_000, 
+        41_000_000_000, 43_000_000_000, 39_000_000_000, 44_000_000_000, 
+        42_000_000_000, 45_000_000_000, 40_000_000_000, 41_000_000_000
+      ]
+    },
+    2025: { 
+      pagu: 540_000_000_000, 
+      realisasi: [
+        42_000_000_000, 44_000_000_000, 40_000_000_000, 47_000_000_000, 
+        43_000_000_000, 45_000_000_000, 41_000_000_000, 46_000_000_000, 
+        44_000_000_000, 47_000_000_000, 42_000_000_000, 43_000_000_000
+      ]
+    },
+    2026: { 
+      pagu: PAGU_TOTAL, 
+      realisasi: [...INITIAL_REALISASI] 
+    },
+    2027: { pagu: 0, realisasi: Array(12).fill(0) },
+    2028: { pagu: 0, realisasi: Array(12).fill(0) },
+    2029: { pagu: 0, realisasi: Array(12).fill(0) },
+    2030: { pagu: 0, realisasi: Array(12).fill(0) },
+  });
+
   const [paguInput, setPaguInput] = useState('');
-  const [tahunAnggaran, setTahunAnggaran] = useState<number>(2026);
   const [tahunAnggaranInput, setTahunAnggaranInput] = useState<number>(2026);
-  const [realisasiArr, setRealisasiArr] = useState<number[]>([...INITIAL_REALISASI]);
   const [expandedKode, setExpandedKode] = useState<Set<string>>(new Set(['1', '2', '3', '4', '5']));
+
+  const currentData = yearlyData[selectedYear] || { pagu: 0, realisasi: Array(12).fill(0) };
+  const paguTotal = currentData.pagu;
+  const realisasiArr = currentData.realisasi;
 
   // Input realisasi form
   const [inputForm, setInputForm] = useState({ bulanIdx: -1, nominal: '', keterangan: '' });
@@ -78,8 +107,14 @@ export function AnggaranRealisasi() {
   function handleSavePagu() {
     const val = Number(paguInput.replace(/\D/g, ''));
     if (val > 0) { 
-      setPaguTotal(val); 
-      setTahunAnggaran(tahunAnggaranInput);
+      setYearlyData(prev => ({
+        ...prev,
+        [tahunAnggaranInput]: {
+          ...prev[tahunAnggaranInput],
+          pagu: val
+        }
+      }));
+      setSelectedYear(tahunAnggaranInput);
       setPaguInput(''); 
       setShowPaguModal(false); 
     }
@@ -87,10 +122,17 @@ export function AnggaranRealisasi() {
 
   function handleSaveRealisasi() {
     if (inputForm.bulanIdx < 0 || !inputForm.nominal) return;
-    setRealisasiArr((prev) => {
-      const next = [...prev];
-      next[inputForm.bulanIdx] = Number(inputForm.nominal);
-      return next;
+    setYearlyData(prev => {
+      const currentYearData = prev[selectedYear] || { pagu: 0, realisasi: Array(12).fill(0) };
+      const nextRealisasi = [...currentYearData.realisasi];
+      nextRealisasi[inputForm.bulanIdx] = Number(inputForm.nominal);
+      return {
+        ...prev,
+        [selectedYear]: {
+          ...currentYearData,
+          realisasi: nextRealisasi
+        }
+      };
     });
     setInputForm({ bulanIdx: -1, nominal: '', keterangan: '' });
     setShowInputModal(false);
@@ -102,10 +144,19 @@ export function AnggaranRealisasi() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-bold text-slate-700">Tahun Anggaran:</label>
+          <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="px-3.5 py-1.5 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm text-slate-800">
+            {Object.keys(yearlyData).map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
 
         <div className="flex gap-2">
-          <button onClick={() => { setPaguInput(String(paguTotal)); setTahunAnggaranInput(tahunAnggaran); setShowPaguModal(true); }}
+          <button onClick={() => { setPaguInput(String(paguTotal)); setTahunAnggaranInput(selectedYear); setShowPaguModal(true); }}
             className="flex items-center gap-2 border border-blue-300 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 text-sm font-semibold transition-colors">
             <DollarSign className="w-4 h-4" /> Set Pagu Anggaran
           </button>
@@ -435,7 +486,7 @@ export function AnggaranRealisasi() {
                 )}
               </div>
               <div className="text-xs text-gray-500">
-                Pagu saat ini: <span className="font-bold text-gray-700">{formatRp(paguTotal)}</span> ({tahunAnggaran})
+                Pagu saat ini: <span className="font-bold text-gray-700">{formatRp(paguTotal)}</span> ({selectedYear})
               </div>
             </div>
             <div className="flex gap-3 px-6 pb-6">
@@ -467,7 +518,7 @@ export function AnggaranRealisasi() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                   <option value={-1}>Pilih Bulan</option>
                   {BULAN_NAMES.map((b, i) => (
-                    <option key={b} value={i}>{b} {tahunAnggaran} — Target: {formatRp(Math.round(paguTotal / 12), true)}</option>
+                    <option key={b} value={i}>{b} {selectedYear} — Target: {formatRp(Math.round(paguTotal / 12), true)}</option>
                   ))}
                 </select>
               </div>
