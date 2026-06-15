@@ -4,7 +4,7 @@ import {
   MapPin, Clock, Users, Building2, ChevronRight as ChevronRightIcon,
   CheckCircle2, Circle, Tag,
 } from 'lucide-react';
-import { kalenderEvents } from '../lib/data';
+import { useAppData } from '../../hooks/useAppData';
 
 const months = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -13,8 +13,8 @@ const months = [
 
 const daysOfWeek = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
-// Extend event data with more detail for the panel
 type KalenderEvent = {
+  id: string;
   date: string;
   title: string;
   color: string;
@@ -25,92 +25,39 @@ type KalenderEvent = {
   tahapan?: { nama: string; selesai: boolean }[];
 };
 
-const eventsExtended: KalenderEvent[] = [
-  {
-    date: '2025-06-02', title: 'Kunjungan Kerja', color: 'bg-red-100 text-red-700 border-red-200',
-    bagian: 'Bagian Persidangan', mulai: '2025-06-02', akhir: '2025-06-02', kategori: 'KUNJUNGAN',
-    tahapan: [
-      { nama: 'Persiapan Dokumen', selesai: true },
-      { nama: 'Pelaksanaan Kunjungan', selesai: true },
-      { nama: 'Penyusunan Laporan', selesai: false },
-    ],
-  },
-  {
-    date: '2025-06-10', title: 'Rapat Pimpinan Internal', color: 'bg-blue-100 text-blue-700 border-blue-200',
-    bagian: 'Sekretariat DPRD', mulai: '2025-06-10', akhir: '2025-06-10', kategori: 'RAPAT',
-    tahapan: [
-      { nama: 'Undangan Peserta', selesai: true },
-      { nama: 'Pelaksanaan Rapat', selesai: true },
-      { nama: 'Notulensi & Laporan', selesai: true },
-    ],
-  },
-  {
-    date: '2025-06-12', title: 'Sidang Paripurna', color: 'bg-amber-100 text-amber-700 border-amber-200',
-    bagian: 'Bagian Persidangan (Pelaksana Utama)', mulai: '2025-06-12', akhir: '2025-06-12', kategori: 'PARIPURNA',
-    tahapan: [
-      { nama: 'Pengumpulan Pandangan Umum', selesai: true },
-      { nama: 'Pembacaan dalam Sidang', selesai: true },
-      { nama: 'Tanggapan Gubernur', selesai: false },
-    ],
-  },
-  {
-    date: '2025-06-13', title: 'Sidang Paripurna', color: 'bg-amber-100 text-amber-700 border-amber-200',
-    bagian: 'Bagian Persidangan', mulai: '2025-06-13', akhir: '2025-06-13', kategori: 'PARIPURNA',
-    tahapan: [
-      { nama: 'Persiapan Ruang Sidang', selesai: true },
-      { nama: 'Pelaksanaan Sidang', selesai: false },
-    ],
-  },
-  {
-    date: '2025-06-15', title: 'Sidang Paripurna', color: 'bg-purple-100 text-purple-700 border-purple-200',
-    bagian: 'Bagian Persidangan', mulai: '2025-06-15', akhir: '2025-06-15', kategori: 'PARIPURNA',
-    tahapan: [{ nama: 'Pelaksanaan Sidang', selesai: false }],
-  },
-  {
-    date: '2025-06-18', title: 'Kunjungan Kerja & Evaluasi', color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    bagian: 'Bagian Humas', mulai: '2025-06-18', akhir: '2025-06-19', kategori: 'KUNJUNGAN',
-    tahapan: [
-      { nama: 'Koordinasi dengan Dinas', selesai: true },
-      { nama: 'Pelaksanaan Kunjungan', selesai: true },
-      { nama: 'Evaluasi Hasil', selesai: false },
-    ],
-  },
-  {
-    date: '2025-06-20', title: 'Hari Libur Nasional', color: 'bg-blue-100 text-blue-700 border-blue-200',
-    bagian: '-', mulai: '2025-06-20', akhir: '2025-06-20', kategori: 'LIBUR',
-    tahapan: [],
-  },
-  {
-    date: '2025-06-22', title: 'Kunjungan Kerja Daerah Pemilihan', color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    bagian: 'Bagian Umum', mulai: '2025-06-22', akhir: '2025-06-23', kategori: 'KUNJUNGAN',
-    tahapan: [
-      { nama: 'Persiapan Logistik', selesai: true },
-      { nama: 'Pelaksanaan Kunjungan', selesai: false },
-    ],
-  },
-  {
-    date: '2025-06-27', title: 'Kunjungan Kerja Ahli', color: 'bg-red-100 text-red-700 border-red-200',
-    bagian: 'Bagian Persidangan', mulai: '2025-06-27', akhir: '2025-06-27', kategori: 'KUNJUNGAN',
-    tahapan: [{ nama: 'Pelaksanaan', selesai: false }],
-  },
-  {
-    date: '2025-06-28', title: 'Kunjungan Kerja', color: 'bg-red-100 text-red-700 border-red-200',
-    bagian: 'Bagian Umum', mulai: '2025-06-28', akhir: '2025-06-28', kategori: 'KUNJUNGAN',
-    tahapan: [{ nama: 'Pelaksanaan', selesai: false }],
-  },
-];
-
-const KATEGORI_COLOR: Record<string, string> = {
-  PARIPURNA: 'bg-amber-600',
-  RAPAT: 'bg-blue-600',
-  KUNJUNGAN: 'bg-emerald-600',
-  AUDIENSI: 'bg-purple-600',
-  LIBUR: 'bg-slate-500',
+const STATUS_COLOR: Record<string, string> = {
+  'Selesai': 'bg-emerald-600',
+  'Berjalan': 'bg-blue-600',
+  'Terlambat': 'bg-red-600',
+  'Belum Mulai': 'bg-gray-500',
 };
 
 export function KalenderKegiatan() {
-  const [currentMonth, setCurrentMonth] = useState(5);
-  const [currentYear, setCurrentYear] = useState(2025);
+  const { getKegiatanList } = useAppData();
+  const kegiatanList = getKegiatanList();
+
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+
+  const eventsExtended: KalenderEvent[] = kegiatanList.map(k => {
+    return {
+      id: k.id,
+      date: k.tanggalMulai,
+      title: k.nama,
+      color: k.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 
+             k.status === 'Terlambat' ? 'bg-red-100 text-red-700 border-red-200' :
+             k.status === 'Berjalan' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+             'bg-gray-100 text-gray-700 border-gray-200',
+      bagian: k.bidang,
+      mulai: k.tanggalMulai,
+      akhir: k.tanggalSelesai,
+      kategori: k.status,
+      tahapan: k.steps
+    };
+  });
+
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [filterBagian, setFilterBagian] = useState('semua');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<KalenderEvent | null>(null);
@@ -132,20 +79,27 @@ export function KalenderKegiatan() {
     setSelectedDate(null); setSelectedEvent(null);
   };
 
+  const isDateMatched = (dateStr: string, startStr: string, endStr: string) => {
+    return dateStr === startStr || dateStr === endStr;
+  };
+
   const getEventsForDate = (day: number): KalenderEvent[] => {
     const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return eventsExtended.filter(e => e.date === dateStr);
+    return eventsExtended.filter(e => {
+      if (filterBagian !== 'semua' && e.bagian && !e.bagian.toLowerCase().includes(filterBagian)) return false;
+      return isDateMatched(dateStr, e.mulai || e.date, e.akhir || e.date);
+    });
   };
 
   function handleDayClick(day: number) {
     const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     setSelectedDate(dateStr);
-    const evs = eventsExtended.filter(e => e.date === dateStr);
+    const evs = getEventsForDate(day);
     setSelectedEvent(evs.length > 0 ? evs[0] : null);
   }
 
   const selectedDateEvents = selectedDate
-    ? eventsExtended.filter(e => e.date === selectedDate)
+    ? eventsExtended.filter(e => isDateMatched(selectedDate, e.mulai || e.date, e.akhir || e.date))
     : [];
 
   const formatDateLabel = (d: string) => {
@@ -224,15 +178,17 @@ export function KalenderKegiatan() {
             </button>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <select value={filterBagian} onChange={(e) => setFilterBagian(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              <option value="semua">Semua Bidang</option>
-              <option value="sekretariat">Sekretariat DPRD</option>
-              <option value="humas">Humas</option>
-              <option value="persidangan">Persidangan</option>
-              <option value="umum">Umum</option>
-              <option value="keuangan">Keuangan</option>
-            </select>
+            {(!user || user.role === 'superadmin') && (
+              <select value={filterBagian} onChange={(e) => setFilterBagian(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="semua">Semua Bidang</option>
+                <option value="sekretariat">Sekretariat DPRD</option>
+                <option value="humas">Humas</option>
+                <option value="persidangan">Persidangan</option>
+                <option value="umum">Umum</option>
+                <option value="keuangan">Keuangan</option>
+              </select>
+            )}
             <div className="flex gap-1.5">
               {['Bulanan','Mingguan','Tahunan'].map((v, i) => (
                 <button key={v} className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
@@ -275,7 +231,7 @@ export function KalenderKegiatan() {
                 <div className="text-sm">Tidak ada kegiatan pada tanggal ini</div>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
                 {selectedDateEvents.map((ev, idx) => (
                   <button key={idx} onClick={() => setSelectedEvent(ev)} className={`w-full text-left px-5 py-4 hover:bg-blue-50 transition-all ${
                     selectedEvent === ev ? 'bg-blue-50 border-l-4 border-blue-500' : ''
@@ -284,7 +240,7 @@ export function KalenderKegiatan() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white ${
-                            KATEGORI_COLOR[ev.kategori ?? ''] ?? 'bg-gray-500'
+                            STATUS_COLOR[ev.kategori ?? ''] ?? 'bg-gray-500'
                           }`}>
                             {ev.kategori}
                           </span>
@@ -325,11 +281,11 @@ export function KalenderKegiatan() {
                 <div className="text-sm">Pilih kegiatan di sebelah kiri untuk melihat detail</div>
               </div>
             ) : (
-              <div className="p-5">
+              <div className="p-5 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
                 {/* Header kegiatan */}
                 <div className="mb-4">
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white inline-block mb-2 ${
-                    KATEGORI_COLOR[selectedEvent.kategori ?? ''] ?? 'bg-gray-500'
+                    STATUS_COLOR[selectedEvent.kategori ?? ''] ?? 'bg-gray-500'
                   }`}>
                     {selectedEvent.kategori}
                   </span>
@@ -384,9 +340,9 @@ export function KalenderKegiatan() {
 
       {/* Legend */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <h3 className="text-sm font-bold text-gray-800 mb-3">Keterangan Kategori</h3>
+        <h3 className="text-sm font-bold text-gray-800 mb-3">Keterangan Status</h3>
         <div className="flex flex-wrap gap-3">
-          {Object.entries(KATEGORI_COLOR).map(([k, c]) => (
+          {Object.entries(STATUS_COLOR).map(([k, c]) => (
             <div key={k} className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-sm ${c}`} />
               <span className="text-xs text-gray-600 font-medium capitalize">{k}</span>

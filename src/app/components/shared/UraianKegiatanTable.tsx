@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, TrendingDown, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { uraianAnggaran, UraianAnggaran } from '../lib/data';
+import { useAppData } from '../../hooks/useAppData';
 
 function formatRp(n: number, short = false) {
   if (short) {
@@ -11,10 +11,10 @@ function formatRp(n: number, short = false) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 }
 
-
-
 export function UraianKegiatanTable() {
+  const { dataUraian: uraianAnggaran } = useAppData();
   const [expandedKode, setExpandedKode] = useState<Set<string>>(new Set(['1', '2', '3', '4', '5']));
+  const [selectedBidang, setSelectedBidang] = useState<string | null>(null);
 
   function toggleExpand(kode: string) {
     setExpandedKode((prev) => {
@@ -24,8 +24,6 @@ export function UraianKegiatanTable() {
     });
   }
 
-
-
   function isVisible(kode: string) {
     const parts = kode.split('.');
     if (parts.length === 1) return true;
@@ -33,13 +31,14 @@ export function UraianKegiatanTable() {
     return expandedKode.has(parent) && isVisible(parent);
   }
 
-  const filteredData = uraianAnggaran;
+  const filteredData = uraianAnggaran.filter(u => {
+    if (!selectedBidang) return true;
+    return u.kode === selectedBidang || u.kode.startsWith(selectedBidang + '.');
+  });
 
   const uraianTotal = filteredData.reduce((a, u) => u.level === 1 ? a + u.target : a, 0);
   const uraianRealisasiTotal = filteredData.reduce((a, u) => u.level === 1 ? a + u.realisasi : a, 0);
   const sisaTotal = uraianTotal - uraianRealisasiTotal;
-
-
 
   // Ambil data per Bidang (level 1) untuk kartu ringkasan
   const bidangList = uraianAnggaran.filter(u => u.level === 1);
@@ -53,7 +52,7 @@ export function UraianKegiatanTable() {
           <TrendingDown className="w-4 h-4 text-blue-600" />
           Sisa Anggaran per Bidang / Bagian
         </h3>
-        <div className="flex flex-wrap justify-center gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {bidangList.map(b => {
             const sisa = b.target - b.realisasi;
             const pct = b.target > 0 ? Math.round((b.realisasi / b.target) * 100) : 0;
@@ -61,55 +60,45 @@ export function UraianKegiatanTable() {
             const sisaPct = 100 - pct;
             const isKritis = sisaPct < 15;
             const isAman = sisaPct >= 40;
+            const isSelected = selectedBidang === b.kode;
+
             return (
-              <div key={b.kode} style={{ minWidth: '200px', maxWidth: '240px', flex: '1 1 200px' }}
-                className={`rounded-xl border p-4 flex flex-col gap-2 shadow-sm transition-all ${
-                  isKritis
-                    ? 'bg-red-50 border-red-200'
-                    : isAman
-                    ? 'bg-emerald-50 border-emerald-200'
-                    : 'bg-amber-50 border-amber-200'
+              <button 
+                key={b.kode} 
+                onClick={() => setSelectedBidang(isSelected ? null : b.kode)}
+                className={`text-left bg-white rounded-xl p-4 shadow-sm border transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-blue-500/30 ${
+                  isSelected 
+                    ? 'border-blue-500 ring-4 ring-blue-500/20 transform scale-[1.02] shadow-md bg-blue-50/10' 
+                    : 'border-gray-200 hover:border-blue-300 hover:shadow-lg hover:-translate-y-1 active:scale-95'
                 }`}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-xs font-bold text-slate-700 leading-tight line-clamp-2">{b.uraian}</div>
-                  {isKritis
-                    ? <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                    : isAman
-                    ? <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                    : <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                  }
-                </div>
-
-                <div>
-                  <div className="text-[10px] text-slate-500 font-medium">Sisa Anggaran</div>
-                  <div className={`text-sm font-black tabular-nums ${
-                    isKritis ? 'text-red-600' : isAman ? 'text-emerald-700' : 'text-amber-700'
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 pr-2 min-w-0">
+                    <div className="text-xs font-medium text-gray-500 mb-1 truncate" title={b.uraian}>{b.uraian}</div>
+                    <div className="text-2xl font-bold text-gray-900 truncate">{formatRp(sisa, true)}</div>
+                  </div>
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      isKritis ? 'bg-red-500' : isAman ? 'bg-emerald-500' : 'bg-amber-500'
                   }`}>
-                    {formatRp(sisa, true)}
+                    {isKritis ? <AlertCircle className="w-6 h-6 text-white" /> : isAman ? <CheckCircle2 className="w-6 h-6 text-white" /> : <AlertCircle className="w-6 h-6 text-white" />}
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-[10px] text-slate-500 mb-1">
-                    <span>Terserap</span>
-                    <span className="font-bold">{pct}%</span>
+                  <div className="flex justify-between text-[11px] text-gray-500 mb-1">
+                    <span>Target: <span className="font-medium text-gray-700">{formatRp(b.target, true)}</span></span>
+                    <span className="font-bold text-gray-700">{pct}% Terserap</span>
                   </div>
-                  <div className="w-full bg-slate-200 rounded-full h-1.5">
+                  <div className="w-full bg-gray-100 rounded-full h-1.5">
                     <div
-                      className={`h-1.5 rounded-full transition-all ${
-                        isKritis ? 'bg-red-500' : pct >= 60 ? 'bg-emerald-500' : 'bg-amber-400'
+                      className={`h-1.5 rounded-full transition-all duration-500 ${
+                        isKritis ? 'bg-red-500' : pct >= 60 ? 'bg-emerald-500' : 'bg-amber-500'
                       }`}
                       style={{ width: `${Math.min(pct, 100)}%` }}
                     />
                   </div>
                 </div>
-
-                <div className="flex justify-between text-[10px] text-slate-500 mt-0.5">
-                  <span>Target: <span className="font-semibold text-slate-700">{formatRp(b.target, true)}</span></span>
-                  <span>Real: <span className="font-semibold text-emerald-700">{formatRp(b.realisasi, true)}</span></span>
-                </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -119,17 +108,7 @@ export function UraianKegiatanTable() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
 
         {/* Table Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white">
-          <div className="flex gap-2">
-            <button onClick={() => setExpandedKode(new Set(uraianAnggaran.map((u) => u.kode)))}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium px-3 py-1.5 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
-              Expand Semua
-            </button>
-            <button onClick={() => setExpandedKode(new Set(['1', '2', '3', '4', '5']))}
-              className="text-xs text-slate-600 hover:text-slate-700 font-medium px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-              Collapse
-            </button>
-          </div>
+        <div className="flex items-center justify-end px-4 py-3 border-b border-slate-100 bg-white">
           <div className="text-xs text-slate-500">
             Target: <span className="font-bold text-slate-700">{formatRp(uraianTotal, true)}</span>
             {' · '}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { detailSSKMock, DetailSSK } from '../lib/data';
+import { detailSSKMock, DetailSSK } from '../../lib/data';
 import { List, Edit3, Save, X, CheckCircle, AlertCircle } from 'lucide-react';
 
 function formatRp(n: number, short = false) {

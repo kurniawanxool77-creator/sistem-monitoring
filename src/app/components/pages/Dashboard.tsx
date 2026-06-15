@@ -3,69 +3,23 @@ import {
   FileText,
   ShoppingCart,
   AlertTriangle,
+  CheckCircle,
   AlertCircle,
   Clock,
-  CheckCircle,
   TrendingUp,
 } from 'lucide-react';
 import { Link } from 'react-router';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { bagianList, kegiatanPerBagian, notifikasiList } from '../lib/data';
+import { notifikasiList } from '../../lib/data';
+import { useAppData } from '../../hooks/useAppData';
 
-const statsCards = [
-  {
-    title: 'TOTAL KEGIATAN',
-    value: '128',
-    subtitle: 'Bulan ini',
-    detail: '↑ 8% dari bulan lalu',
-    detailColor: 'text-emerald-600',
-    icon: FileText,
-    color: 'bg-blue-500',
-    path: '/agenda',
-  },
-  {
-    title: 'KEGIATAN BERJALAN',
-    value: '56',
-    subtitle: 'Sedang Berjalan',
-    detail: '↑ 12% dari bulan lalu',
-    detailColor: 'text-emerald-600',
-    icon: ShoppingCart,
-    color: 'bg-emerald-500',
-    path: '/progress',
-  },
-  {
-    title: 'KEGIATAN SELESAI',
-    value: '65',
-    subtitle: 'Selesai',
-    detail: '↑ 5% dari bulan lalu',
-    detailColor: 'text-emerald-600',
-    icon: CheckCircle,
-    color: 'bg-amber-500',
-    path: '/laporan-kegiatan',
-  },
-  {
-    title: 'TERLAMBAT / OVERDUE',
-    value: '7',
-    subtitle: 'Perlu Perhatian',
-    detail: '↓ 3% dari bulan lalu',
-    detailColor: 'text-red-500',
-    icon: AlertTriangle,
-    color: 'bg-red-500',
-    path: '/agenda',
-  },
-];
-
-const realisasiData = [
-  { name: 'Terpakai', value: 45.67, color: '#3b82f6' },
-  { name: 'Tersisa', value: 54.33, color: '#e5e7eb' },
-];
-
-const jenisData = [
-  { name: 'Persidangan', value: 42, color: '#3b82f6' },
-  { name: 'Humas', value: 28, color: '#10b981' },
-  { name: 'Umum', value: 35, color: '#f59e0b' },
-  { name: 'Keuangan', value: 23, color: '#8b5cf6' },
-];
+const BIDANG_COLORS: Record<string, string> = {
+  'Sekretariat DPRD': '#3b82f6', // blue
+  'Bagian Umum': '#10b981', // emerald
+  'Bagian Humas': '#f59e0b', // amber
+  'Bagian Persidangan': '#8b5cf6', // purple
+  'Keuangan': '#ef4444', // red
+};
 
 const stepColors: Record<string, string> = {
   Persiapan: 'bg-gray-400',
@@ -77,9 +31,101 @@ const stepColors: Record<string, string> = {
 };
 
 export function Dashboard() {
-  const [selectedBagian, setSelectedBagian] = useState('Sekretariat DPRD');
+  const { getBagianList, getKegiatanList, dataUraian, activityLogs } = useAppData();
+  
+  const bagianList = getBagianList();
+  const kegiatanList = getKegiatanList();
+
+  const [selectedBagian, setSelectedBagian] = useState(bagianList.length > 0 ? bagianList[0].nama : 'Sekretariat DPRD');
+
+  const level1Data = dataUraian.filter(u => u.level === 1);
+  let totalPagu = 0;
+  let totalRealisasi = 0;
+
+  const realisasiData = level1Data.map(u => {
+    totalPagu += u.target;
+    totalRealisasi += u.realisasi;
+    return {
+      name: u.uraian,
+      value: u.realisasi,
+      color: BIDANG_COLORS[u.uraian] || '#3b82f6',
+    };
+  }).filter(item => item.value > 0);
+
+  const sisa = totalPagu - totalRealisasi;
+  if (sisa > 0) {
+    realisasiData.push({ name: 'Sisa Anggaran', value: sisa, color: '#e5e7eb' });
+  }
+
+  const percentRealisasi = totalPagu > 0 ? ((totalRealisasi / totalPagu) * 100).toFixed(2) : '0';
+
+  const jenisCounts: Record<string, number> = {};
+  kegiatanList.forEach(k => {
+     jenisCounts[k.bidang] = (jenisCounts[k.bidang] || 0) + 1;
+  });
+  const jenisData = Object.entries(jenisCounts).map(([name, value]) => ({
+     name,
+     value,
+     color: BIDANG_COLORS[name] || '#3b82f6'
+  }));
+
+  const kegiatanPerBagian = kegiatanList.reduce((acc, k) => {
+    if (!acc[k.bidang]) acc[k.bidang] = [];
+    acc[k.bidang].push({
+      id: k.id,
+      nama: k.nama,
+      tanggal: `${k.tanggalMulai} - ${k.tanggalSelesai}`,
+      progress: k.progress,
+      status: k.status,
+      step: k.step
+    });
+    return acc;
+  }, {} as Record<string, any[]>);
 
   const kegiatanBerjalan = kegiatanPerBagian[selectedBagian] ?? [];
+
+  const statsCards = [
+    {
+      title: 'TOTAL KEGIATAN',
+      value: kegiatanList.length,
+      subtitle: 'Bulan ini',
+      detail: 'Aktivitas terdata',
+      detailColor: 'text-emerald-600',
+      icon: FileText,
+      color: 'bg-blue-500',
+      path: '/agenda',
+    },
+    {
+      title: 'KEGIATAN BERJALAN',
+      value: kegiatanList.filter(k => k.status === 'Berjalan').length,
+      subtitle: 'Sedang Berjalan',
+      detail: 'Dalam proses',
+      detailColor: 'text-emerald-600',
+      icon: ShoppingCart,
+      color: 'bg-emerald-500',
+      path: '/progress',
+    },
+    {
+      title: 'KEGIATAN SELESAI',
+      value: kegiatanList.filter(k => k.status === 'Selesai').length,
+      subtitle: 'Selesai',
+      detail: 'Selesai 100%',
+      detailColor: 'text-emerald-600',
+      icon: CheckCircle,
+      color: 'bg-amber-500',
+      path: '/laporan-kegiatan',
+    },
+    {
+      title: 'BELUM MULAI / TERLAMBAT',
+      value: kegiatanList.filter(k => k.status === 'Terlambat' || k.status === 'Belum Mulai').length,
+      subtitle: 'Perlu Perhatian',
+      detail: 'Cek jadwal',
+      detailColor: 'text-red-500',
+      icon: AlertTriangle,
+      color: 'bg-red-500',
+      path: '/agenda',
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -91,7 +137,7 @@ export function Dashboard() {
             <Link
               key={card.title}
               to={card.path}
-              className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg hover:border-blue-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500/30 block"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
@@ -166,7 +212,7 @@ export function Dashboard() {
             </Link>
           </div>
 
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 space-y-3 overflow-y-auto max-h-[350px] pr-2" style={{ scrollbarWidth: 'thin' }}>
             {kegiatanBerjalan.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-gray-400">
                 <CheckCircle className="w-10 h-10 mb-2 text-gray-300" />
@@ -218,31 +264,30 @@ export function Dashboard() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-base font-bold text-gray-900">NOTIFIKASI / PERINGATAN</h2>
-            <Link to="/agenda" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+            <Link to="/log-aktifitas" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
               Lihat Semua
             </Link>
           </div>
           <div className="space-y-3">
-            {notifikasiList.map((notif) => (
-              <div key={notif.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className={`p-2 rounded-lg flex-shrink-0 ${
-                  notif.type === 'overdue' ? 'bg-red-100' :
-                  notif.type === 'belumSelesai' ? 'bg-yellow-100' :
-                  notif.type === 'deadline' ? 'bg-blue-100' :
-                  'bg-emerald-100'
-                }`}>
-                  {notif.type === 'overdue' ? <AlertTriangle className="w-4 h-4 text-red-600" /> :
-                   notif.type === 'belumSelesai' ? <AlertCircle className="w-4 h-4 text-yellow-600" /> :
-                   notif.type === 'deadline' ? <Clock className="w-4 h-4 text-blue-600" /> :
-                   <CheckCircle className="w-4 h-4 text-emerald-600" />}
+            {activityLogs.length === 0 ? (
+              <div className="text-center py-4 text-sm text-gray-500">Belum ada aktifitas</div>
+            ) : (
+              activityLogs.slice(0, 5).map((log) => (
+                <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="p-2 rounded-lg flex-shrink-0 bg-blue-100">
+                    <Clock className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 text-sm mb-0.5">{log.action}</h3>
+                    <p className="text-xs text-gray-500 mb-1 leading-snug line-clamp-2">{log.details}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-[10px] font-medium text-gray-500">{log.user}</p>
+                      <p className="text-[10px] text-gray-400">{new Date(log.timestamp).toLocaleString('id-ID')}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 text-sm mb-0.5">{notif.title}</h3>
-                  <p className="text-xs text-gray-500 mb-1 leading-snug">{notif.message}</p>
-                  <p className="text-xs text-gray-400">{notif.time}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -273,25 +318,32 @@ export function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <div className="text-2xl font-bold text-gray-900">45.67%</div>
+                <div className="text-2xl font-bold text-gray-900">{percentRealisasi}%</div>
                 <div className="text-xs text-gray-500">Realisasi</div>
               </div>
             </div>
 
             <div className="mt-4 w-full space-y-2">
+              {realisasiData.filter(item => item.name !== 'Sisa Anggaran').map(item => (
+                <div key={item.name} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                    <span className="text-xs text-gray-600 truncate max-w-[120px]">{item.name}</span>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-800">Rp {item.value.toLocaleString('id-ID')}</span>
+                </div>
+              ))}
+              {/* Sisa Anggaran selalu tampil */}
               <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-xs text-gray-600">Terpakai</span>
+                  <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+                  <span className="text-xs text-gray-500">Sisa Anggaran</span>
                 </div>
-                <span className="text-xs font-semibold text-gray-800">Rp 44.950.000.000</span>
+                <span className="text-xs font-semibold text-gray-500">Rp {Math.max(0, totalPagu - totalRealisasi).toLocaleString('id-ID')}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
-                  <span className="text-xs text-gray-600">Pagu Total</span>
-                </div>
-                <span className="text-xs font-semibold text-gray-800">Rp 98.450.000.000</span>
+              <div className="flex items-center justify-between py-1.5 pt-2 mt-1 border-t-2 border-gray-200">
+                <span className="text-xs font-bold text-gray-800">Total Pagu</span>
+                <span className="text-xs font-bold text-gray-800">Rp {totalPagu.toLocaleString('id-ID')}</span>
               </div>
             </div>
           </div>
@@ -323,7 +375,7 @@ export function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <div className="text-2xl font-bold text-gray-900">128</div>
+                <div className="text-2xl font-bold text-gray-900">{kegiatanList.length}</div>
                 <div className="text-xs text-gray-500">Total</div>
               </div>
             </div>

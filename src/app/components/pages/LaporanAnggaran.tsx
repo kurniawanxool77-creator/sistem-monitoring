@@ -91,21 +91,21 @@ export function LaporanAnggaran() {
             <div className="mb-6">
               <h3 className="font-bold text-gray-900 mb-4">Ringkasan Anggaran</h3>
               <div className="grid grid-cols-4 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="border border-gray-300 p-4 rounded-lg text-center">
                   <div className="text-sm text-gray-600 mb-1">Total Pagu</div>
-                  <div className="text-xl font-bold text-blue-600">Rp 18.5M</div>
+                  <div className="text-xl font-bold text-gray-900">Rp 18.5M</div>
                 </div>
-                <div className="bg-emerald-50 p-4 rounded-lg">
+                <div className="border border-gray-300 p-4 rounded-lg text-center">
                   <div className="text-sm text-gray-600 mb-1">Realisasi</div>
-                  <div className="text-xl font-bold text-emerald-600">Rp 14.0M</div>
+                  <div className="text-xl font-bold text-gray-900">Rp 14.0M</div>
                 </div>
-                <div className="bg-amber-50 p-4 rounded-lg">
+                <div className="border border-gray-300 p-4 rounded-lg text-center">
                   <div className="text-sm text-gray-600 mb-1">Sisa</div>
-                  <div className="text-xl font-bold text-amber-600">Rp 4.5M</div>
+                  <div className="text-xl font-bold text-gray-900">Rp 4.5M</div>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="border border-gray-300 p-4 rounded-lg text-center">
                   <div className="text-sm text-gray-600 mb-1">% Serapan</div>
-                  <div className="text-xl font-bold text-purple-600">75.68%</div>
+                  <div className="text-xl font-bold text-gray-900">75.68%</div>
                 </div>
               </div>
             </div>
@@ -188,53 +188,7 @@ export function LaporanAnggaran() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900">Laporan Triwulan</h3>
-              <p className="text-sm text-gray-600">Per 3 bulan</p>
-            </div>
-          </div>
-          <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
-            Generate Laporan
-          </button>
-        </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-emerald-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-emerald-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900">Laporan Semester</h3>
-              <p className="text-sm text-gray-600">Per 6 bulan</p>
-            </div>
-          </div>
-          <button className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium">
-            Generate Laporan
-          </button>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900">Laporan Tahunan</h3>
-              <p className="text-sm text-gray-600">Per tahun</p>
-            </div>
-          </div>
-          <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium">
-            Generate Laporan
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

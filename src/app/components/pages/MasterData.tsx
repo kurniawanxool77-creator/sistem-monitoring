@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Database, Plus, Edit, Trash2, ChevronDown, ChevronRight, DollarSign, X, Save, TrendingDown } from 'lucide-react';
-import { masterBidang, uraianAnggaran, anggotaData } from '../lib/data';
+import { Database, Plus, Edit, Trash2, ChevronDown, ChevronRight, DollarSign, X, Save, TrendingDown, Users, FolderTree, FileText, CheckSquare } from 'lucide-react';
+import { anggotaData } from '../../lib/data';
+import { useAppData } from '../../hooks/useAppData';
 
 type TabKey = 'bidang' | 'subBidang' | 'kegiatan' | 'subKegiatan' | 'anggota';
 
@@ -26,51 +27,86 @@ function formatRp(n: number) {
   return `Rp ${n.toLocaleString('id-ID')}`;
 }
 
+export function MasterData() {
+  const { dataUraian, addUraianBaru, updateUraian, deleteUraian, addActivityLog } = useAppData();
 
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isSuperadmin = user?.role === 'superadmin';
 
-// Flatten all sub bidang
-const allSubBidang = masterBidang.flatMap(b => b.subBidang.map(s => ({ ...s, bidangNama: b.nama })));
+  function handleEditUraian(kode: string, oldNama: string, oldTarget: number) {
+    if (!isSuperadmin) return alert("Hanya Superadmin yang bisa mengedit Master Data.");
+    const newNama = prompt("Masukkan nama baru:", oldNama);
+    if (!newNama || newNama === oldNama) return;
+    const newTargetStr = prompt("Masukkan pagu/target baru (opsional):", String(oldTarget));
+    const newTarget = newTargetStr ? Number(newTargetStr) : oldTarget;
+    updateUraian(kode, newNama, newTarget, user?.nama || 'Unknown User');
+  }
 
-// Flatten all kegiatan
-const allKegiatan = masterBidang.flatMap(b =>
-  b.subBidang.flatMap(s =>
-    s.kegiatan.map(k => ({ ...k, subBidangNama: s.nama, bidangNama: b.nama }))
-  )
-);
+  function handleDeleteUraian(kode: string, nama: string) {
+    if (!isSuperadmin) return alert("Hanya Superadmin yang bisa menghapus Master Data.");
+    if (confirm(`Peringatan: Menghapus "${nama}" akan ikut menghapus seluruh data turunannya secara permanen. Lanjutkan?`)) {
+      deleteUraian(kode, user?.nama || 'Unknown User');
+    }
+  }
 
-// Flatten all sub kegiatan from level 4 of uraianAnggaran
-const allSubKegiatan = uraianAnggaran
-  .filter(u => u.level === 4)
-  .map(u => {
-    // Find parent kegiatan (level 3)
-    const parentKode = u.kode.split('.').slice(0, 3).join('.');
-    const parentKegiatan = uraianAnggaran.find(x => x.kode === parentKode);
+  // Flatten all bidang (level 1)
+  const allBidang = dataUraian.filter(u => u.level === 1).map(u => ({
+    id: u.kode,
+    nama: u.uraian,
+    pagu: u.target,
+  }));
 
-    // Find parent sub bidang (level 2)
-    const subBidangKode = u.kode.split('.').slice(0, 2).join('.');
-    const parentSubBidang = uraianAnggaran.find(x => x.kode === subBidangKode);
-
-    // Find parent bidang (level 1)
-    const bidangKode = u.kode.split('.').slice(0, 1).join('.');
-    const parentBidang = uraianAnggaran.find(x => x.kode === bidangKode);
-
+  // Flatten all sub bidang (level 2)
+  const allSubBidang = dataUraian.filter(u => u.level === 2).map(u => {
+    const parentKode = u.kode.split('.').slice(0, 1).join('.');
+    const parentBidang = dataUraian.find(x => x.kode === parentKode);
     return {
-      kode: u.kode,
+      id: u.kode,
       nama: u.uraian,
-      kegiatanNama: parentKegiatan?.uraian || '',
+      bidangNama: parentBidang?.uraian || '',
+    };
+  });
+
+  // Flatten all kegiatan (level 3)
+  const allKegiatan = dataUraian.filter(u => u.level === 3).map(u => {
+    const subBidangKode = u.kode.split('.').slice(0, 2).join('.');
+    const parentSubBidang = dataUraian.find(x => x.kode === subBidangKode);
+    const bidangKode = u.kode.split('.').slice(0, 1).join('.');
+    const parentBidang = dataUraian.find(x => x.kode === bidangKode);
+    return {
+      id: u.kode,
+      nama: u.uraian,
       subBidangNama: parentSubBidang?.uraian || '',
       bidangNama: parentBidang?.uraian || '',
     };
   });
 
-// Helper to get sub kegiatan for a given kegiatan name
-function getSubKegiatanForKegiatan(kegiatanNama: string) {
-  return allSubKegiatan.filter(sk => sk.kegiatanNama.toLowerCase() === kegiatanNama.toLowerCase());
-}
+  // Flatten all sub kegiatan from level 4 of dataUraian
+  const allSubKegiatan = dataUraian
+    .filter(u => u.level === 4)
+    .map(u => {
+      // Find parent kegiatan (level 3)
+      const parentKode = u.kode.split('.').slice(0, 3).join('.');
+      const parentKegiatan = dataUraian.find(x => x.kode === parentKode);
 
+      // Find parent sub bidang (level 2)
+      const subBidangKode = u.kode.split('.').slice(0, 2).join('.');
+      const parentSubBidang = dataUraian.find(x => x.kode === subBidangKode);
 
+      // Find parent bidang (level 1)
+      const bidangKode = u.kode.split('.').slice(0, 1).join('.');
+      const parentBidang = dataUraian.find(x => x.kode === bidangKode);
 
-export function MasterData() {
+      return {
+        kode: u.kode,
+        nama: u.uraian,
+        kegiatanNama: parentKegiatan?.uraian || '',
+        subBidangNama: parentSubBidang?.uraian || '',
+        bidangNama: parentBidang?.uraian || '',
+      };
+    });
+
   const [activeTab, setActiveTab] = useState<TabKey>('bidang');
   const [expandedBidang, setExpandedBidang] = useState<Set<string>>(new Set(['bid-1']));
   const [showAddModal, setShowAddModal] = useState(false);
@@ -97,7 +133,7 @@ export function MasterData() {
     : allSubKegiatan.filter(sk => sk.bidangNama === filterBidang);
 
   const tabs: { key: TabKey; label: string; count: number }[] = [
-    { key: 'bidang', label: 'Bidang / Bagian', count: masterBidang.length },
+    { key: 'bidang', label: 'Bidang / Bagian', count: allBidang.length },
     { key: 'subBidang', label: 'Sub Bidang', count: allSubBidang.length },
     { key: 'kegiatan', label: 'Kegiatan', count: allKegiatan.length },
     { key: 'subKegiatan', label: 'Sub Kegiatan', count: allSubKegiatan.length },
@@ -119,19 +155,74 @@ export function MasterData() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {[
-          { label: 'Total Bidang', value: masterBidang.length, color: 'from-blue-500 to-blue-600' },
-          { label: 'Total Sub Bidang', value: allSubBidang.length, color: 'from-purple-500 to-purple-600' },
-          { label: 'Total Kegiatan', value: allKegiatan.length, color: 'from-emerald-500 to-emerald-600' },
-          { label: 'Total Sub Kegiatan', value: allSubKegiatan.length, color: 'from-cyan-500 to-cyan-600' },
-          { label: 'Total Anggota', value: anggotaData.length, color: 'from-amber-500 to-amber-600' },
-        ].map(c => (
-          <div key={c.label} className={`bg-gradient-to-br ${c.color} rounded-xl p-4 text-white`}>
-            <div className="text-2xl font-black">{c.value}</div>
-            <div className="text-sm text-white/80 mt-0.5">{c.label}</div>
-          </div>
-        ))}
+          { 
+            title: 'TOTAL BIDANG', 
+            value: allBidang.length, 
+            subtitle: 'Master Data', 
+            detail: 'Kategori utama', 
+            detailColor: 'text-blue-600', 
+            icon: Database, 
+            color: 'bg-blue-500' 
+          },
+          { 
+            title: 'TOTAL SUB BIDANG', 
+            value: allSubBidang.length, 
+            subtitle: 'Master Data', 
+            detail: 'Kategori turunan', 
+            detailColor: 'text-purple-600', 
+            icon: FolderTree, 
+            color: 'bg-purple-500' 
+          },
+          { 
+            title: 'TOTAL KEGIATAN', 
+            value: allKegiatan.length, 
+            subtitle: 'Master Data', 
+            detail: 'Aktivitas terdaftar', 
+            detailColor: 'text-emerald-600', 
+            icon: FileText, 
+            color: 'bg-emerald-500' 
+          },
+          { 
+            title: 'TOTAL SUB KEGIATAN', 
+            value: allSubKegiatan.length, 
+            subtitle: 'Master Data', 
+            detail: 'Rincian aktivitas', 
+            detailColor: 'text-cyan-600', 
+            icon: CheckSquare, 
+            color: 'bg-cyan-500' 
+          },
+          { 
+            title: 'TOTAL ANGGOTA', 
+            value: anggotaData.length, 
+            subtitle: 'Master Data', 
+            detail: 'Personel terdata', 
+            detailColor: 'text-amber-600', 
+            icon: Users, 
+            color: 'bg-amber-500' 
+          },
+        ].map((card) => {
+          const Icon = card.icon;
+          return (
+            <div
+              key={card.title}
+              className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-blue-300 cursor-default"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <div className="text-xs font-medium text-gray-500 mb-1">{card.title}</div>
+                  <div className="text-2xl lg:text-3xl font-bold text-gray-900">{card.value}</div>
+                </div>
+                <div className={`w-10 h-10 lg:w-12 lg:h-12 ${card.color} rounded-lg flex items-center justify-center`}>
+                  <Icon className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+                </div>
+              </div>
+              <div className="text-xs text-gray-500 mb-1">{card.subtitle}</div>
+              <div className={`text-xs font-medium ${card.detailColor}`}>{card.detail}</div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Main content */}
@@ -169,10 +260,10 @@ export function MasterData() {
                     </tr>
                   </thead>
                   <tbody>
-                    {masterBidang.map((bidang, idx) => {
+                    {allBidang.map((bidang, idx) => {
                       const color = BIDANG_COLORS[bidang.nama] ?? 'bg-gray-100 text-gray-600';
-                      const jmlSubBidang = bidang.subBidang.length;
-                      const jmlKegiatan = bidang.subBidang.reduce((acc, s) => acc + s.kegiatan.length, 0);
+                      const jmlSubBidang = allSubBidang.filter(s => s.bidangNama === bidang.nama).length;
+                      const jmlKegiatan = allKegiatan.filter(k => k.bidangNama === bidang.nama).length;
                       const jmlSubKegiatan = allSubKegiatan.filter(sk => sk.bidangNama === bidang.nama).length;
 
                       return (
@@ -188,8 +279,8 @@ export function MasterData() {
                           <td className="py-3 px-4 text-center font-semibold text-gray-700">{jmlSubKegiatan}</td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-center gap-1.5">
-                              <button className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors"><Edit className="w-4 h-4" /></button>
-                              <button className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => handleEditUraian(bidang.id, bidang.nama, bidang.pagu)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors title='Edit'"><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => handleDeleteUraian(bidang.id, bidang.nama)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors title='Hapus'"><Trash2 className="w-4 h-4" /></button>
                             </div>
                           </td>
                         </tr>
@@ -208,7 +299,7 @@ export function MasterData() {
                 <select value={filterBidang} onChange={e => setFilterBidang(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                   <option value="semua">Semua Bidang</option>
-                  {masterBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
+                  {allBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
                 </select>
                 <span className="text-sm text-gray-500">{filteredSubBidang.length} sub bidang</span>
               </div>
@@ -238,13 +329,13 @@ export function MasterData() {
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
-                              {sub.kegiatan.length}
+                              {allKegiatan.filter(k => k.subBidangNama === sub.nama && k.bidangNama === sub.bidangNama).length}
                             </span>
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-center gap-1.5">
-                              <button className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors"><Edit className="w-4 h-4" /></button>
-                              <button className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => handleEditUraian(sub.id, sub.nama, 0)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title='Edit'><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => handleDeleteUraian(sub.id, sub.nama)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors" title='Hapus'><Trash2 className="w-4 h-4" /></button>
                             </div>
                           </td>
                         </tr>
@@ -263,7 +354,7 @@ export function MasterData() {
                 <select value={filterBidang} onChange={e => setFilterBidang(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                   <option value="semua">Semua Bidang</option>
-                  {masterBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
+                  {allBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
                 </select>
                 <span className="text-sm text-gray-500">{filteredKegiatan.length} kegiatan</span>
               </div>
@@ -294,8 +385,8 @@ export function MasterData() {
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-center gap-1.5">
-                              <button className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors"><Edit className="w-4 h-4" /></button>
-                              <button className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => handleEditUraian(k.id, k.nama, 0)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title='Edit'><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => handleDeleteUraian(k.id, k.nama)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors" title='Hapus'><Trash2 className="w-4 h-4" /></button>
                             </div>
                           </td>
                         </tr>
@@ -314,7 +405,7 @@ export function MasterData() {
                 <select value={filterBidang} onChange={e => setFilterBidang(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                   <option value="semua">Semua Bidang</option>
-                  {masterBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
+                  {allBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
                 </select>
                 <span className="text-sm text-gray-500">{filteredSubKegiatan.length} sub kegiatan</span>
               </div>
@@ -347,8 +438,8 @@ export function MasterData() {
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-center gap-1.5">
-                              <button className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors"><Edit className="w-4 h-4" /></button>
-                              <button className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={() => handleEditUraian(sk.kode, sk.nama, 0)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title='Edit'><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => handleDeleteUraian(sk.kode, sk.nama)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors" title='Hapus'><Trash2 className="w-4 h-4" /></button>
                             </div>
                           </td>
                         </tr>
@@ -443,7 +534,7 @@ export function MasterData() {
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
                     <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="">Pilih Bidang</option>
-                      {masterBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
+                      {allBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
                     </select>
                   </div>
                   <div>
@@ -458,7 +549,7 @@ export function MasterData() {
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
                     <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="">Pilih Bidang</option>
-                      {masterBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
+                      {allBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
                     </select>
                   </div>
                   <div>
@@ -479,7 +570,7 @@ export function MasterData() {
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
                     <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="">Pilih Bidang</option>
-                      {masterBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
+                      {allBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
                     </select>
                   </div>
                   <div>
@@ -514,7 +605,7 @@ export function MasterData() {
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
                     <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="">Pilih Bidang</option>
-                      {masterBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
+                      {allBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
                     </select>
                   </div>
                 </>
@@ -525,7 +616,17 @@ export function MasterData() {
                 className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">
                 Batal
               </button>
-              <button onClick={() => setShowAddModal(false)}
+              <button onClick={() => {
+                // Mock Add Log for modal
+                if (isSuperadmin) {
+                  addActivityLog({
+                    user: user?.nama || 'Unknown',
+                    action: 'Menambah Data Master (Simulasi UI)',
+                    details: 'Mencoba submit form tambah data di Master Data (Saat ini sebatas mock UI)'
+                  });
+                }
+                setShowAddModal(false);
+              }}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all">
                 <Save className="w-4 h-4" /> Simpan
               </button>

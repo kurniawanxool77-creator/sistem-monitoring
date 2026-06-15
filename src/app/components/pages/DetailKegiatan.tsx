@@ -1,33 +1,20 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router';
-import { ArrowLeft, Calendar, User, DollarSign, FileText, Clock, CheckCircle } from 'lucide-react';
-import { kegiatanList, Kegiatan } from '../lib/data';
+import { ArrowLeft, Calendar, User, FileText, Clock, CheckCircle, Banknote } from 'lucide-react';
+import { Kegiatan } from '../../lib/data';
 import { UpdateProgressModal } from './UpdateProgressModal';
-
-const stepList = [
-  { id: 1, name: 'Persiapan', description: 'Rencana kerja, SK, anggaran' },
-  { id: 2, name: 'Koordinasi', description: 'Rapat, surat undangan, konfirmasi peserta' },
-  { id: 3, name: 'Pelaksanaan', description: 'Upload foto, dokumen, absensi' },
-  { id: 4, name: 'Evaluasi', description: 'Laporan, notulen, hasil kegiatan' },
-  { id: 5, name: 'Verifikasi', description: 'Cek kelengkapan dokumen & laporan' },
-  { id: 6, name: 'Closed', description: 'Kegiatan Selesai Sempurna' },
-];
+import { KegiatanFormModal } from './KegiatanFormModal';
+import { useAppData } from '../../hooks/useAppData';
 
 export function DetailKegiatan() {
   const { id } = useParams();
-  const [kegiatans, setKegiatans] = useState<Kegiatan[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('kegiatan_list_data');
-      if (saved) {
-        try { return JSON.parse(saved); } catch (e) {}
-      }
-    }
-    return kegiatanList;
-  });
-
-  const [showModalPanel, setShowModalPanel] = useState<'progress' | 'realisasi' | 'edit' | null>(null);
-
+  const { getKegiatanList, updateKegiatanMetadata, addRealisasi } = useAppData();
+  
+  const kegiatans = getKegiatanList();
   const kegiatan = kegiatans.find((k) => k.id === id);
+
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   if (!kegiatan) {
     return (
@@ -41,63 +28,30 @@ export function DetailKegiatan() {
   }
 
   function handleToggleStep(stepId: string) {
-    const next = kegiatans.map((k) => {
-      if (k.id !== id) return k;
-      const newSteps = k.steps.map((s) =>
-        s.id === stepId ? { ...s, selesai: !s.selesai } : s
-      );
-      const done = newSteps.filter((s) => s.selesai).length;
-      const newProgress = Math.round((done / newSteps.length) * 100);
-      
-      let newStatus = k.status;
-      if (newProgress === 100) {
-        newStatus = 'Selesai';
-      } else if (k.status === 'Selesai') {
-        newStatus = 'Berjalan';
-      }
-
-      let newStep = k.step;
-      if (newProgress === 100) {
-        newStep = 'Closed';
-      } else if (newProgress >= 86) {
-        newStep = 'Verifikasi';
-      } else if (newProgress >= 66) {
-        newStep = 'Evaluasi';
-      } else if (newProgress >= 36) {
-        newStep = 'Pelaksanaan';
-      } else if (newProgress >= 16) {
-        newStep = 'Koordinasi';
-      } else {
-        newStep = 'Persiapan';
-      }
-
-      return { ...k, steps: newSteps, progress: newProgress, status: newStatus, step: newStep };
+    if (!kegiatan) return;
+    const newSteps = kegiatan.steps.map((s) =>
+      s.id === stepId ? { ...s, selesai: !s.selesai } : s
+    );
+    updateKegiatanMetadata({
+      id: kegiatan.id,
+      penanggungJawab: kegiatan.penanggungJawab,
+      tanggalMulai: kegiatan.tanggalMulai,
+      tanggalSelesai: kegiatan.tanggalSelesai,
+      deskripsi: kegiatan.deskripsi,
+      sumberDana: kegiatan.sumberDana,
+      anggaranDiminta: kegiatan.anggaranDiminta,
+      steps: newSteps,
+      isApproved: kegiatan.isApproved
     });
-    setKegiatans(next);
-    localStorage.setItem('kegiatan_list_data', JSON.stringify(next));
   }
 
   function handleSaveRealisasi(amount: number) {
-    const next = kegiatans.map((k) => {
-      if (k.id !== id) return k;
-      const newRealisasi = Math.min(k.realisasiAnggaran + amount, k.paguAnggaran);
-      return { ...k, realisasiAnggaran: newRealisasi };
-    });
-    setKegiatans(next);
-    localStorage.setItem('kegiatan_list_data', JSON.stringify(next));
+    if (!kegiatan) return;
+    addRealisasi(kegiatan.id, amount);
   }
 
-  function handleSaveEdit(updatedFields: Partial<Kegiatan>) {
-    const next = kegiatans.map((k) => {
-      if (k.id !== id) return k;
-      return { ...k, ...updatedFields };
-    });
-    setKegiatans(next);
-    localStorage.setItem('kegiatan_list_data', JSON.stringify(next));
-  }
 
-  const currentStepIndex = stepList.findIndex((s) => s.name === kegiatan.step);
-  const progressPercentage = (kegiatan.realisasiAnggaran / kegiatan.paguAnggaran) * 100;
+  const progressPercentage = kegiatan.paguAnggaran > 0 ? (kegiatan.realisasiAnggaran / kegiatan.paguAnggaran) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -127,7 +81,7 @@ export function DetailKegiatan() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mt-6">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
               <User className="w-5 h-5 text-blue-600" />
@@ -180,6 +134,16 @@ export function DetailKegiatan() {
               <div className="text-sm text-gray-600">{kegiatan.subBidang}</div>
             </div>
           </div>
+
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-indigo-100 rounded-lg">
+              <Banknote className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <div className="text-sm text-gray-600">Sumber Dana</div>
+              <div className="font-medium text-gray-900">{kegiatan.sumberDana || '-'}</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -187,11 +151,17 @@ export function DetailKegiatan() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-6">Anggaran Kegiatan</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div>
             <div className="text-sm text-gray-600 mb-1">Pagu Anggaran</div>
             <div className="text-2xl font-bold text-gray-900">
               Rp {kegiatan.paguAnggaran.toLocaleString('id-ID')}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-600 mb-1">Anggaran Diminta</div>
+            <div className="text-2xl font-bold text-indigo-600">
+              Rp {kegiatan.anggaranDiminta?.toLocaleString('id-ID') || '0'}
             </div>
           </div>
           <div>
@@ -224,13 +194,14 @@ export function DetailKegiatan() {
 
       {/* Timeline Progress */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-6">Timeline Step Progress (6 Tahap)</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-6">Timeline Step Progress ({kegiatan.steps.length} Tahap)</h2>
         
         <div className="relative">
-          {stepList.map((step, index) => {
-            const isCompleted = index < currentStepIndex;
-            const isCurrent = index === currentStepIndex;
-            const isLast = index === stepList.length - 1;
+          {kegiatan.steps.map((step, index) => {
+            const isCompleted = step.selesai;
+            const currentStepIdx = kegiatan.steps.findIndex((s) => !s.selesai);
+            const isCurrent = index === (currentStepIdx === -1 ? kegiatan.steps.length : currentStepIdx);
+            const isLast = index === kegiatan.steps.length - 1;
 
             return (
               <div key={step.id} className="relative flex gap-4 pb-8">
@@ -250,7 +221,7 @@ export function DetailKegiatan() {
                   {isCompleted ? (
                     <CheckCircle className="w-5 h-5 text-white" />
                   ) : (
-                    <span className="text-sm font-medium text-white">{step.id}</span>
+                    <span className="text-sm font-medium text-white">{String.fromCharCode(65 + index)}</span>
                   )}
                 </div>
 
@@ -261,11 +232,10 @@ export function DetailKegiatan() {
                     isCompleted ? 'text-emerald-600' :
                     'text-gray-600'
                   }`}>
-                    {step.name}
+                    {step.nama}
                     {isCurrent && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Sedang Berjalan</span>}
                     {isCompleted && <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Selesai</span>}
                   </div>
-                  <div className="text-sm text-gray-600">{step.description}</div>
                 </div>
               </div>
             );
@@ -344,35 +314,36 @@ export function DetailKegiatan() {
       {/* Action Buttons */}
       <div className="flex gap-3">
         <button
-          onClick={() => setShowModalPanel('progress')}
+          onClick={() => setShowProgressModal(true)}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium cursor-pointer animate-none"
         >
           Update Progress
         </button>
+
         <button
-          onClick={() => setShowModalPanel('realisasi')}
-          className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium cursor-pointer animate-none"
-        >
-          Input Realisasi
-        </button>
-        <button
-          onClick={() => setShowModalPanel('edit')}
+          onClick={() => setShowEditModal(true)}
           className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium cursor-pointer animate-none"
         >
           Edit Kegiatan
         </button>
       </div>
 
-      {showModalPanel && (
+      {showProgressModal && (
         <UpdateProgressModal
           kegiatan={kegiatan}
           steps={kegiatan.steps}
           progress={kegiatan.progress}
-          onClose={() => setShowModalPanel(null)}
+          onClose={() => setShowProgressModal(false)}
           onToggleStep={handleToggleStep}
           onSaveRealisasi={handleSaveRealisasi}
-          onSaveEdit={handleSaveEdit}
-          initialPanel={showModalPanel}
+        />
+      )}
+
+      {showEditModal && (
+        <KegiatanFormModal
+          mode="edit"
+          initialData={kegiatan}
+          onClose={() => setShowEditModal(false)}
         />
       )}
     </div>

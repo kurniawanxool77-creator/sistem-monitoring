@@ -11,6 +11,9 @@ import { LaporanAnggaran } from "./components/LaporanAnggaran";
 import { RoleAkses } from "./components/RoleAkses";
 import { MasterData } from "./components/MasterData";
 import { DetailKegiatan } from "./components/DetailKegiatan";
+import { RealisasiPage } from "./components/RealisasiPage";
+import { LogAktifitas } from "./components/LogAktifitas";
+import { PengaturanAkun } from "./components/PengaturanAkun";
 
 export const router = createBrowserRouter([
   {
@@ -27,10 +30,13 @@ export const router = createBrowserRouter([
       { path: "kalender", Component: KalenderKegiatan },
       { path: "progress", Component: ProgressKegiatan },
       { path: "anggaran", Component: AnggaranRealisasi },
+      { path: "anggaran/realisasi", Component: RealisasiPage },
       { path: "laporan-kegiatan", Component: LaporanKegiatan },
       { path: "laporan-anggaran", Component: LaporanAnggaran },
       { path: "role-akses", Component: RoleAkses },
       { path: "master-data", Component: MasterData },
+      { path: "log-aktifitas", Component: LogAktifitas },
+      { path: "pengaturan-akun", Component: PengaturanAkun },
     ],
   },
 ]);

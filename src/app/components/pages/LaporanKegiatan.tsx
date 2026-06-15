@@ -1,10 +1,34 @@
 import { useState } from 'react';
 import { FileText, Download, Eye, Printer, Share2 } from 'lucide-react';
+import { useAppData } from '../../hooks/useAppData';
 
 export function LaporanKegiatan() {
+  const { getKegiatanList } = useAppData();
+  const kegiatanList = getKegiatanList();
+
+  const [filterQuery, setFilterQuery] = useState('');
   const [filterBagian, setFilterBagian] = useState('semua');
   const [filterBulan, setFilterBulan] = useState('semua');
   const [filterStatus, setFilterStatus] = useState('semua');
+
+  // Filter the kegiatan
+  const filteredKegiatan = kegiatanList.filter(k => {
+    if (filterQuery && !k.nama.toLowerCase().includes(filterQuery.toLowerCase())) return false;
+    if (filterBagian !== 'semua' && !k.bidang.toLowerCase().includes(filterBagian.toLowerCase())) return false;
+    
+    // Check month if filterBulan is not 'semua'
+    if (filterBulan !== 'semua') {
+      const monthStr = String(filterBulan).padStart(2, '0');
+      if (!k.tanggalMulai.includes(`-${monthStr}-`)) return false;
+    }
+    
+    if (filterStatus !== 'semua' && k.status.toLowerCase() !== filterStatus.toLowerCase()) return false;
+    return true;
+  });
+
+  const total = filteredKegiatan.length;
+  const selesai = filteredKegiatan.filter(k => k.status === 'Selesai').length;
+  const berjalan = filteredKegiatan.filter(k => k.status === 'Berjalan').length;
 
   return (
     <div className="space-y-6">
@@ -19,6 +43,8 @@ export function LaporanKegiatan() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Nama Kegiatan</label>
             <input
               type="text"
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
               placeholder="Cari kegiatan..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -35,7 +61,7 @@ export function LaporanKegiatan() {
               <option value="humas">Humas</option>
               <option value="persidangan">Persidangan</option>
               <option value="umum">Umum</option>
-              <option value="Keuangan">Keuangan</option>
+              <option value="keuangan">Keuangan</option>
             </select>
           </div>
           <div>
@@ -96,24 +122,24 @@ export function LaporanKegiatan() {
             <div className="text-center mb-8 pb-6 border-b-2 border-gray-300">
 
               <h1 className="text-2xl font-bold text-gray-900 mb-2">LAPORAN KEGIATAN</h1>
-              <p className="text-gray-600">Periode: Juni 2025</p>
+              <p className="text-gray-600">Periode: {filterBulan === 'semua' ? 'Semua Waktu' : `Bulan ${filterBulan}`}</p>
             </div>
 
             {/* Report Summary */}
             <div className="mb-6">
               <h3 className="font-bold text-gray-900 mb-4">Ringkasan Kegiatan</h3>
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="border border-gray-300 p-4 rounded-lg text-center">
                   <div className="text-sm text-gray-600 mb-1">Total Kegiatan</div>
-                  <div className="text-2xl font-bold text-blue-600">128</div>
+                  <div className="text-2xl font-bold text-gray-900">{total}</div>
                 </div>
-                <div className="bg-emerald-50 p-4 rounded-lg">
+                <div className="border border-gray-300 p-4 rounded-lg text-center">
                   <div className="text-sm text-gray-600 mb-1">Selesai</div>
-                  <div className="text-2xl font-bold text-emerald-600">65</div>
+                  <div className="text-2xl font-bold text-gray-900">{selesai}</div>
                 </div>
-                <div className="bg-amber-50 p-4 rounded-lg">
+                <div className="border border-gray-300 p-4 rounded-lg text-center">
                   <div className="text-sm text-gray-600 mb-1">Berjalan</div>
-                  <div className="text-2xl font-bold text-amber-600">56</div>
+                  <div className="text-2xl font-bold text-gray-900">{berjalan}</div>
                 </div>
               </div>
             </div>
@@ -126,29 +152,25 @@ export function LaporanKegiatan() {
                   <tr>
                     <th className="text-left py-2 px-3 border">No</th>
                     <th className="text-left py-2 px-3 border">Nama Kegiatan</th>
-                    <th className="text-left py-2 px-3 border">Tanggal</th>
+                    <th className="text-left py-2 px-3 border">Tanggal Mulai</th>
                     <th className="text-left py-2 px-3 border">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="py-2 px-3 border">1</td>
-                    <td className="py-2 px-3 border">Pembahasan Raperda APBD 2025-2029</td>
-                    <td className="py-2 px-3 border">12 Mei 2025</td>
-                    <td className="py-2 px-3 border">Berjalan</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-3 border">2</td>
-                    <td className="py-2 px-3 border">Publikasi & Dokumentasi Kegiatan</td>
-                    <td className="py-2 px-3 border">20 Mei 2025</td>
-                    <td className="py-2 px-3 border">Berjalan</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-3 border">3</td>
-                    <td className="py-2 px-3 border">Rapat Koordinasi Pimpinan</td>
-                    <td className="py-2 px-3 border">9 Juni 2025</td>
-                    <td className="py-2 px-3 border">Selesai</td>
-                  </tr>
+                  {filteredKegiatan.length > 0 ? (
+                    filteredKegiatan.map((keg, idx) => (
+                      <tr key={keg.id}>
+                        <td className="py-2 px-3 border">{idx + 1}</td>
+                        <td className="py-2 px-3 border">{keg.nama}</td>
+                        <td className="py-2 px-3 border">{keg.tanggalMulai}</td>
+                        <td className="py-2 px-3 border">{keg.status}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="py-4 text-center text-gray-500 border">Tidak ada kegiatan yang sesuai dengan filter.</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -171,53 +193,7 @@ export function LaporanKegiatan() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <FileText className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900">Laporan Bulanan</h3>
-              <p className="text-sm text-gray-600">Kegiatan per bulan</p>
-            </div>
-          </div>
-          <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
-            Generate Laporan
-          </button>
-        </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-emerald-100 rounded-lg">
-              <FileText className="w-6 h-6 text-emerald-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900">Laporan Tahunan</h3>
-              <p className="text-sm text-gray-600">Kegiatan per tahun</p>
-            </div>
-          </div>
-          <button className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium">
-            Generate Laporan
-          </button>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <FileText className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900">Laporan Custom</h3>
-              <p className="text-sm text-gray-600">Sesuai filter</p>
-            </div>
-          </div>
-          <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium">
-            Generate Laporan
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

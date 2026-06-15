@@ -4,7 +4,8 @@ import {
   FileText, RefreshCw, DollarSign, Edit3,
   Plus, Trash2, Save, ChevronRight, AlertCircle,
 } from 'lucide-react';
-import { Kegiatan, KegiatanStep, anggotaData } from '../lib/data';
+import { Kegiatan, KegiatanStep } from '../../lib/data';
+import { useAppData } from '../../hooks/useAppData';
 
 interface LogItem {
   id: string;
@@ -27,8 +28,6 @@ interface Props {
   onClose: () => void;
   onToggleStep: (stepId: string) => void;
   onSaveRealisasi?: (amount: number) => void;
-  onSaveEdit?: (updatedFields: Partial<Kegiatan>) => void;
-  initialPanel?: ActivePanel;
 }
 
 const STEP_DESCRIPTIONS: Record<string, string> = {
@@ -52,7 +51,6 @@ function nowTime() {
   return new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 }
 
-type ActivePanel = 'progress' | 'edit';
 
 export function UpdateProgressModal({
   kegiatan,
@@ -61,10 +59,10 @@ export function UpdateProgressModal({
   onClose,
   onToggleStep,
   onSaveRealisasi,
-  onSaveEdit,
-  initialPanel,
 }: Props) {
-  const [activePanel, setActivePanel] = useState<ActivePanel>(initialPanel ?? 'progress');
+  const { addActivityLog, addRealisasi, user, updateKegiatanMetadata } = useAppData();
+  const [confirmStep, setConfirmStep] = useState<{ step: KegiatanStep | null; type: 'done' | 'undo' }>({ step: null, type: 'done' });
+  const [undoReason, setUndoReason] = useState('');
   const [docs, setDocs] = useState<DocItem[]>([
     { id: 'd1', nama: 'Dokumen Perencanaan.pdf', ukuran: '245 KB', uploadedAt: '2 hari yang lalu' },
     { id: 'd2', nama: 'Surat Undangan.pdf', ukuran: '128 KB', uploadedAt: '1 hari yang lalu' },
@@ -86,16 +84,7 @@ export function UpdateProgressModal({
     keterangan: '',
   });
 
-  // ── Edit Kegiatan form state ──
-  const [editForm, setEditForm] = useState({
-    nama: kegiatan.nama,
-    penanggungJawab: kegiatan.penanggungJawab,
-    tanggalMulai: kegiatan.tanggalMulai,
-    tanggalSelesai: kegiatan.tanggalSelesai,
-    status: kegiatan.status,
-    deskripsi: kegiatan.deskripsi,
-  });
-  const [editFormSteps, setEditFormSteps] = useState<KegiatanStep[]>(() => kegiatan.steps || steps || []);
+
 
   const doneCount = steps.filter((s) => s.selesai).length;
   const currentStepIdx = steps.findIndex((s) => !s.selesai);
@@ -109,13 +98,63 @@ export function UpdateProgressModal({
       keterangan,
       oleh: 'Administrator Utama',
     }, ...prev]);
+
+    addActivityLog({
+      user: 'Administrator Utama',
+      action: 'Update Progress Kegiatan',
+      details: `${keterangan} pada kegiatan: ${kegiatan.nama}`
+    });
   }
 
-  function handleMarkStep(step: KegiatanStep) {
-    addLog(step.selesai
-      ? `Tahap "${step.nama}" dibatalkan / ditandai belum selesai`
-      : `Tahap "${step.nama}" ditandai selesai`);
+  function handleMarkStepClick(step: KegiatanStep, type: 'done' | 'undo') {
+    if (!kegiatan.isApproved) {
+      alert("Kegiatan ini belum disetujui, progress tidak bisa diupdate.");
+      return;
+    }
+    setConfirmStep({ step, type });
+  }
+
+  function confirmMarkStep() {
+    if (!confirmStep.step) return;
+    const step = confirmStep.step;
+    
+    if (confirmStep.type === 'undo') {
+      const reason = undoReason.trim() ? ` (Alasan: ${undoReason})` : '';
+      addLog(`Tahap "${step.nama}" dibatalkan / ditandai belum selesai${reason}`);
+      
+      const isLastStep = confirmStep.step.id === steps[steps.length - 1].id;
+      if (isLastStep && kegiatan.anggaranDiminta) {
+         addRealisasi(kegiatan.id, -kegiatan.anggaranDiminta);
+         addLog(`Realisasi anggaran ditarik kembali: Rp ${kegiatan.anggaranDiminta.toLocaleString('id-ID')}`);
+      }
+    } else {
+      addLog(`Tahap "${step.nama}" ditandai selesai`);
+      
+      const isLastStep = confirmStep.step.id === steps[steps.length - 1].id;
+      if (isLastStep && kegiatan.anggaranDiminta) {
+         addRealisasi(kegiatan.id, kegiatan.anggaranDiminta);
+         addLog(`Realisasi anggaran otomatis ditambahkan: Rp ${kegiatan.anggaranDiminta.toLocaleString('id-ID')}`);
+      }
+    }
+    
     onToggleStep(step.id);
+    setConfirmStep({ step: null, type: 'done' });
+    setUndoReason('');
+  }
+
+  function handleApprove() {
+    updateKegiatanMetadata({
+      id: kegiatan.id,
+      penanggungJawab: kegiatan.penanggungJawab,
+      tanggalMulai: kegiatan.tanggalMulai,
+      tanggalSelesai: kegiatan.tanggalSelesai,
+      deskripsi: kegiatan.deskripsi,
+      steps: kegiatan.steps,
+      isApproved: true,
+      sumberDana: kegiatan.sumberDana,
+      anggaranDiminta: kegiatan.anggaranDiminta
+    });
+    addLog(`Kegiatan disetujui oleh ${user?.nama || 'Superadmin'}`);
   }
 
   function handleUpload(files: FileList | null) {
@@ -154,73 +193,54 @@ export function UpdateProgressModal({
     setActivePanel('progress');
   }
 
-  function handleSaveEdit() {
-    // Recalculate progress based on current editFormSteps
-    const done = editFormSteps.filter((s) => s.selesai).length;
-    const newProgress = editFormSteps.length > 0 ? Math.round((done / editFormSteps.length) * 100) : 0;
-    
-    let newStatus = editForm.status;
-    if (newProgress === 100) {
-      newStatus = 'Selesai';
-    } else if (editForm.status === 'Selesai') {
-      newStatus = 'Berjalan';
-    }
 
-    let newStep = kegiatan.step;
-    if (newProgress === 100) {
-      newStep = 'Closed';
-    } else if (newProgress >= 86) {
-      newStep = 'Verifikasi';
-    } else if (newProgress >= 66) {
-      newStep = 'Evaluasi';
-    } else if (newProgress >= 36) {
-      newStep = 'Pelaksanaan';
-    } else if (newProgress >= 16) {
-      newStep = 'Koordinasi';
-    } else {
-      newStep = 'Persiapan';
-    }
-
-    addLog(`Data kegiatan diperbarui oleh Administrator Utama`);
-    if (onSaveEdit) {
-      onSaveEdit({
-        nama: editForm.nama,
-        penanggungJawab: editForm.penanggungJawab,
-        tanggalMulai: editForm.tanggalMulai,
-        tanggalSelesai: editForm.tanggalSelesai,
-        status: newStatus as any,
-        progress: newProgress,
-        step: newStep as any,
-        steps: editFormSteps,
-        deskripsi: editForm.deskripsi,
-      });
-    }
-    setActivePanel('progress');
-  }
-
-  const BULAN_LIST = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-
-  const navTabs: { key: ActivePanel; label: string; icon: React.ReactNode; color: string; activeColor: string }[] = [
-    {
-      key: 'progress',
-      label: 'Update Progress',
-      icon: <RefreshCw className="w-4 h-4" />,
-      color: 'border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600',
-      activeColor: 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200',
-    },
-
-    {
-      key: 'edit',
-      label: 'Edit Kegiatan',
-      icon: <Edit3 className="w-4 h-4" />,
-      color: 'border-gray-200 text-gray-600 hover:border-amber-300 hover:text-amber-600',
-      activeColor: 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-200',
-    },
-  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden relative">
+
+        {/* ── Confirmation Modal Overlay ── */}
+        {confirmStep.step && (
+          <div className="absolute inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 bg-blue-50 flex items-center gap-3">
+                <AlertCircle className="w-6 h-6 text-blue-600" />
+                <h3 className="font-bold text-gray-900">
+                  {confirmStep.type === 'done' ? 'Verifikasi Tahapan' : 'Batalkan Tahapan'}
+                </h3>
+              </div>
+              <div className="p-6">
+                <p className="text-sm text-gray-600 mb-4">
+                  {confirmStep.type === 'done' 
+                    ? `Apakah Anda yakin tahap "${confirmStep.step.nama}" sudah betul-betul terlaksanakan sesuai prosedur?`
+                    : `Apakah Anda yakin ingin mengembalikan status tahap "${confirmStep.step.nama}" menjadi belum selesai?`}
+                </p>
+                
+                {confirmStep.type === 'undo' && (
+                  <div className="mb-4">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Alasan Perubahan (Opsional)</label>
+                    <textarea 
+                      value={undoReason} 
+                      onChange={(e) => setUndoReason(e.target.value)}
+                      placeholder="Masukkan detail alasan pembatalan..."
+                      className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                      rows={3}
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3">
+                  <button onClick={() => { setConfirmStep({ step: null, type: 'done' }); setUndoReason(''); }} className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                    Kembali
+                  </button>
+                  <button onClick={confirmMarkStep} className={`flex-1 px-4 py-2.5 text-sm font-bold text-white rounded-lg transition-colors shadow-md ${confirmStep.type === 'done' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' : 'bg-red-600 hover:bg-red-700 shadow-red-200'}`}>
+                    Ya, {confirmStep.type === 'done' ? 'Selesai' : 'Batalkan'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-[#1e3a5f] to-blue-700">
@@ -245,21 +265,7 @@ export function UpdateProgressModal({
           </div>
         </div>
 
-        {/* ── Tab Navigation ── */}
-        <div className="flex gap-2 px-6 pt-4 pb-0 bg-gray-50 border-b border-gray-200">
-          {navTabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActivePanel(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl border-2 border-b-0 text-sm font-semibold transition-all -mb-px ${
-                activePanel === tab.key ? tab.activeColor : `bg-white ${tab.color}`
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
+
 
         {/* hidden file input — always mounted so ref works across all panels */}
         <input ref={fileInputRef} type="file" multiple className="hidden"
@@ -323,8 +329,7 @@ export function UpdateProgressModal({
           {/* RIGHT — tab content */}
           <div className="flex-1 overflow-y-auto">
 
-            {/* ── TAB: UPDATE PROGRESS ── */}
-            {activePanel === 'progress' && (
+            {/* ── UPDATE PROGRESS ── */}
               <div className="p-6 space-y-6">
                 {/* Current step highlight */}
                 {!allDone && currentStepIdx >= 0 && (
@@ -335,13 +340,29 @@ export function UpdateProgressModal({
                         <div className="text-base font-bold text-blue-900">{steps[currentStepIdx]?.nama}</div>
                         <div className="text-sm text-blue-600 mt-0.5">{getDesc(steps[currentStepIdx]?.nama)}</div>
                       </div>
-                      <button
-                        onClick={() => handleMarkStep(steps[currentStepIdx])}
-                        className="flex-shrink-0 flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 shadow-md shadow-blue-200 transition-all hover:scale-105"
-                      >
-                        <Check className="w-4 h-4" strokeWidth={3} />
-                        Tandai Selesai
-                      </button>
+                      {!kegiatan.isApproved ? (
+                        user?.role === 'superadmin' ? (
+                          <button
+                            onClick={handleApprove}
+                            className="flex-shrink-0 flex items-center gap-2 bg-amber-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-amber-600 shadow-md shadow-amber-200 transition-all hover:scale-105"
+                          >
+                            <Check className="w-4 h-4" strokeWidth={3} />
+                            Approve Kegiatan
+                          </button>
+                        ) : (
+                          <div className="text-sm text-amber-700 font-bold bg-amber-100 px-4 py-2 rounded-lg border border-amber-200 shadow-sm">
+                            Menunggu Approval
+                          </div>
+                        )
+                      ) : (
+                        <button
+                          onClick={() => handleMarkStepClick(steps[currentStepIdx], 'done')}
+                          className="flex-shrink-0 flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 shadow-md shadow-blue-200 transition-all hover:scale-105"
+                        >
+                          <Check className="w-4 h-4" strokeWidth={3} />
+                          Tandai Selesai
+                        </button>
+                      )}
                     </div>
                     <div className="mt-3 flex items-center gap-2">
                       <div className="flex-1 bg-blue-200 rounded-full h-2">
@@ -349,18 +370,41 @@ export function UpdateProgressModal({
                       </div>
                       <span className="text-xs font-bold text-blue-700">{progress}%</span>
                     </div>
+
+                    {/* Undo Previous Step Button */}
+                    {currentStepIdx > 0 && kegiatan.isApproved && (
+                      <div className="mt-4 flex justify-end">
+                        <button 
+                          onClick={() => handleMarkStepClick(steps[currentStepIdx - 1], 'undo')}
+                          className="text-xs text-red-500 hover:text-red-700 font-semibold underline flex items-center gap-1 transition-colors"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          Batalkan tahap sebelumnya ({steps[currentStepIdx - 1].nama})
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {allDone && (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <FileCheck className="w-6 h-6 text-white" />
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <FileCheck className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-base font-bold text-emerald-800">Kegiatan Selesai Sempurna</div>
+                        <div className="text-sm text-emerald-600">Semua tahap telah terverifikasi</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-base font-bold text-emerald-800">Kegiatan Selesai Sempurna</div>
-                      <div className="text-sm text-emerald-600">Semua tahap telah terverifikasi</div>
-                    </div>
+                    {kegiatan.isApproved && steps.length > 0 && (
+                      <button 
+                        onClick={() => handleMarkStepClick(steps[steps.length - 1], 'undo')}
+                        className="text-xs text-red-500 hover:text-red-700 font-semibold underline whitespace-nowrap transition-colors"
+                      >
+                        Batalkan tahap terakhir
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -447,153 +491,15 @@ export function UpdateProgressModal({
                   </div>
                 </div>
               </div>
-            )}
-
-
-
-            {/* ── TAB: EDIT KEGIATAN ── */}
-            {activePanel === 'edit' && (
-              <div className="p-6 space-y-4">
-                <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-amber-700">
-                    Perubahan data kegiatan akan tercatat di log aktivitas. Pastikan data yang diubah sudah benar.
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Kegiatan</label>
-                  <input type="text" value={editForm.nama}
-                    onChange={(e) => setEditForm((f) => ({ ...f, nama: e.target.value }))}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Penanggung Jawab</label>
-                  <input list="modal-anggota-list" type="text" value={editForm.penanggungJawab}
-                    onChange={(e) => setEditForm((f) => ({ ...f, penanggungJawab: e.target.value }))}
-                    placeholder="Ketik untuk mencari penanggung jawab..."
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
-                  <datalist id="modal-anggota-list">
-                    {anggotaData.map(a => <option key={a.id} value={a.nama}>{a.nama} - {a.jabatan}</option>)}
-                  </datalist>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tanggal Mulai</label>
-                    <input type="date" value={editForm.tanggalMulai}
-                      onChange={(e) => setEditForm((f) => ({ ...f, tanggalMulai: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tanggal Selesai</label>
-                    <input type="date" value={editForm.tanggalSelesai}
-                      onChange={(e) => setEditForm((f) => ({ ...f, tanggalSelesai: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
-                  </div>
-                </div>
-
-
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Deskripsi</label>
-                  <textarea value={editForm.deskripsi}
-                    onChange={(e) => setEditForm((f) => ({ ...f, deskripsi: e.target.value }))}
-                    rows={3}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none" />
-                </div>
-
-                {/* Edit Steps / Tahapan */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-                    <label className="block text-sm font-semibold text-gray-700">Tahapan Progress</label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newId = `step-${Date.now()}`;
-                        setEditFormSteps([...editFormSteps, { id: newId, nama: `Tahap Baru`, selesai: false }]);
-                      }}
-                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-bold cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Tambah Tahap
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-xl p-3 bg-gray-50/50">
-                    {editFormSteps.map((step, idx) => {
-                      return (
-                        <div key={step.id} className="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
-                          {/* Step letter indicator */}
-                          <div className="w-6 h-6 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-[10px] font-bold text-blue-600 flex-shrink-0">
-                            {String.fromCharCode(65 + idx)}
-                          </div>
-                          {/* Step name input */}
-                          <input
-                            type="text"
-                            value={step.nama}
-                            onChange={(e) => {
-                              const updated = editFormSteps.map((s, sIdx) => 
-                                sIdx === idx ? { ...s, nama: e.target.value } : s
-                              );
-                              setEditFormSteps(updated);
-                            }}
-                            placeholder={`Nama tahapan ${idx + 1}`}
-                            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
-                          />
-
-                          {/* Delete button */}
-                          {editFormSteps.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updated = editFormSteps.filter((_, sIdx) => sIdx !== idx);
-                                setEditFormSteps(updated);
-                              }}
-                              className="p-1 text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0 cursor-pointer"
-                              title="Hapus tahapan"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {editFormSteps.length === 0 && (
-                      <div className="text-center py-4 text-xs text-gray-400">Belum ada tahapan. Klik Tambah Tahap di atas.</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button onClick={() => setActivePanel('progress')}
-                    className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">
-                    Batal
-                  </button>
-                  <button onClick={handleSaveEdit}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-bold hover:bg-amber-600 shadow-md shadow-amber-200 transition-all">
-                    <Save className="w-4 h-4" /> Simpan Perubahan
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex items-center gap-2 px-6 py-3 border-t border-gray-200 bg-gray-50">
-          {navTabs.map((tab) => (
-            <button key={tab.key} onClick={() => setActivePanel(tab.key)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border-2 transition-all ${
-                activePanel === tab.key ? tab.activeColor : `bg-white ${tab.color}`
-              }`}>
-              {tab.icon}{tab.label}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <button onClick={onClose} 
+              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-md shadow-blue-200 transition-all">
+              <Check className="w-4 h-4" strokeWidth={3} /> Selesai & Tutup
             </button>
-          ))}
-          <div className="flex-1" />
-          <button onClick={onClose} className="px-4 py-2 text-gray-500 hover:text-gray-700 text-xs font-medium">
-            Tutup
-          </button>
         </div>
       </div>
     </div>

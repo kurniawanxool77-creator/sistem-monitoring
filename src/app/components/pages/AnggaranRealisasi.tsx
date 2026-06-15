@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   DollarSign, TrendingUp, PieChart as PieChartIcon, Upload,
-  X, Save, ChevronDown, ChevronRight, Plus, Minus, AlertCircle,
+  X, Save, ChevronDown, ChevronRight, Plus, Minus, AlertCircle, Wallet
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -9,10 +9,9 @@ import {
 } from 'recharts';
 import {
   PAGU_TOTAL, BULAN_SINGKAT, BULAN_NAMES, buildMonthlyBudget,
-  realisasiPerBulan as INITIAL_REALISASI, uraianAnggaran,
-} from '../lib/data';
-import { DetailSSKView } from './DetailSSKView';
-import { UraianKegiatanTable } from './UraianKegiatanTable';
+  realisasiPerBulan as INITIAL_REALISASI,
+} from '../../lib/data';
+import { useAppData } from '../../hooks/useAppData';
 
 function formatRp(n: number, short = false) {
   if (short) {
@@ -23,10 +22,9 @@ function formatRp(n: number, short = false) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 }
 
-type TabKey = 'bulanan' | 'uraian';
-
 export function AnggaranRealisasi() {
-  const [activeTab, setActiveTab] = useState<TabKey>('bulanan');
+  const { dataUraian: uraianAnggaran } = useAppData();
+
   const [showInputModal, setShowInputModal] = useState(false);
   const [showPaguModal, setShowPaguModal] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number>(2026);
@@ -61,21 +59,34 @@ export function AnggaranRealisasi() {
   const [tahunAnggaranInput, setTahunAnggaranInput] = useState<number>(2026);
   const [expandedKode, setExpandedKode] = useState<Set<string>>(new Set(['1', '2', '3', '4', '5']));
 
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+
   const currentData = yearlyData[selectedYear] || { pagu: 0, realisasi: Array(12).fill(0) };
-  const paguTotal = currentData.pagu;
-  const realisasiArr = currentData.realisasi;
+  
+  const uraianTotal = uraianAnggaran.reduce((a, u) => u.level === 1 ? a + u.target : a, 0);
+  const uraianRealisasiTotal = uraianAnggaran.reduce((a, u) => u.level === 1 ? a + u.realisasi : a, 0);
+
+  // Gunakan data dari Master Data
+  const paguTotal = uraianTotal > 0 ? uraianTotal : currentData.pagu;
+  
+  // Skalakan mock realisasi per bulan agar totalnya cocok dengan realisasi dari Master Data
+  const mockRealisasiTotal = currentData.realisasi.reduce((a,b) => a+b, 0) || 1;
+  const realisasiArr = uraianRealisasiTotal > 0 
+    ? currentData.realisasi.map(r => (r / mockRealisasiTotal) * uraianRealisasiTotal)
+    : currentData.realisasi;
 
   // Input realisasi form
   const [inputForm, setInputForm] = useState({ bulanIdx: -1, nominal: '', keterangan: '' });
 
   const monthly = useMemo(() => buildMonthlyBudget(paguTotal, realisasiArr), [paguTotal, realisasiArr]);
 
-  const totalRealisasi = realisasiArr.reduce((a, b) => a + b, 0);
+  const totalRealisasi = uraianRealisasiTotal > 0 ? uraianRealisasiTotal : realisasiArr.reduce((a, b) => a + b, 0);
   const totalSisa = paguTotal - totalRealisasi;
   const pctSerapan = paguTotal > 0 ? ((totalRealisasi / paguTotal) * 100).toFixed(1) : '0';
 
-  const bulanJalan = realisasiArr.filter((r) => r > 0).length;
-  const realisasiTarget = bulanJalan > 0 ? paguTotal * (bulanJalan / 12) : paguTotal / 12;
+  const bulanJalan = realisasiArr.filter((r) => r > 0).length || 1;
+  const realisasiTarget = paguTotal * (bulanJalan / 12);
   const statusSerapan = totalRealisasi >= realisasiTarget ? 'On Track' : 'Di Bawah Target';
 
   // Bar chart data — only months with data or current
@@ -143,11 +154,35 @@ export function AnggaranRealisasi() {
     setShowInputModal(false);
   }
 
-  const uraianTotal = uraianAnggaran.reduce((a, u) => u.level === 1 ? a + u.target : a, 0);
-  const uraianRealisasiTotal = uraianAnggaran.reduce((a, u) => u.level === 1 ? a + u.realisasi : a, 0);
+  // No longer needed as we declare it above
+  // const uraianTotal = uraianAnggaran.reduce((a, u) => u.level === 1 ? a + u.target : a, 0);
+  // const uraianRealisasiTotal = uraianAnggaran.reduce((a, u) => u.level === 1 ? a + u.realisasi : a, 0);
 
   return (
     <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { title: "TOTAL PAGU", value: formatRp(paguTotal, true), color: "bg-blue-500", icon: DollarSign, detail: `Tahun Anggaran ${selectedYear}` },
+          { title: "TOTAL REALISASI", value: formatRp(totalRealisasi, true), color: "bg-emerald-500", icon: TrendingUp, detail: "Terserap" },
+          { title: "SISA ANGGARAN", value: formatRp(paguTotal - totalRealisasi, true), color: "bg-amber-500", icon: Wallet, detail: "Sisa Pagu" },
+          { title: "PERSENTASE CAPAIAN", value: `${(paguTotal > 0 ? (totalRealisasi / paguTotal) * 100 : 0).toFixed(1)}%`, color: "bg-purple-500", icon: PieChartIcon, detail: "Dari Total Pagu" }
+        ].map((c, i) => (
+          <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg hover:border-blue-300 active:scale-95 flex flex-col justify-between">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1 pr-2 min-w-0">
+                <div className="text-xs font-bold text-gray-500 mb-1 truncate">{c.title}</div>
+                <div className="text-3xl font-bold text-gray-900 truncate">{c.value}</div>
+              </div>
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${c.color}`}>
+                <c.icon className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <div className="text-xs text-gray-500 mt-1">{c.detail}</div>
+          </div>
+        ))}
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
@@ -161,31 +196,19 @@ export function AnggaranRealisasi() {
         </div>
 
         <div className="flex gap-2">
-          <button onClick={() => { setPaguInput(String(paguTotal)); setTahunAnggaranInput(selectedYear); setShowPaguModal(true); }}
-            className="flex items-center gap-2 border border-blue-300 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 text-sm font-semibold transition-colors">
-            <DollarSign className="w-4 h-4" /> Set Pagu Anggaran
-          </button>
-          <button onClick={() => setShowInputModal(true)}
-            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors text-sm font-semibold">
-            <Upload className="w-4 h-4" /> Input Realisasi
-          </button>
+          {user?.role === 'superadmin' && (
+            <>
+              <button onClick={() => { setPaguInput(String(paguTotal)); setTahunAnggaranInput(selectedYear); setShowPaguModal(true); }}
+                className="flex items-center gap-2 border border-blue-300 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 text-sm font-semibold transition-colors">
+                <DollarSign className="w-4 h-4" /> Set Pagu Anggaran
+              </button>
+              <button onClick={() => setShowInputModal(true)}
+                className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors text-sm font-semibold">
+                <Upload className="w-4 h-4" /> Input Realisasi
+              </button>
+            </>
+          )}
         </div>
-      </div>
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Pagu', value: formatRp(paguTotal, true), sub: `Tahun ${selectedYear}`, color: 'from-blue-500 to-blue-600', icon: <DollarSign className="w-6 h-6" /> },
-          { label: 'Total Realisasi', value: formatRp(totalRealisasi, true), sub: `${pctSerapan}% terserap`, color: 'from-emerald-500 to-emerald-600', icon: <TrendingUp className="w-6 h-6" /> },
-          { label: 'Sisa Anggaran', value: formatRp(totalSisa, true), sub: `${(100 - parseFloat(pctSerapan)).toFixed(1)}% tersisa`, color: 'from-amber-500 to-amber-600', icon: <PieChartIcon className="w-6 h-6" /> },
-          { label: 'Status Serapan', value: parseFloat(pctSerapan) >= 40 ? 'On Track' : 'Perlu Perhatian', sub: `Pagu/bln: ${formatRp(Math.round(paguTotal / 12), true)}`, color: parseFloat(pctSerapan) >= 40 ? 'from-purple-500 to-purple-600' : 'from-red-500 to-red-600', icon: <TrendingUp className="w-6 h-6" /> },
-        ].map((c) => (
-          <div key={c.label} className={`bg-gradient-to-br ${c.color} rounded-xl p-5 text-white`}>
-            <div className="flex items-center justify-between mb-2">{c.icon}<span className="text-xs text-white/70">{c.label}</span></div>
-            <div className="text-xl font-black mb-0.5">{c.value}</div>
-            <div className="text-xs text-white/70">{c.sub}</div>
-          </div>
-        ))}
       </div>
 
       {/* Charts row */}
@@ -238,26 +261,12 @@ export function AnggaranRealisasi() {
         </div>
       </div>
 
-      {/* Tab: Bulanan / Uraian */}
+      {/* Realisasi Per Bulan */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="flex border-b border-gray-200">
-          {([
-            { key: 'bulanan', label: '📅 Realisasi Per Bulan' },
-            { key: 'uraian', label: '📋 Uraian Kegiatan' },
-          ] as { key: TabKey; label: string }[]).map((tab) => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all ${activeTab === tab.key
-                  ? 'border-blue-600 text-blue-700 bg-blue-50'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}>
-              {tab.label}
-            </button>
-          ))}
+        <div className="px-5 py-3 border-b border-gray-200">
+          <h3 className="text-sm font-bold text-gray-800">📅 Realisasi Per Bulan</h3>
         </div>
-
-        {/* ── TAB: BULANAN ── */}
-        {activeTab === 'bulanan' && (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
@@ -314,12 +323,16 @@ export function AnggaranRealisasi() {
                         )}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <button
-                          onClick={() => { setInputForm({ bulanIdx: i, nominal: String(m.realisasi || ''), keterangan: '' }); setShowInputModal(true); }}
-                          className="text-xs text-blue-600 hover:text-blue-700 font-semibold hover:underline"
-                        >
-                          {hasData ? 'Edit' : '+ Input'}
-                        </button>
+                        {user?.role === 'superadmin' ? (
+                          <button
+                            onClick={() => { setInputForm({ bulanIdx: i, nominal: String(m.realisasi || ''), keterangan: '' }); setShowInputModal(true); }}
+                            className="text-xs text-blue-600 hover:text-blue-700 font-semibold hover:underline"
+                          >
+                            {hasData ? 'Edit' : '+ Input'}
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -342,15 +355,7 @@ export function AnggaranRealisasi() {
                 </tr>
               </tbody>
             </table>
-          </div>
-        )}
-
-        {/* ── TAB: URAIAN ── */}
-        {activeTab === 'uraian' && (
-          <div className="pt-4">
-            <UraianKegiatanTable />
-          </div>
-        )}
+        </div>
       </div>
 
       {/* ── Modal: Set Pagu Anggaran ── */}

@@ -306,242 +306,9 @@ export interface Bagian {
 }
 
 // Progress berdasarkan Realisasi Fisik S/D Mei 2026 (sumber: E-Controlling 2026)
-export const bagianList: Bagian[] = [
-  { id: '1', nama: 'Sekretariat DPRD', progress: 100, warna: 'bg-blue-500' },
-  { id: '2', nama: 'Bagian Humas', progress: 54, warna: 'bg-orange-500' },
-  { id: '3', nama: 'Bagian Umum', progress: 42, warna: 'bg-emerald-500' },
-  { id: '4', nama: 'Bagian Persidangan', progress: 37, warna: 'bg-purple-500' },
-  { id: '5', nama: 'Keuangan', progress: 42, warna: 'bg-amber-500' },
-];
+// bagianList dynamically derived at the bottom of the file
 
-export const kegiatanList: Kegiatan[] = [
-  {
-    id: '1',
-    nama: 'Pembahasan Raperda APBD 2025-2029',
-    bidang: 'Sekretariat DPRD',
-    subBidang: 'Persidangan',
-    penanggungJawab: 'Rapat Paripurna',
-    tanggalMulai: '2025-05-12',
-    tanggalSelesai: '2025-07-12',
-    status: 'Selesai',
-    progress: 100,
-    paguAnggaran: 450000000,
-    realisasiAnggaran: 450000000,
-    deskripsi: 'Pembahasan dan persetujuan Raperda APBD untuk periode 2025-2029',
-    step: 'Closed',
-    steps: [
-      { id: 's1-1', nama: 'Persiapan Dokumen Raperda', selesai: true },
-      { id: 's1-2', nama: 'Koordinasi dengan Komisi', selesai: true },
-      { id: 's1-3', nama: 'Rapat Pembahasan Internal', selesai: true },
-      { id: 's1-4', nama: 'Sidang Paripurna', selesai: true },
-      { id: 's1-5', nama: 'Pengesahan Raperda', selesai: true },
-      { id: 's1-6', nama: 'Verifikasi Dokumen', selesai: true },
-    ],
-  },
-  {
-    id: '2',
-    nama: 'Publikasi & Dokumentasi Kegiatan',
-    bidang: 'Bagian Humas',
-    subBidang: 'Humas & Publikasi',
-    penanggungJawab: 'Kepala Humas',
-    tanggalMulai: '2025-05-20',
-    tanggalSelesai: '2025-06-26',
-    status: 'Berjalan',
-    progress: 45,
-    paguAnggaran: 320000000,
-    realisasiAnggaran: 144000000,
-    deskripsi: 'Dokumentasi dan publikasi kegiatan DPRD ke media massa',
-    step: 'Koordinasi',
-    steps: [
-      { id: 's2-1', nama: 'Penyusunan Rencana Publikasi', selesai: true },
-      { id: 's2-2', nama: 'Koordinasi Media Partner', selesai: true },
-      { id: 's2-3', nama: 'Liputan Kegiatan', selesai: false },
-      { id: 's2-4', nama: 'Pengeditan & Review Konten', selesai: false },
-      { id: 's2-5', nama: 'Publikasi ke Media', selesai: false },
-      { id: 's2-6', nama: 'Verifikasi Dokumen', selesai: false },
-    ],
-  },
-  {
-    id: '3',
-    nama: 'Rapat Koordinasi Pimpinan',
-    bidang: 'Sekretariat DPRD',
-    subBidang: 'Sekretariat',
-    penanggungJawab: 'Pimpinan DPRD',
-    tanggalMulai: '2025-06-09',
-    tanggalSelesai: '2025-06-30',
-    status: 'Selesai',
-    progress: 100,
-    paguAnggaran: 150000000,
-    realisasiAnggaran: 150000000,
-    deskripsi: 'Koordinasi rutin pimpinan DPRD',
-    step: 'Closed',
-    steps: [
-      { id: 's3-1', nama: 'Penyiapan Agenda Rapat', selesai: true },
-      { id: 's3-2', nama: 'Undangan & Konfirmasi Peserta', selesai: true },
-      { id: 's3-3', nama: 'Pelaksanaan Rapat', selesai: true },
-      { id: 's3-4', nama: 'Notulensi & Tindak Lanjut', selesai: true },
-      { id: 's3-5', nama: 'Verifikasi Dokumen', selesai: true },
-    ],
-  },
-  {
-    id: '4',
-    nama: 'Penyusunan Laporan Keuangan Triwulan',
-    bidang: 'Keuangan',
-    subBidang: 'Pelaporan',
-    penanggungJawab: 'Kepala Keuangan',
-    tanggalMulai: '2025-06-01',
-    tanggalSelesai: '2025-06-14',
-    status: 'Terlambat',
-    progress: 40,
-    paguAnggaran: 280000000,
-    realisasiAnggaran: 112000000,
-    deskripsi: 'Penyusunan laporan keuangan triwulan',
-    step: 'Pelaksanaan',
-    steps: [
-      { id: 's4-1', nama: 'Pengumpulan Data Keuangan', selesai: true },
-      { id: 's4-2', nama: 'Rekonsiliasi Anggaran', selesai: true },
-      { id: 's4-3', nama: 'Penyusunan Draft Laporan', selesai: false },
-      { id: 's4-4', nama: 'Review Internal', selesai: false },
-      { id: 's4-5', nama: 'Perbaikan & Finalisasi', selesai: false },
-      { id: 's4-6', nama: 'Verifikasi Dokumen', selesai: false },
-    ],
-  },
-  {
-    id: '5',
-    nama: 'Sidang Paripurna Pembahasan Raperda',
-    bidang: 'Bagian Persidangan',
-    subBidang: 'Persidangan',
-    penanggungJawab: 'Ketua DPRD',
-    tanggalMulai: '2025-06-12',
-    tanggalSelesai: '2025-06-20',
-    status: 'Berjalan',
-    progress: 85,
-    paguAnggaran: 200000000,
-    realisasiAnggaran: 170000000,
-    deskripsi: 'Sidang paripurna pembahasan raperda',
-    step: 'Evaluasi',
-    steps: [
-      { id: 's5-1', nama: 'Persiapan Ruang Sidang', selesai: true },
-      { id: 's5-2', nama: 'Distribusi Materi Sidang', selesai: true },
-      { id: 's5-3', nama: 'Pembukaan Sidang', selesai: true },
-      { id: 's5-4', nama: 'Pembahasan Agenda', selesai: true },
-      { id: 's5-5', nama: 'Pengambilan Keputusan', selesai: true },
-      { id: 's5-6', nama: 'Verifikasi Dokumen', selesai: false },
-    ],
-  },
-  {
-    id: '6',
-    nama: 'Pengelolaan Arsip & Surat Dinas',
-    bidang: 'Bagian Umum',
-    subBidang: 'Tata Usaha',
-    penanggungJawab: 'Kepala Bagian Umum',
-    tanggalMulai: '2025-06-01',
-    tanggalSelesai: '2025-06-30',
-    status: 'Berjalan',
-    progress: 60,
-    paguAnggaran: 120000000,
-    realisasiAnggaran: 72000000,
-    deskripsi: 'Pengelolaan arsip dan surat-surat dinas DPRD',
-    step: 'Pelaksanaan',
-    steps: [
-      { id: 's6-1', nama: 'Inventarisasi Arsip Lama', selesai: true },
-      { id: 's6-2', nama: 'Digitalisasi Dokumen', selesai: true },
-      { id: 's6-3', nama: 'Penataan Sistem Kearsipan', selesai: true },
-      { id: 's6-4', nama: 'Monitoring & Evaluasi', selesai: false },
-      { id: 's6-5', nama: 'Verifikasi Dokumen', selesai: false },
-    ],
-  },
-  {
-    id: '7',
-    nama: 'Siaran Pers & Media Sosial DPRD',
-    bidang: 'Bagian Humas',
-    subBidang: 'Humas & Publikasi',
-    penanggungJawab: 'Kepala Humas',
-    tanggalMulai: '2025-06-05',
-    tanggalSelesai: '2025-07-05',
-    status: 'Berjalan',
-    progress: 50,
-    paguAnggaran: 180000000,
-    realisasiAnggaran: 90000000,
-    deskripsi: 'Pengelolaan siaran pers dan konten media sosial DPRD',
-    step: 'Pelaksanaan',
-    steps: [
-      { id: 's7-1', nama: 'Penyusunan Kalender Konten', selesai: true },
-      { id: 's7-2', nama: 'Pembuatan Konten Media Sosial', selesai: true },
-      { id: 's7-3', nama: 'Distribusi Siaran Pers', selesai: false },
-      { id: 's7-4', nama: 'Monitoring & Evaluasi', selesai: false },
-      { id: 's7-5', nama: 'Verifikasi Dokumen', selesai: false },
-    ],
-  },
-  {
-    id: '8',
-    nama: 'Pengadaan Perlengkapan Kantor',
-    bidang: 'Bagian Umum',
-    subBidang: 'Perlengkapan',
-    penanggungJawab: 'Kepala Bagian Umum',
-    tanggalMulai: '2025-06-10',
-    tanggalSelesai: '2025-07-10',
-    status: 'Berjalan',
-    progress: 35,
-    paguAnggaran: 250000000,
-    realisasiAnggaran: 87500000,
-    deskripsi: 'Pengadaan perlengkapan dan peralatan kantor DPRD',
-    step: 'Koordinasi',
-    steps: [
-      { id: 's8-1', nama: 'Identifikasi Kebutuhan', selesai: true },
-      { id: 's8-2', nama: 'Penyusunan Spesifikasi', selesai: true },
-      { id: 's8-3', nama: 'Proses Pengadaan / Lelang', selesai: false },
-      { id: 's8-4', nama: 'Penerimaan & Pemeriksaan Barang', selesai: false },
-      { id: 's8-5', nama: 'Distribusi ke Unit Kerja', selesai: false },
-      { id: 's8-6', nama: 'Verifikasi Dokumen', selesai: false },
-    ],
-  },
-  {
-    id: '9',
-    nama: 'Pembayaran Gaji & Tunjangan',
-    bidang: 'Keuangan',
-    subBidang: 'Penggajian',
-    penanggungJawab: 'Bendahara',
-    tanggalMulai: '2025-06-01',
-    tanggalSelesai: '2025-06-05',
-    status: 'Selesai',
-    progress: 100,
-    paguAnggaran: 5800000000,
-    realisasiAnggaran: 5800000000,
-    deskripsi: 'Pembayaran gaji dan tunjangan anggota & pegawai DPRD',
-    step: 'Closed',
-    steps: [
-      { id: 's9-1', nama: 'Rekap Daftar Gaji', selesai: true },
-      { id: 's9-2', nama: 'Verifikasi Data Pegawai', selesai: true },
-      { id: 's9-3', nama: 'Pencairan Dana', selesai: true },
-      { id: 's9-4', nama: 'Transfer / Pembayaran', selesai: true },
-      { id: 's9-5', nama: 'Verifikasi Dokumen', selesai: true },
-    ],
-  },
-  {
-    id: '10',
-    nama: 'Rapat Panitia Khusus Raperda',
-    bidang: 'Bagian Persidangan',
-    subBidang: 'Persidangan',
-    penanggungJawab: 'Ketua Pansus',
-    tanggalMulai: '2025-06-15',
-    tanggalSelesai: '2025-07-15',
-    status: 'Berjalan',
-    progress: 20,
-    paguAnggaran: 175000000,
-    realisasiAnggaran: 35000000,
-    deskripsi: 'Rapat Pansus pembahasan Raperda inisiatif DPRD',
-    step: 'Persiapan',
-    steps: [
-      { id: 's10-1', nama: 'Pembentukan Pansus', selesai: true },
-      { id: 's10-2', nama: 'Penyusunan Jadwal Rapat', selesai: false },
-      { id: 's10-3', nama: 'Pembahasan Draft Raperda', selesai: false },
-      { id: 's10-4', nama: 'Konsultasi Publik', selesai: false },
-      { id: 's10-5', nama: 'Finalisasi Raperda', selesai: false },
-      { id: 's10-6', nama: 'Verifikasi Dokumen', selesai: false },
-    ],
-  },
-];
+// kegiatanList dynamically derived at the bottom of the file
 
 export const notifikasiList = [
   {
@@ -574,69 +341,9 @@ export const notifikasiList = [
   },
 ];
 
-export const agendaHariIni = [
-  {
-    id: '1',
-    waktu: '09:00',
-    status: 'berlangsung' as const,
-    nama: 'Rapat Koordinasi Pimpinan',
-    lokasi: 'Ruang Rapat Pimpinan',
-    badge: 'Berlangsung',
-  },
-  {
-    id: '2',
-    waktu: '10:00',
-    status: 'berlangsung' as const,
-    nama: 'Pengecekan Perlengkapan Sidang',
-    lokasi: 'Ruang Sidang Paripurna',
-    badge: 'Berlangsung',
-  },
-  {
-    id: '3',
-    waktu: '13:00',
-    status: 'terjadwal' as const,
-    nama: 'Liputan & Publikasi Kegiatan',
-    lokasi: 'Ruang Media',
-    badge: 'Terjadwal',
-  },
-  {
-    id: '4',
-    waktu: '14:00',
-    status: 'terjadwal' as const,
-    nama: 'Penyusunan Laporan Keuangan',
-    lokasi: 'Ruang Keuangan',
-    badge: 'Terjadwal',
-  },
-];
+// agendaHariIni dynamically derived at the bottom of the file
 
-export const kegiatanPerBagian: Record<string, { id: string; nama: string; tanggal: string; progress: number; status: string; step: string }[]> = {
-  'Sekretariat DPRD': [
-    { id: 'k1', nama: 'Penyusunan Dokumen Perencanaan Perangkat Daerah', tanggal: '1 Jan – 31 Des 2026', progress: 100, status: 'Selesai', step: 'Closed' },
-    { id: 'k3', nama: 'Evaluasi Kinerja Perangkat Daerah', tanggal: '1 Jan – 31 Des 2026', progress: 100, status: 'Selesai', step: 'Closed' },
-    { id: 'ka', nama: 'Penyediaan Gaji dan Tunjangan ASN', tanggal: '1 Jan – 31 Des 2026', progress: 100, status: 'Selesai', step: 'Closed' },
-  ],
-  'Bagian Humas': [
-    { id: 'k2', nama: 'Penyelenggaraan Hubungan Masyarakat', tanggal: '1 Jan – 31 Des 2026', progress: 41, status: 'Berjalan', step: 'Pelaksanaan' },
-    { id: 'k7', nama: 'Penyusunan Bahan Komunikasi dan Publikasi', tanggal: '1 Jan – 31 Des 2026', progress: 53, status: 'Berjalan', step: 'Pelaksanaan' },
-    { id: 'kb', nama: 'Penyusunan Program Kerja DPRD', tanggal: '1 Jan – 31 Des 2026', progress: 55, status: 'Berjalan', step: 'Pelaksanaan' },
-  ],
-  'Bagian Umum': [
-    { id: 'k6', nama: 'Penatausahaan Arsip Dinamis pada SKPD', tanggal: '1 Jan – 31 Des 2026', progress: 87, status: 'Berjalan', step: 'Evaluasi' },
-    { id: 'k8', nama: 'Pengadaan Sarana dan Prasarana Gedung Kantor', tanggal: '1 Jan – 31 Des 2026', progress: 39, status: 'Berjalan', step: 'Koordinasi' },
-    { id: 'kc', nama: 'Fasilitasi Kunjungan Tamu', tanggal: '1 Jan – 31 Des 2026', progress: 41, status: 'Berjalan', step: 'Pelaksanaan' },
-  ],
-  'Bagian Persidangan': [
-    { id: 'k5', nama: 'Pembahasan APBD', tanggal: '1 Jan – 31 Des 2026', progress: 33, status: 'Berjalan', step: 'Persiapan' },
-    { id: 'k10', nama: 'Penyusunan dan Pembahasan Program Pembentukan Perda', tanggal: '1 Jan – 31 Des 2026', progress: 44, status: 'Berjalan', step: 'Koordinasi' },
-    { id: 'kd', nama: 'Kunjungan Kerja dalam Daerah', tanggal: '1 Jan – 31 Des 2026', progress: 36, status: 'Berjalan', step: 'Pelaksanaan' },
-    { id: 'ke', nama: 'Pelaksanaan Reses', tanggal: '1 Jan – 31 Des 2026', progress: 31, status: 'Berjalan', step: 'Persiapan' },
-  ],
-  'Keuangan': [
-    { id: 'k4', nama: 'Penyusunan Laporan Keuangan Triwulan', tanggal: '1 Jan – 31 Des 2026', progress: 40, status: 'Terlambat', step: 'Pelaksanaan' },
-    { id: 'k9', nama: 'Pembayaran Gaji & Tunjangan ASN', tanggal: '1 – 5 Jun 2026', progress: 100, status: 'Selesai', step: 'Closed' },
-    { id: 'kf', nama: 'Penyelenggaraan Administrasi Keuangan DPRD', tanggal: '1 Jan – 31 Des 2026', progress: 39, status: 'Berjalan', step: 'Pelaksanaan' },
-  ],
-};
+// kegiatanPerBagian dynamically derived at the bottom of the file
 
 export const kegiatanPrioritas = [
   { id: '1', nama: 'Pembahasan Raperda APBD 2025-2029', komisi: 'Pimpinan', tanggal: '12 Mei 2025', progress: 100, status: 'Selesai' as const },
@@ -911,3 +618,78 @@ export const detailSSKMock: DetailSSK = {
     { target: 15.27, realisasi: 0 }
   ]
 };
+
+// ─── DYNAMICALLY DERIVED MOCK LISTS FROM URAIAN ANGGARAN ────────────────────
+
+export const bagianList: Bagian[] = uraianAnggaran
+  .filter(u => u.level === 1)
+  .map(u => {
+    const progress = u.target > 0 ? Math.round((u.realisasi / u.target) * 100) : 0;
+    let color = 'bg-gray-500';
+    if (u.uraian.includes('Sekretariat')) color = 'bg-blue-500';
+    if (u.uraian.includes('Umum')) color = 'bg-emerald-500';
+    if (u.uraian.includes('Humas')) color = 'bg-orange-500';
+    if (u.uraian.includes('Persidangan')) color = 'bg-purple-500';
+    return {
+      id: u.kode,
+      nama: u.uraian,
+      progress,
+      warna: color
+    };
+  });
+
+export const kegiatanList: Kegiatan[] = uraianAnggaran
+  .filter(u => u.level === 3)
+  .map((u, i) => {
+    const subBidangKode = u.kode.split('.').slice(0, 2).join('.');
+    const parentSubBidang = uraianAnggaran.find(x => x.kode === subBidangKode);
+    const bidangKode = u.kode.split('.').slice(0, 1).join('.');
+    const parentBidang = uraianAnggaran.find(x => x.kode === bidangKode);
+    
+    const progress = u.target > 0 ? Math.round((u.realisasi / u.target) * 100) : 0;
+    const status = progress >= 100 ? 'Selesai' : progress > 0 ? 'Berjalan' : 'Belum Mulai';
+    const step = progress >= 100 ? 'Closed' : progress > 50 ? 'Pelaksanaan' : 'Persiapan';
+
+    return {
+      id: u.kode,
+      nama: u.uraian,
+      bidang: parentBidang?.uraian || 'Unknown',
+      subBidang: parentSubBidang?.uraian || 'Unknown',
+      penanggungJawab: 'Pejabat Pembuat Komitmen',
+      tanggalMulai: '2026-01-01',
+      tanggalSelesai: '2026-12-31',
+      status,
+      progress,
+      paguAnggaran: u.target,
+      realisasiAnggaran: u.realisasi,
+      deskripsi: `Pelaksanaan kegiatan ${u.uraian}`,
+      step,
+      steps: [
+        { id: `s${i}-1`, nama: 'Persiapan', selesai: progress >= 20 },
+        { id: `s${i}-2`, nama: 'Pelaksanaan', selesai: progress >= 60 },
+        { id: `s${i}-3`, nama: 'Evaluasi', selesai: progress >= 100 },
+      ]
+    };
+  });
+
+export const kegiatanPerBagian = kegiatanList.reduce((acc, k) => {
+  if (!acc[k.bidang]) acc[k.bidang] = [];
+  acc[k.bidang].push({
+    id: k.id,
+    nama: k.nama,
+    tanggal: `${k.tanggalMulai} - ${k.tanggalSelesai}`,
+    progress: k.progress,
+    status: k.status,
+    step: k.step
+  });
+  return acc;
+}, {} as Record<string, { id: string; nama: string; tanggal: string; progress: number; status: string; step: string }[]>);
+
+export const agendaHariIni = kegiatanList.slice(0, 4).map((k, i) => ({
+  id: k.id,
+  waktu: `${9 + i}:00`,
+  status: i < 2 ? 'berlangsung' as const : 'terjadwal' as const,
+  nama: k.nama,
+  lokasi: 'Ruang Rapat',
+  badge: i < 2 ? 'Berlangsung' : 'Terjadwal',
+}));
