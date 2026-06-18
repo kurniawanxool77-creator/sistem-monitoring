@@ -32,14 +32,14 @@ const STATUS_COLOR: Record<string, string> = {
   'Belum Mulai': 'bg-gray-500',
 };
 
-export function KalenderKegiatan() {
-  const { getKegiatanList } = useAppData();
-  const kegiatanList = getKegiatanList();
+export function KalenderSubKegiatan() {
+  const { getSubKegiatanList } = useAppData();
+  const subKegiatanList = getSubKegiatanList();
 
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
 
-  const eventsExtended: KalenderEvent[] = kegiatanList.map(k => {
+  const eventsExtended: KalenderEvent[] = subKegiatanList.map(k => {
     return {
       id: k.id,
       date: k.tanggalMulai,
@@ -216,7 +216,7 @@ export function KalenderKegiatan() {
       {selectedDate && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-          {/* KIRI — daftar kegiatan pada tanggal terpilih */}
+          {/* KIRI — daftar subKegiatan pada tanggal terpilih */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="px-5 py-3 bg-slate-50 border-b border-gray-200 flex items-center gap-2">
               <CalendarIcon className="w-4 h-4 text-blue-600" />
@@ -268,7 +268,7 @@ export function KalenderKegiatan() {
             )}
           </div>
 
-          {/* KANAN — detail & tahapan kegiatan terpilih */}
+          {/* KANAN — detail & tahapan subKegiatan terpilih */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="px-5 py-3 bg-slate-50 border-b border-gray-200 flex items-center gap-2">
               <Tag className="w-4 h-4 text-emerald-600" />
@@ -282,7 +282,7 @@ export function KalenderKegiatan() {
               </div>
             ) : (
               <div className="p-5 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                {/* Header kegiatan */}
+                {/* Header subKegiatan */}
                 <div className="mb-4">
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white inline-block mb-2 ${
                     STATUS_COLOR[selectedEvent.kategori ?? ''] ?? 'bg-gray-500'

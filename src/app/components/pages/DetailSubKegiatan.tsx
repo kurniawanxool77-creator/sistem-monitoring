@@ -1,25 +1,25 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router';
 import { ArrowLeft, Calendar, User, FileText, Clock, CheckCircle, Banknote } from 'lucide-react';
-import { Kegiatan } from '../../lib/data';
-import { UpdateProgressModal } from './UpdateProgressModal';
-import { KegiatanFormModal } from './KegiatanFormModal';
+import { SubSubKegiatan } from '../../lib/data';
+import { UpdateProgressModal } from '../modals/UpdateProgressModal';
+import { SubKegiatanFormModal } from '../modals/SubKegiatanFormModal';
 import { useAppData } from '../../hooks/useAppData';
 
-export function DetailKegiatan() {
+export function DetailSubKegiatan() {
   const { id } = useParams();
-  const { getKegiatanList, updateKegiatanMetadata, addRealisasi } = useAppData();
+  const { getSubKegiatanList, updateSubKegiatanMetadata, addRealisasi } = useAppData();
   
-  const kegiatans = getKegiatanList();
-  const kegiatan = kegiatans.find((k) => k.id === id);
+  const subKegiatans = getSubKegiatanList();
+  const subKegiatan = subKegiatans.find((k) => k.id === id);
 
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  if (!kegiatan) {
+  if (!subKegiatan) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Kegiatan tidak ditemukan</p>
+        <p className="text-gray-600">Detail Kegiatan tidak ditemukan</p>
         <Link to="/agenda" className="text-blue-600 hover:text-blue-700 mt-4 inline-block">
           Kembali ke Daftar Kegiatan
         </Link>
@@ -28,30 +28,30 @@ export function DetailKegiatan() {
   }
 
   function handleToggleStep(stepId: string) {
-    if (!kegiatan) return;
-    const newSteps = kegiatan.steps.map((s) =>
+    if (!subKegiatan) return;
+    const newSteps = subKegiatan.steps.map((s) =>
       s.id === stepId ? { ...s, selesai: !s.selesai } : s
     );
-    updateKegiatanMetadata({
-      id: kegiatan.id,
-      penanggungJawab: kegiatan.penanggungJawab,
-      tanggalMulai: kegiatan.tanggalMulai,
-      tanggalSelesai: kegiatan.tanggalSelesai,
-      deskripsi: kegiatan.deskripsi,
-      sumberDana: kegiatan.sumberDana,
-      anggaranDiminta: kegiatan.anggaranDiminta,
+    updateSubKegiatanMetadata({
+      id: subKegiatan.id,
+      penanggungJawab: subKegiatan.penanggungJawab,
+      tanggalMulai: subKegiatan.tanggalMulai,
+      tanggalSelesai: subKegiatan.tanggalSelesai,
+      deskripsi: subKegiatan.deskripsi,
+      sumberDana: subKegiatan.sumberDana,
+      anggaranDiminta: subKegiatan.anggaranDiminta,
       steps: newSteps,
-      isApproved: kegiatan.isApproved
+      isApproved: subKegiatan.isApproved
     });
   }
 
   function handleSaveRealisasi(amount: number) {
-    if (!kegiatan) return;
-    addRealisasi(kegiatan.id, amount);
+    if (!subKegiatan) return;
+    addRealisasi(subKegiatan.id, amount);
   }
 
 
-  const progressPercentage = kegiatan.paguAnggaran > 0 ? (kegiatan.realisasiAnggaran / kegiatan.paguAnggaran) * 100 : 0;
+  const progressPercentage = subKegiatan.paguAnggaran > 0 ? (subKegiatan.realisasiAnggaran / subKegiatan.paguAnggaran) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -68,16 +68,16 @@ export function DetailKegiatan() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{kegiatan.nama}</h1>
-            <p className="text-gray-600">{kegiatan.deskripsi}</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{subKegiatan.nama}</h1>
+            <p className="text-gray-600">{subKegiatan.deskripsi}</p>
           </div>
           <span className={`px-4 py-2 rounded-lg text-sm font-medium ${
-            kegiatan.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
-            kegiatan.status === 'Berjalan' ? 'bg-blue-100 text-blue-700' :
-            kegiatan.status === 'Overdue' || kegiatan.status === 'Terlambat' ? 'bg-red-100 text-red-700' :
+            subKegiatan.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
+            subKegiatan.status === 'Berjalan' ? 'bg-blue-100 text-blue-700' :
+            subKegiatan.status === 'Overdue' || subKegiatan.status === 'Terlambat' ? 'bg-red-100 text-red-700' :
             'bg-gray-100 text-gray-700'
           }`}>
-            {kegiatan.status}
+            {subKegiatan.status}
           </span>
         </div>
 
@@ -88,7 +88,7 @@ export function DetailKegiatan() {
             </div>
             <div>
               <div className="text-sm text-gray-600">Penanggung Jawab</div>
-              <div className="font-medium text-gray-900">{kegiatan.penanggungJawab}</div>
+              <div className="font-medium text-gray-900">{subKegiatan.penanggungJawab}</div>
             </div>
           </div>
 
@@ -99,7 +99,7 @@ export function DetailKegiatan() {
             <div>
               <div className="text-sm text-gray-600">Tanggal Mulai</div>
               <div className="font-medium text-gray-900">
-                {new Date(kegiatan.tanggalMulai).toLocaleDateString('id-ID', { 
+                {new Date(subKegiatan.tanggalMulai).toLocaleDateString('id-ID', { 
                   day: 'numeric', 
                   month: 'long', 
                   year: 'numeric' 
@@ -115,7 +115,7 @@ export function DetailKegiatan() {
             <div>
               <div className="text-sm text-gray-600">Tanggal Selesai</div>
               <div className="font-medium text-gray-900">
-                {new Date(kegiatan.tanggalSelesai).toLocaleDateString('id-ID', { 
+                {new Date(subKegiatan.tanggalSelesai).toLocaleDateString('id-ID', { 
                   day: 'numeric', 
                   month: 'long', 
                   year: 'numeric' 
@@ -129,9 +129,9 @@ export function DetailKegiatan() {
               <FileText className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <div className="text-sm text-gray-600">Bidang/Sub Bidang</div>
-              <div className="font-medium text-gray-900">{kegiatan.bidang}</div>
-              <div className="text-sm text-gray-600">{kegiatan.subBidang}</div>
+              <div className="text-sm text-gray-600">Bidang/Kegiatan</div>
+              <div className="font-medium text-gray-900">{subKegiatan.bidang}</div>
+              <div className="text-sm text-gray-600">{subKegiatan.subKegiatan_parent}</div>
             </div>
           </div>
 
@@ -141,7 +141,7 @@ export function DetailKegiatan() {
             </div>
             <div>
               <div className="text-sm text-gray-600">Sumber Dana</div>
-              <div className="font-medium text-gray-900">{kegiatan.sumberDana || '-'}</div>
+              <div className="font-medium text-gray-900">{subKegiatan.sumberDana || '-'}</div>
             </div>
           </div>
         </div>
@@ -155,25 +155,25 @@ export function DetailKegiatan() {
           <div>
             <div className="text-sm text-gray-600 mb-1">Pagu Anggaran</div>
             <div className="text-2xl font-bold text-gray-900">
-              Rp {kegiatan.paguAnggaran.toLocaleString('id-ID')}
+              Rp {subKegiatan.paguAnggaran.toLocaleString('id-ID')}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-600 mb-1">Anggaran Diminta</div>
             <div className="text-2xl font-bold text-indigo-600">
-              Rp {kegiatan.anggaranDiminta?.toLocaleString('id-ID') || '0'}
+              Rp {subKegiatan.anggaranDiminta?.toLocaleString('id-ID') || '0'}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-600 mb-1">Realisasi</div>
             <div className="text-2xl font-bold text-emerald-600">
-              Rp {kegiatan.realisasiAnggaran.toLocaleString('id-ID')}
+              Rp {subKegiatan.realisasiAnggaran.toLocaleString('id-ID')}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-600 mb-1">Sisa Anggaran</div>
             <div className="text-2xl font-bold text-amber-600">
-              Rp {(kegiatan.paguAnggaran - kegiatan.realisasiAnggaran).toLocaleString('id-ID')}
+              Rp {(subKegiatan.paguAnggaran - subKegiatan.realisasiAnggaran).toLocaleString('id-ID')}
             </div>
           </div>
         </div>
@@ -194,14 +194,14 @@ export function DetailKegiatan() {
 
       {/* Timeline Progress */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-6">Timeline Step Progress ({kegiatan.steps.length} Tahap)</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-6">Timeline Step Progress ({subKegiatan.steps.length} Tahap)</h2>
         
         <div className="relative">
-          {kegiatan.steps.map((step, index) => {
+          {subKegiatan.steps.map((step, index) => {
             const isCompleted = step.selesai;
-            const currentStepIdx = kegiatan.steps.findIndex((s) => !s.selesai);
-            const isCurrent = index === (currentStepIdx === -1 ? kegiatan.steps.length : currentStepIdx);
-            const isLast = index === kegiatan.steps.length - 1;
+            const currentStepIdx = subKegiatan.steps.findIndex((s) => !s.selesai);
+            const isCurrent = index === (currentStepIdx === -1 ? subKegiatan.steps.length : currentStepIdx);
+            const isLast = index === subKegiatan.steps.length - 1;
 
             return (
               <div key={step.id} className="relative flex gap-4 pb-8">
@@ -304,7 +304,7 @@ export function DetailKegiatan() {
           <div className="flex gap-4">
             <div className="text-sm text-gray-600 w-32">8 Jun 2026, 09:00</div>
             <div className="flex-1">
-              <div className="font-medium text-gray-900">Kegiatan dibuat</div>
+              <div className="font-medium text-gray-900">SubKegiatan dibuat</div>
               <div className="text-sm text-gray-600">oleh Administrator Utama</div>
             </div>
           </div>
@@ -330,9 +330,9 @@ export function DetailKegiatan() {
 
       {showProgressModal && (
         <UpdateProgressModal
-          kegiatan={kegiatan}
-          steps={kegiatan.steps}
-          progress={kegiatan.progress}
+          subKegiatan={subKegiatan}
+          steps={subKegiatan.steps}
+          progress={subKegiatan.progress}
           onClose={() => setShowProgressModal(false)}
           onToggleStep={handleToggleStep}
           onSaveRealisasi={handleSaveRealisasi}
@@ -340,9 +340,9 @@ export function DetailKegiatan() {
       )}
 
       {showEditModal && (
-        <KegiatanFormModal
+        <SubKegiatanFormModal
           mode="edit"
-          initialData={kegiatan}
+          initialData={subKegiatan}
           onClose={() => setShowEditModal(false)}
         />
       )}

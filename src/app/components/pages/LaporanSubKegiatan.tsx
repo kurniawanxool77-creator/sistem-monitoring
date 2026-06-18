@@ -2,17 +2,17 @@ import { useState } from 'react';
 import { FileText, Download, Eye, Printer, Share2 } from 'lucide-react';
 import { useAppData } from '../../hooks/useAppData';
 
-export function LaporanKegiatan() {
-  const { getKegiatanList } = useAppData();
-  const kegiatanList = getKegiatanList();
+export function LaporanSubKegiatan() {
+  const { getSubKegiatanList } = useAppData();
+  const subKegiatanList = getSubKegiatanList();
 
   const [filterQuery, setFilterQuery] = useState('');
   const [filterBagian, setFilterBagian] = useState('semua');
   const [filterBulan, setFilterBulan] = useState('semua');
   const [filterStatus, setFilterStatus] = useState('semua');
 
-  // Filter the kegiatan
-  const filteredKegiatan = kegiatanList.filter(k => {
+  // Filter the subKegiatan
+  const filteredSubKegiatan = subKegiatanList.filter(k => {
     if (filterQuery && !k.nama.toLowerCase().includes(filterQuery.toLowerCase())) return false;
     if (filterBagian !== 'semua' && !k.bidang.toLowerCase().includes(filterBagian.toLowerCase())) return false;
     
@@ -26,9 +26,9 @@ export function LaporanKegiatan() {
     return true;
   });
 
-  const total = filteredKegiatan.length;
-  const selesai = filteredKegiatan.filter(k => k.status === 'Selesai').length;
-  const berjalan = filteredKegiatan.filter(k => k.status === 'Berjalan').length;
+  const total = filteredSubKegiatan.length;
+  const selesai = filteredSubKegiatan.filter(k => k.status === 'Selesai').length;
+  const berjalan = filteredSubKegiatan.filter(k => k.status === 'Berjalan').length;
 
   return (
     <div className="space-y-6">
@@ -157,8 +157,8 @@ export function LaporanKegiatan() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredKegiatan.length > 0 ? (
-                    filteredKegiatan.map((keg, idx) => (
+                  {filteredSubKegiatan.length > 0 ? (
+                    filteredSubKegiatan.map((keg, idx) => (
                       <tr key={keg.id}>
                         <td className="py-2 px-3 border">{idx + 1}</td>
                         <td className="py-2 px-3 border">{keg.nama}</td>

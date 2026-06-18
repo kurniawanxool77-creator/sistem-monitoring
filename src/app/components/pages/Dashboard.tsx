@@ -31,10 +31,10 @@ const stepColors: Record<string, string> = {
 };
 
 export function Dashboard() {
-  const { getBagianList, getKegiatanList, dataUraian, activityLogs } = useAppData();
+  const { getBagianList, getSubKegiatanList, dataUraian, activityLogs } = useAppData();
   
   const bagianList = getBagianList();
-  const kegiatanList = getKegiatanList();
+  const subKegiatanList = getSubKegiatanList();
 
   const [selectedBagian, setSelectedBagian] = useState(bagianList.length > 0 ? bagianList[0].nama : 'Sekretariat DPRD');
 
@@ -60,7 +60,7 @@ export function Dashboard() {
   const percentRealisasi = totalPagu > 0 ? ((totalRealisasi / totalPagu) * 100).toFixed(2) : '0';
 
   const jenisCounts: Record<string, number> = {};
-  kegiatanList.forEach(k => {
+  subKegiatanList.forEach(k => {
      jenisCounts[k.bidang] = (jenisCounts[k.bidang] || 0) + 1;
   });
   const jenisData = Object.entries(jenisCounts).map(([name, value]) => ({
@@ -69,7 +69,7 @@ export function Dashboard() {
      color: BIDANG_COLORS[name] || '#3b82f6'
   }));
 
-  const kegiatanPerBagian = kegiatanList.reduce((acc, k) => {
+  const subKegiatanPerBagian = subKegiatanList.reduce((acc, k) => {
     if (!acc[k.bidang]) acc[k.bidang] = [];
     acc[k.bidang].push({
       id: k.id,
@@ -82,12 +82,12 @@ export function Dashboard() {
     return acc;
   }, {} as Record<string, any[]>);
 
-  const kegiatanBerjalan = kegiatanPerBagian[selectedBagian] ?? [];
+  const subKegiatanBerjalan = subKegiatanPerBagian[selectedBagian] ?? [];
 
   const statsCards = [
     {
       title: 'TOTAL KEGIATAN',
-      value: kegiatanList.length,
+      value: subKegiatanList.length,
       subtitle: 'Bulan ini',
       detail: 'Aktivitas terdata',
       detailColor: 'text-emerald-600',
@@ -97,7 +97,7 @@ export function Dashboard() {
     },
     {
       title: 'KEGIATAN BERJALAN',
-      value: kegiatanList.filter(k => k.status === 'Berjalan').length,
+      value: subKegiatanList.filter(k => k.status === 'Berjalan').length,
       subtitle: 'Sedang Berjalan',
       detail: 'Dalam proses',
       detailColor: 'text-emerald-600',
@@ -107,17 +107,17 @@ export function Dashboard() {
     },
     {
       title: 'KEGIATAN SELESAI',
-      value: kegiatanList.filter(k => k.status === 'Selesai').length,
+      value: subKegiatanList.filter(k => k.status === 'Selesai').length,
       subtitle: 'Selesai',
       detail: 'Selesai 100%',
       detailColor: 'text-emerald-600',
       icon: CheckCircle,
       color: 'bg-amber-500',
-      path: '/laporan-kegiatan',
+      path: '/laporan-subKegiatan',
     },
     {
       title: 'BELUM MULAI / TERLAMBAT',
-      value: kegiatanList.filter(k => k.status === 'Terlambat' || k.status === 'Belum Mulai').length,
+      value: subKegiatanList.filter(k => k.status === 'Terlambat' || k.status === 'Belum Mulai').length,
       subtitle: 'Perlu Perhatian',
       detail: 'Cek jadwal',
       detailColor: 'text-red-500',
@@ -155,13 +155,13 @@ export function Dashboard() {
         })}
       </div>
 
-      {/* Middle row: Progress Bagian (clickable) + Kegiatan Prioritas */}
+      {/* Middle row: Progress Bagian (clickable) + SubKegiatan Prioritas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Progress per Bagian — clickable */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="mb-5">
             <h2 className="text-base font-bold text-gray-900">PROGRESS KEGIATAN SEKRETARIAT DPRD</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Klik bagian untuk melihat kegiatan berjalan</p>
+            <p className="text-xs text-gray-500 mt-0.5">Klik bagian untuk melihat subKegiatan berjalan</p>
           </div>
 
           <div className="space-y-3">
@@ -197,7 +197,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Kegiatan Prioritas — filtered by selected bagian */}
+        {/* SubKegiatan Prioritas — filtered by selected bagian */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -213,13 +213,13 @@ export function Dashboard() {
           </div>
 
           <div className="flex-1 space-y-3 overflow-y-auto max-h-[350px] pr-2" style={{ scrollbarWidth: 'thin' }}>
-            {kegiatanBerjalan.length === 0 ? (
+            {subKegiatanBerjalan.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-gray-400">
                 <CheckCircle className="w-10 h-10 mb-2 text-gray-300" />
-                <p className="text-sm">Tidak ada kegiatan berjalan</p>
+                <p className="text-sm">Tidak ada subKegiatan berjalan</p>
               </div>
             ) : (
-              kegiatanBerjalan.map((kg) => (
+              subKegiatanBerjalan.map((kg) => (
                 <div key={kg.id} className="p-3 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-all">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h4 className="text-sm font-medium text-gray-900 leading-tight">{kg.nama}</h4>
@@ -258,7 +258,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Bottom row: Notifikasi | Realisasi Anggaran | Kegiatan Berdasarkan Jenis */}
+      {/* Bottom row: Notifikasi | Realisasi Anggaran | SubKegiatan Berdasarkan Jenis */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Notifikasi */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -349,7 +349,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Kegiatan Berdasarkan Jenis */}
+        {/* SubKegiatan Berdasarkan Jenis */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-base font-bold text-gray-900">KEGIATAN BERDASARKAN JENIS</h2>
@@ -375,7 +375,7 @@ export function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <div className="text-2xl font-bold text-gray-900">{kegiatanList.length}</div>
+                <div className="text-2xl font-bold text-gray-900">{subKegiatanList.length}</div>
                 <div className="text-xs text-gray-500">Total</div>
               </div>
             </div>
@@ -387,7 +387,7 @@ export function Dashboard() {
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                     <span className="text-xs text-gray-600">{item.name}</span>
                   </div>
-                  <span className="text-xs font-semibold text-gray-800">{item.value} kegiatan</span>
+                  <span className="text-xs font-semibold text-gray-800">{item.value} subKegiatan</span>
                 </div>
               ))}
             </div>

@@ -3,7 +3,7 @@ import { Database, Plus, Edit, Trash2, ChevronDown, ChevronRight, DollarSign, X,
 import { anggotaData } from '../../lib/data';
 import { useAppData } from '../../hooks/useAppData';
 
-type TabKey = 'bidang' | 'subBidang' | 'kegiatan' | 'subKegiatan' | 'anggota';
+type TabKey = 'bidang' | 'kegiatan' | 'subKegiatan' | 'subSubKegiatan' | 'anggota';
 
 const BIDANG_COLORS: Record<string, string> = {
   'Sekretariat DPRD': 'bg-blue-100 text-blue-700',
@@ -57,8 +57,8 @@ export function MasterData() {
     pagu: u.target,
   }));
 
-  // Flatten all sub bidang (level 2)
-  const allSubBidang = dataUraian.filter(u => u.level === 2).map(u => {
+  // Flatten all kegiatan (level 2)
+  const allKegiatan = dataUraian.filter(u => u.level === 2).map(u => {
     const parentKode = u.kode.split('.').slice(0, 1).join('.');
     const parentBidang = dataUraian.find(x => x.kode === parentKode);
     return {
@@ -68,31 +68,31 @@ export function MasterData() {
     };
   });
 
-  // Flatten all kegiatan (level 3)
-  const allKegiatan = dataUraian.filter(u => u.level === 3).map(u => {
-    const subBidangKode = u.kode.split('.').slice(0, 2).join('.');
-    const parentSubBidang = dataUraian.find(x => x.kode === subBidangKode);
+  // Flatten all subKegiatan (level 3)
+  const allSubKegiatan = dataUraian.filter(u => u.level === 3).map(u => {
+    const kegiatanKode = u.kode.split('.').slice(0, 2).join('.');
+    const parentKegiatan = dataUraian.find(x => x.kode === kegiatanKode);
     const bidangKode = u.kode.split('.').slice(0, 1).join('.');
     const parentBidang = dataUraian.find(x => x.kode === bidangKode);
     return {
       id: u.kode,
       nama: u.uraian,
-      subBidangNama: parentSubBidang?.uraian || '',
+      kegiatanNama: parentKegiatan?.uraian || '',
       bidangNama: parentBidang?.uraian || '',
     };
   });
 
-  // Flatten all sub kegiatan from level 4 of dataUraian
-  const allSubKegiatan = dataUraian
+  // Flatten all sub subKegiatan from level 4 of dataUraian
+  const allSubSubKegiatan = dataUraian
     .filter(u => u.level === 4)
     .map(u => {
-      // Find parent kegiatan (level 3)
+      // Find parent subKegiatan (level 3)
       const parentKode = u.kode.split('.').slice(0, 3).join('.');
-      const parentKegiatan = dataUraian.find(x => x.kode === parentKode);
+      const parentSubKegiatan = dataUraian.find(x => x.kode === parentKode);
 
-      // Find parent sub bidang (level 2)
-      const subBidangKode = u.kode.split('.').slice(0, 2).join('.');
-      const parentSubBidang = dataUraian.find(x => x.kode === subBidangKode);
+      // Find parent kegiatan (level 2)
+      const kegiatanKode = u.kode.split('.').slice(0, 2).join('.');
+      const parentKegiatan = dataUraian.find(x => x.kode === kegiatanKode);
 
       // Find parent bidang (level 1)
       const bidangKode = u.kode.split('.').slice(0, 1).join('.');
@@ -101,8 +101,8 @@ export function MasterData() {
       return {
         kode: u.kode,
         nama: u.uraian,
+        subKegiatanNama: parentSubKegiatan?.uraian || '',
         kegiatanNama: parentKegiatan?.uraian || '',
-        subBidangNama: parentSubBidang?.uraian || '',
         bidangNama: parentBidang?.uraian || '',
       };
     });
@@ -112,6 +112,9 @@ export function MasterData() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [filterBidang, setFilterBidang] = useState('semua');
 
+  // Form state untuk Tambah Bidang
+  const [formNamaBidang, setFormNamaBidang] = useState('');
+
   function toggleBidang(id: string) {
     setExpandedBidang(prev => {
       const next = new Set(prev);
@@ -120,23 +123,23 @@ export function MasterData() {
     });
   }
 
-  const filteredSubBidang = filterBidang === 'semua'
-    ? allSubBidang
-    : allSubBidang.filter(s => s.bidangNama === filterBidang);
-
   const filteredKegiatan = filterBidang === 'semua'
     ? allKegiatan
-    : allKegiatan.filter(k => k.bidangNama === filterBidang);
+    : allKegiatan.filter(s => s.bidangNama === filterBidang);
 
   const filteredSubKegiatan = filterBidang === 'semua'
     ? allSubKegiatan
-    : allSubKegiatan.filter(sk => sk.bidangNama === filterBidang);
+    : allSubKegiatan.filter(k => k.bidangNama === filterBidang);
+
+  const filteredSubSubKegiatan = filterBidang === 'semua'
+    ? allSubSubKegiatan
+    : allSubSubKegiatan.filter(sk => sk.bidangNama === filterBidang);
 
   const tabs: { key: TabKey; label: string; count: number }[] = [
-    { key: 'bidang', label: 'Bidang / Bagian', count: allBidang.length },
-    { key: 'subBidang', label: 'Sub Bidang', count: allSubBidang.length },
+    { key: 'bidang', label: 'Bidang', count: allBidang.length },
     { key: 'kegiatan', label: 'Kegiatan', count: allKegiatan.length },
-    { key: 'subKegiatan', label: 'Sub Kegiatan', count: allSubKegiatan.length },
+    { key: 'subKegiatan', label: 'SubKegiatan', count: allSubKegiatan.length },
+    { key: 'subSubKegiatan', label: 'Sub SubKegiatan', count: allSubSubKegiatan.length },
     { key: 'anggota', label: 'Anggota & Jabatan', count: anggotaData.length },
   ];
 
@@ -168,7 +171,7 @@ export function MasterData() {
           },
           { 
             title: 'TOTAL SUB BIDANG', 
-            value: allSubBidang.length, 
+            value: allKegiatan.length, 
             subtitle: 'Master Data', 
             detail: 'Kategori turunan', 
             detailColor: 'text-purple-600', 
@@ -177,7 +180,7 @@ export function MasterData() {
           },
           { 
             title: 'TOTAL KEGIATAN', 
-            value: allKegiatan.length, 
+            value: allSubKegiatan.length, 
             subtitle: 'Master Data', 
             detail: 'Aktivitas terdaftar', 
             detailColor: 'text-emerald-600', 
@@ -186,7 +189,7 @@ export function MasterData() {
           },
           { 
             title: 'TOTAL SUB KEGIATAN', 
-            value: allSubKegiatan.length, 
+            value: allSubSubKegiatan.length, 
             subtitle: 'Master Data', 
             detail: 'Rincian aktivitas', 
             detailColor: 'text-cyan-600', 
@@ -252,19 +255,19 @@ export function MasterData() {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="text-left py-3 px-4 font-semibold text-gray-600 w-8">No</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Bidang / Bagian</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-600">Jumlah Sub Bidang</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Bidang</th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-600">Jumlah Kegiatan</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-600">Jumlah Sub Kegiatan</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-600">Jumlah SubKegiatan</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-600">Jumlah Sub SubKegiatan</th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-600">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
                     {allBidang.map((bidang, idx) => {
                       const color = BIDANG_COLORS[bidang.nama] ?? 'bg-gray-100 text-gray-600';
-                      const jmlSubBidang = allSubBidang.filter(s => s.bidangNama === bidang.nama).length;
-                      const jmlKegiatan = allKegiatan.filter(k => k.bidangNama === bidang.nama).length;
-                      const jmlSubKegiatan = allSubKegiatan.filter(sk => sk.bidangNama === bidang.nama).length;
+                      const jmlKegiatan = allKegiatan.filter(s => s.bidangNama === bidang.nama).length;
+                      const jmlSubKegiatan = allSubKegiatan.filter(k => k.bidangNama === bidang.nama).length;
+                      const jmlSubSubKegiatan = allSubSubKegiatan.filter(sk => sk.bidangNama === bidang.nama).length;
 
                       return (
                         <tr key={bidang.id} className="border-b border-gray-100 hover:bg-gray-50">
@@ -274,9 +277,9 @@ export function MasterData() {
                               {bidang.nama}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-center font-semibold text-gray-700">{jmlSubBidang}</td>
                           <td className="py-3 px-4 text-center font-semibold text-gray-700">{jmlKegiatan}</td>
                           <td className="py-3 px-4 text-center font-semibold text-gray-700">{jmlSubKegiatan}</td>
+                          <td className="py-3 px-4 text-center font-semibold text-gray-700">{jmlSubSubKegiatan}</td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-center gap-1.5">
                               <button onClick={() => handleEditUraian(bidang.id, bidang.nama, bidang.pagu)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors title='Edit'"><Edit className="w-4 h-4" /></button>
@@ -293,7 +296,7 @@ export function MasterData() {
           )}
 
           {/* ── SUB BIDANG tab ── */}
-          {activeTab === 'subBidang' && (
+          {activeTab === 'kegiatan' && (
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <select value={filterBidang} onChange={e => setFilterBidang(e.target.value)}
@@ -301,7 +304,7 @@ export function MasterData() {
                   <option value="semua">Semua Bidang</option>
                   {allBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
                 </select>
-                <span className="text-sm text-gray-500">{filteredSubBidang.length} sub bidang</span>
+                <span className="text-sm text-gray-500">{filteredKegiatan.length} kegiatan</span>
               </div>
 
               <div className="overflow-x-auto">
@@ -309,14 +312,14 @@ export function MasterData() {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="text-left py-3 px-4 font-semibold text-gray-600 w-8">No</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Nama Sub Bidang</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Nama Kegiatan</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-600">Bidang</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-600">Jml Kegiatan</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-600">Jml SubKegiatan</th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-600">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSubBidang.map((sub, idx) => {
+                    {filteredKegiatan.map((sub, idx) => {
                       const color = BIDANG_COLORS[sub.bidangNama] ?? 'bg-gray-100 text-gray-600';
                       return (
                         <tr key={sub.id} className="border-b border-gray-100 hover:bg-gray-50">
@@ -329,7 +332,7 @@ export function MasterData() {
                           </td>
                           <td className="py-3 px-4 text-center">
                             <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
-                              {allKegiatan.filter(k => k.subBidangNama === sub.nama && k.bidangNama === sub.bidangNama).length}
+                              {allSubKegiatan.filter(k => k.kegiatanNama === sub.nama && k.bidangNama === sub.bidangNama).length}
                             </span>
                           </td>
                           <td className="py-3 px-4">
@@ -348,7 +351,7 @@ export function MasterData() {
           )}
 
           {/* ── KEGIATAN tab ── */}
-          {activeTab === 'kegiatan' && (
+          {activeTab === 'subKegiatan' && (
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <select value={filterBidang} onChange={e => setFilterBidang(e.target.value)}
@@ -356,7 +359,7 @@ export function MasterData() {
                   <option value="semua">Semua Bidang</option>
                   {allBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
                 </select>
-                <span className="text-sm text-gray-500">{filteredKegiatan.length} kegiatan</span>
+                <span className="text-sm text-gray-500">{filteredSubKegiatan.length} subKegiatan</span>
               </div>
 
               <div className="overflow-x-auto">
@@ -364,20 +367,20 @@ export function MasterData() {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="text-left py-3 px-4 font-semibold text-gray-600 w-8">No</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Nama Kegiatan</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Sub Bidang</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Nama SubKegiatan</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Kegiatan</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-600">Bidang</th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-600">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredKegiatan.map((k, idx) => {
+                    {filteredSubKegiatan.map((k, idx) => {
                       const color = BIDANG_COLORS[k.bidangNama] ?? 'bg-gray-100 text-gray-600';
                       return (
                         <tr key={k.id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-3 px-4 text-gray-400">{idx + 1}</td>
                           <td className="py-3 px-4 font-medium text-gray-800">{k.nama}</td>
-                          <td className="py-3 px-4 text-gray-600 text-xs">{k.subBidangNama}</td>
+                          <td className="py-3 px-4 text-gray-600 text-xs">{k.kegiatanNama}</td>
                           <td className="py-3 px-4">
                             <span className={`px-2 py-0.5 rounded-lg text-xs font-semibold ${color}`}>
                               {k.bidangNama}
@@ -399,7 +402,7 @@ export function MasterData() {
           )}
 
           {/* ── SUB KEGIATAN tab ── */}
-          {activeTab === 'subKegiatan' && (
+          {activeTab === 'subSubKegiatan' && (
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <select value={filterBidang} onChange={e => setFilterBidang(e.target.value)}
@@ -407,7 +410,7 @@ export function MasterData() {
                   <option value="semua">Semua Bidang</option>
                   {allBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
                 </select>
-                <span className="text-sm text-gray-500">{filteredSubKegiatan.length} sub kegiatan</span>
+                <span className="text-sm text-gray-500">{filteredSubSubKegiatan.length} sub subKegiatan</span>
               </div>
 
               <div className="overflow-x-auto">
@@ -415,22 +418,22 @@ export function MasterData() {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="text-left py-3 px-4 font-semibold text-gray-600 w-8">No</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Nama Sub Kegiatan</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Nama Sub SubKegiatan</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-600">SubKegiatan</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-600">Kegiatan</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-600">Sub Bidang</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-600">Bidang</th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-600">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSubKegiatan.map((sk, idx) => {
+                    {filteredSubSubKegiatan.map((sk, idx) => {
                       const color = BIDANG_COLORS[sk.bidangNama] ?? 'bg-gray-100 text-gray-600';
                       return (
                         <tr key={sk.kode} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-3 px-4 text-gray-400">{idx + 1}</td>
                           <td className="py-3 px-4 font-medium text-gray-800">{sk.nama}</td>
-                          <td className="py-3 px-4 text-gray-600 text-xs">{sk.kegiatanNama}</td>
-                          <td className="py-3 px-4 text-gray-500 text-xs">{sk.subBidangNama}</td>
+                          <td className="py-3 px-4 text-gray-600 text-xs">{sk.subKegiatanNama}</td>
+                          <td className="py-3 px-4 text-gray-500 text-xs">{sk.kegiatanNama}</td>
                           <td className="py-3 px-4">
                             <span className={`px-2 py-0.5 rounded-lg text-xs font-semibold ${color}`}>
                               {sk.bidangNama}
@@ -509,7 +512,7 @@ export function MasterData() {
           <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-lg font-bold text-gray-900">
-                Tambah {activeTab === 'bidang' ? 'Bidang' : activeTab === 'subBidang' ? 'Sub Bidang' : activeTab === 'kegiatan' ? 'Kegiatan' : activeTab === 'subKegiatan' ? 'Sub Kegiatan' : 'Anggota'}
+                Tambah {activeTab === 'bidang' ? 'Bidang' : activeTab === 'kegiatan' ? 'Kegiatan' : activeTab === 'subKegiatan' ? 'SubKegiatan' : activeTab === 'subSubKegiatan' ? 'Sub SubKegiatan' : 'Anggota'}
               </h2>
               <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-gray-100 rounded-xl text-gray-500">
                 <X className="w-5 h-5" />
@@ -519,27 +522,14 @@ export function MasterData() {
               {activeTab === 'bidang' && (
                 <>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kode Bidang <span className="text-red-500">*</span></label>
-                    <input type="text" placeholder="Contoh: SKR" className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                  </div>
-                  <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Bidang <span className="text-red-500">*</span></label>
-                    <input type="text" placeholder="Nama bidang..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                  </div>
-                </>
-              )}
-              {activeTab === 'subBidang' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
-                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                      <option value="">Pilih Bidang</option>
-                      {allBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Sub Bidang <span className="text-red-500">*</span></label>
-                    <input type="text" placeholder="Nama sub bidang..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    <input
+                      type="text"
+                      placeholder="Contoh: Bagian Keuangan..."
+                      value={formNamaBidang}
+                      onChange={e => setFormNamaBidang(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
                   </div>
                 </>
               )}
@@ -550,12 +540,6 @@ export function MasterData() {
                     <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="">Pilih Bidang</option>
                       {allBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Sub Bidang <span className="text-red-500">*</span></label>
-                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                      <option value="">Pilih Sub Bidang</option>
                     </select>
                   </div>
                   <div>
@@ -574,9 +558,24 @@ export function MasterData() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Sub Bidang <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kegiatan <span className="text-red-500">*</span></label>
                     <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                      <option value="">Pilih Sub Bidang</option>
+                      <option value="">Pilih Kegiatan</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama SubKegiatan <span className="text-red-500">*</span></label>
+                    <input type="text" placeholder="Nama subKegiatan..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                  </div>
+                </>
+              )}
+              {activeTab === 'subSubKegiatan' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
+                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                      <option value="">Pilih Bidang</option>
+                      {allBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
                     </select>
                   </div>
                   <div>
@@ -586,8 +585,14 @@ export function MasterData() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Sub Kegiatan <span className="text-red-500">*</span></label>
-                    <input type="text" placeholder="Nama sub kegiatan..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">SubKegiatan <span className="text-red-500">*</span></label>
+                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                      <option value="">Pilih SubKegiatan</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Sub SubKegiatan <span className="text-red-500">*</span></label>
+                    <input type="text" placeholder="Nama sub subKegiatan..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                   </div>
                 </>
               )}
@@ -616,18 +621,28 @@ export function MasterData() {
                 className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">
                 Batal
               </button>
-              <button onClick={() => {
-                // Mock Add Log for modal
-                if (isSuperadmin) {
+              <button
+                disabled={activeTab === 'bidang' && !formNamaBidang.trim()}
+                onClick={() => {
+                  if (activeTab === 'bidang') {
+                    if (!isSuperadmin) return alert('Hanya Superadmin yang bisa menambah Bidang.');
+                    if (!formNamaBidang.trim()) return;
+                    const nextKode = String(allBidang.length + 1);
+                    addUraianBaru(nextKode, formNamaBidang.trim(), 1, 0, user?.nama || 'Unknown');
+                    setFormNamaBidang('');
+                    setActiveTab('bidang');
+                    setShowAddModal(false);
+                    return;
+                  }
+                  // Untuk tab lain: simulasi log saja
                   addActivityLog({
                     user: user?.nama || 'Unknown',
-                    action: 'Menambah Data Master (Simulasi UI)',
-                    details: 'Mencoba submit form tambah data di Master Data (Saat ini sebatas mock UI)'
+                    action: 'Menambah Data Master',
+                    details: `Mencoba submit form tambah data di tab ${activeTab}`
                   });
-                }
-                setShowAddModal(false);
-              }}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all">
+                  setShowAddModal(false);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
                 <Save className="w-4 h-4" /> Simpan
               </button>
             </div>

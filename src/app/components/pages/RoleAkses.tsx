@@ -176,17 +176,17 @@ export function RoleAkses() {
                 <td className="py-3 px-4 border text-center">✓</td>
               </tr>
               <tr>
-                <td className="py-3 px-4 border font-medium">Agenda & Kegiatan (Tambah/Edit)</td>
+                <td className="py-3 px-4 border font-medium">Agenda & SubKegiatan (Tambah/Edit)</td>
                 <td className="py-3 px-4 border text-center">✓</td>
                 <td className="py-3 px-4 border text-center">✓</td>
               </tr>
               <tr>
-                <td className="py-3 px-4 border font-medium">Agenda & Kegiatan (Hapus)</td>
+                <td className="py-3 px-4 border font-medium">Agenda & SubKegiatan (Hapus)</td>
                 <td className="py-3 px-4 border text-center">✓</td>
                 <td className="py-3 px-4 border text-center">✗</td>
               </tr>
               <tr>
-                <td className="py-3 px-4 border font-medium">Verifikasi Kegiatan</td>
+                <td className="py-3 px-4 border font-medium">Verifikasi SubKegiatan</td>
                 <td className="py-3 px-4 border text-center">✓</td>
                 <td className="py-3 px-4 border text-center">✗</td>
               </tr>

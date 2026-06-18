@@ -4,7 +4,7 @@ import {
   FileText, RefreshCw, DollarSign, Edit3,
   Plus, Trash2, Save, ChevronRight, AlertCircle,
 } from 'lucide-react';
-import { Kegiatan, KegiatanStep } from '../../lib/data';
+import { SubSubKegiatan, SubKegiatanStep } from '../../lib/data';
 import { useAppData } from '../../hooks/useAppData';
 
 interface LogItem {
@@ -22,8 +22,8 @@ interface DocItem {
 }
 
 interface Props {
-  kegiatan: Kegiatan;
-  steps: KegiatanStep[];
+  subKegiatan: SubSubKegiatan;
+  steps: SubKegiatanStep[];
   progress: number;
   onClose: () => void;
   onToggleStep: (stepId: string) => void;
@@ -31,13 +31,13 @@ interface Props {
 }
 
 const STEP_DESCRIPTIONS: Record<string, string> = {
-  'Persiapan Dokumen': 'Siapkan seluruh dokumen pendukung kegiatan',
+  'Persiapan Dokumen': 'Siapkan seluruh dokumen pendukung subKegiatan',
   'Koordinasi Internal': 'Koordinasi dengan pihak terkait & konfirmasi peserta',
-  'Pelaksanaan Kegiatan': 'Upload foto, dokumen, absensi',
-  'Evaluasi Hasil': 'Laporan, notulen, hasil kegiatan',
-  'Penyusunan Laporan': 'Susun laporan pelaksanaan kegiatan',
+  'Pelaksanaan SubKegiatan': 'Upload foto, dokumen, absensi',
+  'Evaluasi Hasil': 'Laporan, notulen, hasil subKegiatan',
+  'Penyusunan Laporan': 'Susun laporan pelaksanaan subKegiatan',
   'Verifikasi Dokumen': 'Cek kelengkapan dokumen & laporan',
-  'Closed': 'Kegiatan Selesai Sempurna',
+  'Closed': 'SubKegiatan Selesai Sempurna',
 };
 const getDesc = (n: string) => STEP_DESCRIPTIONS[n] ?? 'Selesaikan tahap ini sesuai prosedur';
 
@@ -53,15 +53,15 @@ function nowTime() {
 
 
 export function UpdateProgressModal({
-  kegiatan,
+  subKegiatan,
   steps,
   progress,
   onClose,
   onToggleStep,
   onSaveRealisasi,
 }: Props) {
-  const { addActivityLog, addRealisasi, user, updateKegiatanMetadata } = useAppData();
-  const [confirmStep, setConfirmStep] = useState<{ step: KegiatanStep | null; type: 'done' | 'undo' }>({ step: null, type: 'done' });
+  const { addActivityLog, addRealisasi, user, updateSubKegiatanMetadata } = useAppData();
+  const [confirmStep, setConfirmStep] = useState<{ step: SubKegiatanStep | null; type: 'done' | 'undo' }>({ step: null, type: 'done' });
   const [undoReason, setUndoReason] = useState('');
   const [docs, setDocs] = useState<DocItem[]>([
     { id: 'd1', nama: 'Dokumen Perencanaan.pdf', ukuran: '245 KB', uploadedAt: '2 hari yang lalu' },
@@ -70,7 +70,7 @@ export function UpdateProgressModal({
   const [logs, setLogs] = useState<LogItem[]>([
     { id: 'l1', tanggal: '12 Jun 2026', jam: '10:30', keterangan: 'Status diubah menjadi "Berjalan"', oleh: 'Administrator Utama' },
     { id: 'l2', tanggal: '10 Jun 2026', jam: '14:15', keterangan: 'Dokumen "Surat Undangan.pdf" ditambahkan', oleh: 'Administrator Utama' },
-    { id: 'l3', tanggal: '8 Jun 2026', jam: '09:00', keterangan: 'Kegiatan dibuat', oleh: 'Administrator Utama' },
+    { id: 'l3', tanggal: '8 Jun 2026', jam: '09:00', keterangan: 'SubKegiatan dibuat', oleh: 'Administrator Utama' },
   ]);
   const [catatan, setCatatan] = useState('');
   const [dragOver, setDragOver] = useState(false);
@@ -101,14 +101,14 @@ export function UpdateProgressModal({
 
     addActivityLog({
       user: 'Administrator Utama',
-      action: 'Update Progress Kegiatan',
-      details: `${keterangan} pada kegiatan: ${kegiatan.nama}`
+      action: 'Update Progress SubKegiatan',
+      details: `${keterangan} pada subKegiatan: ${subKegiatan.nama}`
     });
   }
 
-  function handleMarkStepClick(step: KegiatanStep, type: 'done' | 'undo') {
-    if (!kegiatan.isApproved) {
-      alert("Kegiatan ini belum disetujui, progress tidak bisa diupdate.");
+  function handleMarkStepClick(step: SubKegiatanStep, type: 'done' | 'undo') {
+    if (!subKegiatan.isApproved) {
+      alert("SubKegiatan ini belum disetujui, progress tidak bisa diupdate.");
       return;
     }
     setConfirmStep({ step, type });
@@ -123,17 +123,17 @@ export function UpdateProgressModal({
       addLog(`Tahap "${step.nama}" dibatalkan / ditandai belum selesai${reason}`);
       
       const isLastStep = confirmStep.step.id === steps[steps.length - 1].id;
-      if (isLastStep && kegiatan.anggaranDiminta) {
-         addRealisasi(kegiatan.id, -kegiatan.anggaranDiminta);
-         addLog(`Realisasi anggaran ditarik kembali: Rp ${kegiatan.anggaranDiminta.toLocaleString('id-ID')}`);
+      if (isLastStep && subKegiatan.anggaranDiminta) {
+         addRealisasi(subKegiatan.id, -subKegiatan.anggaranDiminta);
+         addLog(`Realisasi anggaran ditarik kembali: Rp ${subKegiatan.anggaranDiminta.toLocaleString('id-ID')}`);
       }
     } else {
       addLog(`Tahap "${step.nama}" ditandai selesai`);
       
       const isLastStep = confirmStep.step.id === steps[steps.length - 1].id;
-      if (isLastStep && kegiatan.anggaranDiminta) {
-         addRealisasi(kegiatan.id, kegiatan.anggaranDiminta);
-         addLog(`Realisasi anggaran otomatis ditambahkan: Rp ${kegiatan.anggaranDiminta.toLocaleString('id-ID')}`);
+      if (isLastStep && subKegiatan.anggaranDiminta) {
+         addRealisasi(subKegiatan.id, subKegiatan.anggaranDiminta);
+         addLog(`Realisasi anggaran otomatis ditambahkan: Rp ${subKegiatan.anggaranDiminta.toLocaleString('id-ID')}`);
       }
     }
     
@@ -143,18 +143,18 @@ export function UpdateProgressModal({
   }
 
   function handleApprove() {
-    updateKegiatanMetadata({
-      id: kegiatan.id,
-      penanggungJawab: kegiatan.penanggungJawab,
-      tanggalMulai: kegiatan.tanggalMulai,
-      tanggalSelesai: kegiatan.tanggalSelesai,
-      deskripsi: kegiatan.deskripsi,
-      steps: kegiatan.steps,
+    updateSubKegiatanMetadata({
+      id: subKegiatan.id,
+      penanggungJawab: subKegiatan.penanggungJawab,
+      tanggalMulai: subKegiatan.tanggalMulai,
+      tanggalSelesai: subKegiatan.tanggalSelesai,
+      deskripsi: subKegiatan.deskripsi,
+      steps: subKegiatan.steps,
       isApproved: true,
-      sumberDana: kegiatan.sumberDana,
-      anggaranDiminta: kegiatan.anggaranDiminta
+      sumberDana: subKegiatan.sumberDana,
+      anggaranDiminta: subKegiatan.anggaranDiminta
     });
-    addLog(`Kegiatan disetujui oleh ${user?.nama || 'Superadmin'}`);
+    addLog(`SubKegiatan disetujui oleh ${user?.nama || 'Superadmin'}`);
   }
 
   function handleUpload(files: FileList | null) {
@@ -249,8 +249,8 @@ export function UpdateProgressModal({
               <RefreshCw className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white leading-tight">Monitoring Kegiatan</h2>
-              <p className="text-blue-200 text-xs truncate max-w-[400px] mt-0.5">{kegiatan.nama}</p>
+              <h2 className="text-sm font-bold text-white leading-tight">Monitoring SubKegiatan</h2>
+              <p className="text-blue-200 text-xs truncate max-w-[400px] mt-0.5">{subKegiatan.nama}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -340,14 +340,14 @@ export function UpdateProgressModal({
                         <div className="text-base font-bold text-blue-900">{steps[currentStepIdx]?.nama}</div>
                         <div className="text-sm text-blue-600 mt-0.5">{getDesc(steps[currentStepIdx]?.nama)}</div>
                       </div>
-                      {!kegiatan.isApproved ? (
+                      {!subKegiatan.isApproved ? (
                         user?.role === 'superadmin' ? (
                           <button
                             onClick={handleApprove}
                             className="flex-shrink-0 flex items-center gap-2 bg-amber-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-amber-600 shadow-md shadow-amber-200 transition-all hover:scale-105"
                           >
                             <Check className="w-4 h-4" strokeWidth={3} />
-                            Approve Kegiatan
+                            Approve SubKegiatan
                           </button>
                         ) : (
                           <div className="text-sm text-amber-700 font-bold bg-amber-100 px-4 py-2 rounded-lg border border-amber-200 shadow-sm">
@@ -372,7 +372,7 @@ export function UpdateProgressModal({
                     </div>
 
                     {/* Undo Previous Step Button */}
-                    {currentStepIdx > 0 && kegiatan.isApproved && (
+                    {currentStepIdx > 0 && subKegiatan.isApproved && (
                       <div className="mt-4 flex justify-end">
                         <button 
                           onClick={() => handleMarkStepClick(steps[currentStepIdx - 1], 'undo')}
@@ -393,11 +393,11 @@ export function UpdateProgressModal({
                         <FileCheck className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <div className="text-base font-bold text-emerald-800">Kegiatan Selesai Sempurna</div>
+                        <div className="text-base font-bold text-emerald-800">SubKegiatan Selesai Sempurna</div>
                         <div className="text-sm text-emerald-600">Semua tahap telah terverifikasi</div>
                       </div>
                     </div>
-                    {kegiatan.isApproved && steps.length > 0 && (
+                    {subKegiatan.isApproved && steps.length > 0 && (
                       <button 
                         onClick={() => handleMarkStepClick(steps[steps.length - 1], 'undo')}
                         className="text-xs text-red-500 hover:text-red-700 font-semibold underline whitespace-nowrap transition-colors"

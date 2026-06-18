@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router';
-import logoJateng from '../../imports/logo_jateng.png';
+import logoJateng from '../../../imports/logo_jateng.png';
 import {
   LayoutDashboard,
   Calendar,

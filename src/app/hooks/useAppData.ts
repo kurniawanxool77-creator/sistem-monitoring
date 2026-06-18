@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { uraianAnggaran, UraianAnggaran, Kegiatan, Bagian } from '../lib/data';
+import { uraianAnggaran, UraianAnggaran, SubKegiatan, Bagian } from '../lib/data';
 
 // Key for local storage
 const STORAGE_KEY = 'master_uraian_anggaran';
@@ -9,7 +9,7 @@ const STORAGE_KEY = 'master_uraian_anggaran';
 // (dates, PJ, steps, etc) in another key.
 const KEGIATAN_META_KEY = 'kegiatan_metadata_v3';
 
-export interface KegiatanMeta {
+export interface SubKegiatanMeta {
   id: string; // references uraianAnggaran kode
   penanggungJawab: string;
   tanggalMulai: string;
@@ -44,7 +44,7 @@ export interface AppUser {
 export function useAppData() {
   const [appUsers, setAppUsers] = useState<AppUser[]>([]);
   const [allDataUraian, setAllDataUraian] = useState<UraianAnggaran[]>([]);
-  const [kegiatanMeta, setKegiatanMeta] = useState<KegiatanMeta[]>([]);
+  const [subKegiatanMeta, setSubKegiatanMeta] = useState<SubKegiatanMeta[]>([]);
   const [allActivityLogs, setAllActivityLogs] = useState<ActivityLog[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -64,7 +64,7 @@ export function useAppData() {
     const savedMeta = localStorage.getItem(KEGIATAN_META_KEY);
     if (savedMeta) {
       try {
-        setKegiatanMeta(JSON.parse(savedMeta));
+        setSubKegiatanMeta(JSON.parse(savedMeta));
       } catch (e) {}
     }
 
@@ -108,11 +108,11 @@ export function useAppData() {
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(allDataUraian));
-      localStorage.setItem(KEGIATAN_META_KEY, JSON.stringify(kegiatanMeta));
+      localStorage.setItem(KEGIATAN_META_KEY, JSON.stringify(subKegiatanMeta));
       localStorage.setItem('activity_logs', JSON.stringify(allActivityLogs));
       localStorage.setItem('app_users', JSON.stringify(appUsers));
     }
-  }, [allDataUraian, kegiatanMeta, allActivityLogs, appUsers, isLoaded]);
+  }, [allDataUraian, subKegiatanMeta, allActivityLogs, appUsers, isLoaded]);
 
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
@@ -152,7 +152,7 @@ export function useAppData() {
   };
 
   // Derived: Kegiatan List (Level 3 or Level 4 with custom metadata)
-  const getKegiatanList = (): Kegiatan[] => {
+  const getSubKegiatanList = (): SubKegiatan[] => {
     return dataUraian
       .filter(u => u.level === 3 || u.level === 4)
       .map((u, i) => {
@@ -164,7 +164,7 @@ export function useAppData() {
         const parentSubBidang = dataUraian.find(x => x.kode === subBidangKode);
         
         // Find custom metadata if it exists
-        const meta = kegiatanMeta.find(m => m.id === u.kode);
+        const meta = subKegiatanMeta.find(m => m.id === u.kode);
         
         const isTerlambat = i < 7;
         const dummyStart = `2026-05-01`;
@@ -210,7 +210,7 @@ export function useAppData() {
           id: u.kode,
           nama: u.uraian,
           bidang: parentBidang?.uraian || 'Unknown',
-          subBidang: parentSubBidang?.uraian || 'Unknown',
+          kegiatan_parent: parentSubBidang?.uraian || 'Unknown',
           penanggungJawab: meta?.penanggungJawab || 'Belum Ada PJ',
           tanggalMulai: meta?.tanggalMulai || dummyStart,
           tanggalSelesai: meta?.tanggalSelesai || dummyEnd,
@@ -230,7 +230,7 @@ export function useAppData() {
 
   // Derived: Agenda Hari Ini
   const getAgendaHariIni = () => {
-    return getKegiatanList().slice(0, 4).map((k, i) => ({
+    return getSubKegiatanList().slice(0, 4).map((k, i) => ({
       id: k.id,
       waktu: `${9 + i}:00`,
       status: i < 2 ? 'berlangsung' as const : 'terjadwal' as const,
@@ -242,10 +242,10 @@ export function useAppData() {
 
   // Actions
   const addUraianBaru = (kode: string, uraian: string, level: 1|2|3|4, target: number, userName?: string) => {
+    const newItem = { kode, uraian, level, target, realisasi: 0 };
     setAllDataUraian(prev => {
-      // Avoid duplicate
       if (prev.some(u => u.kode === kode)) return prev;
-      return [...prev, { kode, uraian, level, target, realisasi: 0 }];
+      return [...prev, newItem];
     });
     if (userName) {
       addActivityLog({
@@ -254,6 +254,7 @@ export function useAppData() {
         details: `Berhasil menambahkan data: ${uraian} (${kode})`
       });
     }
+    return newItem;
   };
 
   const updateUraian = (kode: string, uraianBaru: string, targetBaru: number, userName: string) => {
@@ -290,7 +291,7 @@ export function useAppData() {
       return next;
     });
 
-    setKegiatanMeta(prev => prev.filter(m => !(m.id === kode || m.id.startsWith(`${kode}.`))));
+    setSubKegiatanMeta(prev => prev.filter(m => !(m.id === kode || m.id.startsWith(`${kode}.`))));
 
     if (deletedCount > 0) {
       addActivityLog({
@@ -301,8 +302,8 @@ export function useAppData() {
     }
   };
 
-  const deleteKegiatan = (id: string, userName: string, kegiatanNama: string) => {
-    setKegiatanMeta(prev => prev.filter(m => m.id !== id));
+  const deleteSubKegiatan = (id: string, userName: string, kegiatanNama: string) => {
+    setSubKegiatanMeta(prev => prev.filter(m => m.id !== id));
     setAllDataUraian(prev => {
       const idx = prev.findIndex(u => u.kode === id);
       if (idx !== -1) {
@@ -320,8 +321,8 @@ export function useAppData() {
     });
   };
 
-  const deleteKegiatanMetadata = (kode: string) => {
-    setKegiatanMeta(prev => prev.filter(m => m.id !== kode));
+  const deleteSubKegiatanMetadata = (kode: string) => {
+    setSubKegiatanMeta(prev => prev.filter(m => m.id !== kode));
   };
 
   const addRealisasi = (kode: string, amount: number) => {
@@ -345,8 +346,8 @@ export function useAppData() {
     });
   };
 
-  const updateKegiatanMetadata = (meta: KegiatanMeta) => {
-    setKegiatanMeta(prev => {
+  const updateSubKegiatanMetadata = (meta: SubKegiatanMeta) => {
+    setSubKegiatanMeta(prev => {
       const idx = prev.findIndex(m => m.id === meta.id);
       if (idx !== -1) {
         const next = [...prev];
@@ -357,8 +358,8 @@ export function useAppData() {
     });
   };
 
-  const approveKegiatan = (id: string, userName: string) => {
-    setKegiatanMeta(prev => {
+  const approveSubKegiatan = (id: string, userName: string) => {
+    setSubKegiatanMeta(prev => {
       const idx = prev.findIndex(m => m.id === id);
       if (idx !== -1) {
         const next = [...prev];
@@ -424,20 +425,20 @@ export function useAppData() {
   return {
     isLoaded,
     dataUraian,
-    kegiatanMeta,
+    subKegiatanMeta,
     activityLogs,
     appUsers,
     getBagianList,
-    getKegiatanList,
+    getSubKegiatanList,
     getAgendaHariIni,
     addUraianBaru,
     updateUraian,
     deleteUraian,
-    deleteKegiatan,
-    deleteKegiatanMetadata,
+    deleteSubKegiatan,
+    deleteSubKegiatanMetadata,
     addRealisasi,
-    updateKegiatanMetadata,
-    approveKegiatan,
+    updateSubKegiatanMetadata,
+    approveSubKegiatan,
     addActivityLog,
     addUser,
     updateUser,

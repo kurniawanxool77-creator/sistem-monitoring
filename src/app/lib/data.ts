@@ -15,27 +15,27 @@ export interface BidangData {
   id: string;
   nama: string;
   pagu: number;
-  subBidang: SubBidangData[];
+  kegiatan: KegiatanData[];
 }
 
-export interface SubBidangData {
+export interface KegiatanData {
   id: string;
   nama: string;
   paguDefault: number;
-  kegiatan: KegiatanTemplate[];
+  subKegiatan: SubKegiatanTemplate[];
 }
 
-export interface SubKegiatanData {
+export interface SubSubKegiatanData {
   id: string;
   nama: string;
   pagu: number;
 }
 
-export interface KegiatanTemplate {
+export interface SubKegiatanTemplate {
   id: string;
   nama: string;
   pagu: number;
-  subKegiatan?: SubKegiatanData[];
+  subSubKegiatan?: SubSubKegiatanData[];
 }
 
 // Sumber: E-controlling 2026 Rekap Progres Agenda – Sekretariat DPRD Provinsi Jawa Tengah
@@ -44,12 +44,12 @@ export const masterBidang: BidangData[] = [
     id: 'bid-1',
     nama: 'Sekretariat DPRD',
     pagu: 168_376_593_000,
-    subBidang: [
+    kegiatan: [
       {
         id: 'sub-1',
         nama: 'Perencanaan & Evaluasi Kinerja',
         paguDefault: 712_581_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-1', nama: 'Penyusunan Dokumen Perencanaan Perangkat Daerah', pagu: 442_601_000 },
           { id: 'k-2', nama: 'Evaluasi Kinerja Perangkat Daerah', pagu: 219_980_000 },
           { id: 'k-3', nama: 'Pengumpulan Data Statistik Sektoral Daerah', pagu: 25_000_000 },
@@ -60,7 +60,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-2',
         nama: 'Administrasi Keuangan Perangkat Daerah',
         paguDefault: 19_550_589_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-5', nama: 'Penyediaan Gaji dan Tunjangan ASN', pagu: 18_570_007_000 },
           { id: 'k-6', nama: 'Penyediaan Administrasi Pelaksanaan Tugas ASN', pagu: 980_582_000 },
         ],
@@ -69,7 +69,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-3',
         nama: 'Layanan Keuangan & Kesejahteraan DPRD',
         paguDefault: 148_113_423_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-7', nama: 'Penyelenggaraan Administrasi Keuangan DPRD', pagu: 148_113_423_000 },
         ],
       },
@@ -79,12 +79,12 @@ export const masterBidang: BidangData[] = [
     id: 'bid-2',
     nama: 'Bagian Umum',
     pagu: 58_216_639_000,
-    subBidang: [
+    kegiatan: [
       {
         id: 'sub-4',
         nama: 'Administrasi Umum Perangkat Daerah',
         paguDefault: 7_464_110_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-8', nama: 'Penyediaan Komponen Instalasi Listrik / Penerangan', pagu: 244_485_000 },
           { id: 'k-9', nama: 'Penyediaan Bahan Logistik Kantor', pagu: 187_269_000 },
           { id: 'k-10', nama: 'Penyediaan Bahan Bacaan dan Peraturan Perundang-undangan', pagu: 96_565_000 },
@@ -97,7 +97,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-5',
         nama: 'Administrasi Kepegawaian',
         paguDefault: 471_428_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-14', nama: 'Pendataan dan Pengolahan Administrasi Kepegawaian', pagu: 141_168_000 },
           { id: 'k-15', nama: 'Pendidikan dan Pelatihan Pegawai', pagu: 330_260_000 },
         ],
@@ -106,7 +106,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-6',
         nama: 'Pengadaan Barang Milik Daerah',
         paguDefault: 10_309_086_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-16', nama: 'Pengadaan Kendaraan Perorangan Dinas / Jabatan', pagu: 4_002_240_000 },
           { id: 'k-17', nama: 'Pengadaan Mebel', pagu: 2_048_833_000 },
           { id: 'k-18', nama: 'Pengadaan Peralatan dan Mesin Lainnya', pagu: 1_443_188_000 },
@@ -117,7 +117,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-7',
         nama: 'Pemeliharaan Barang Milik Daerah',
         paguDefault: 11_282_023_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-20', nama: 'Pemeliharaan Kendaraan Dinas Jabatan', pagu: 596_253_000 },
           { id: 'k-21', nama: 'Pemeliharaan Kendaraan Dinas Operasional', pagu: 2_712_428_000 },
           { id: 'k-22', nama: 'Pemeliharaan Mebel', pagu: 86_425_000 },
@@ -129,7 +129,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-8',
         nama: 'Penyediaan Jasa Penunjang',
         paguDefault: 28_689_992_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-25', nama: 'Penyediaan Jasa Surat Menyurat', pagu: 145_708_000 },
           { id: 'k-26', nama: 'Penyediaan Jasa Komunikasi, Air dan Listrik', pagu: 4_474_000_000 },
           { id: 'k-27', nama: 'Penyediaan Jasa Peralatan dan Perlengkapan Kantor', pagu: 900_761_000 },
@@ -142,12 +142,12 @@ export const masterBidang: BidangData[] = [
     id: 'bid-3',
     nama: 'Bagian Humas',
     pagu: 231_584_388_000,
-    subBidang: [
+    kegiatan: [
       {
         id: 'sub-9',
         nama: 'Peningkatan Kapasitas DPRD',
         paguDefault: 130_044_388_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-29', nama: 'Penyediaan Kelompok Pakar dan Tim Ahli', pagu: 1_939_086_000 },
           { id: 'k-30', nama: 'Penyediaan Tenaga Ahli Fraksi', pagu: 418_741_000 },
           { id: 'k-31', nama: 'Penyelenggaraan Hubungan Masyarakat', pagu: 12_166_561_000 },
@@ -158,7 +158,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-10',
         nama: 'Pembahasan Kerja Sama Daerah',
         paguDefault: 101_540_000_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-33', nama: 'Penyusunan Bahan Komunikasi dan Publikasi', pagu: 101_540_000_000 },
         ],
       },
@@ -168,12 +168,12 @@ export const masterBidang: BidangData[] = [
     id: 'bid-4',
     nama: 'Bagian Persidangan',
     pagu: 97_960_085_000,
-    subBidang: [
+    kegiatan: [
       {
         id: 'sub-11',
         nama: 'Pembentukan Perda dan Peraturan DPRD',
         paguDefault: 7_206_440_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-34', nama: 'Penyusunan dan Pembahasan Program Pembentukan Perda', pagu: 4_262_440_000 },
           { id: 'k-35', nama: 'Sosialisasi Peraturan Daerah Bersama DPRD & Pemerintah', pagu: 2_944_000_000 },
         ],
@@ -182,7 +182,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-12',
         nama: 'Pembahasan Kebijakan Anggaran',
         paguDefault: 2_210_534_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-36', nama: 'Pembahasan APBD', pagu: 2_210_534_000 },
         ],
       },
@@ -190,7 +190,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-13',
         nama: 'Pengawasan Penyelenggaraan Pemerintahan',
         paguDefault: 12_515_582_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-37', nama: 'Pengawasan Bidang Pemerintahan dan Hukum', pagu: 1_850_000_000 },
           { id: 'k-38', nama: 'Pengawasan Bidang Infrastruktur', pagu: 1_850_000_000 },
           { id: 'k-39', nama: 'Pengawasan Bidang Kesejahteraan Rakyat', pagu: 1_850_000_000 },
@@ -204,7 +204,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-14',
         nama: 'Penyerapan Aspirasi Masyarakat',
         paguDefault: 49_184_524_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-44', nama: 'Kunjungan Kerja dalam Daerah', pagu: 10_402_980_000 },
           { id: 'k-45', nama: 'Penyusunan Pokok-Pokok Pikiran DPRD', pagu: 175_000_000 },
           { id: 'k-46', nama: 'Pelaksanaan Reses', pagu: 38_606_544_000 },
@@ -214,7 +214,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-15',
         nama: 'Peningkatan Kapasitas & Kode Etik DPRD',
         paguDefault: 5_532_000_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-47', nama: 'Pendalaman Tugas DPRD', pagu: 4_380_000_000 },
           { id: 'k-48', nama: 'Penyusunan Kode Etik DPRD', pagu: 1_152_000_000 },
         ],
@@ -223,7 +223,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-16',
         nama: 'Fasilitasi Tugas DPRD',
         paguDefault: 21_311_005_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-49', nama: 'Koordinasi dan Konsultasi Pelaksanaan Tugas DPRD', pagu: 21_311_005_000 },
         ],
       },
@@ -233,12 +233,12 @@ export const masterBidang: BidangData[] = [
     id: 'bid-5',
     nama: 'Keuangan',
     pagu: 168_376_593_000,
-    subBidang: [
+    kegiatan: [
       {
         id: 'sub-17',
         nama: 'Administrasi Keuangan',
         paguDefault: 19_550_589_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-50', nama: 'Penyediaan Gaji dan Tunjangan ASN', pagu: 18_570_007_000 },
           { id: 'k-51', nama: 'Penyediaan Administrasi Pelaksanaan Tugas ASN', pagu: 980_582_000 },
         ],
@@ -247,7 +247,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-18',
         nama: 'Layanan Keuangan DPRD',
         paguDefault: 148_113_423_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-52', nama: 'Penyelenggaraan Administrasi Keuangan DPRD', pagu: 148_113_423_000 },
         ],
       },
@@ -255,7 +255,7 @@ export const masterBidang: BidangData[] = [
         id: 'sub-19',
         nama: 'Pelaporan & Akuntabilitas',
         paguDefault: 712_581_000,
-        kegiatan: [
+        subKegiatan: [
           { id: 'k-53', nama: 'Penyusunan Dokumen Perencanaan Perangkat Daerah', pagu: 442_601_000 },
           { id: 'k-54', nama: 'Evaluasi Kinerja Perangkat Daerah', pagu: 219_980_000 },
         ],
@@ -281,11 +281,11 @@ export interface KegiatanStep {
   selesai: boolean;
 }
 
-export interface Kegiatan {
+export interface SubKegiatan {
   id: string;
   nama: string;
   bidang: string;
-  subBidang: string;
+  kegiatan_parent: string;
   penanggungJawab: string;
   tanggalMulai: string;
   tanggalSelesai: string;
@@ -638,7 +638,7 @@ export const bagianList: Bagian[] = uraianAnggaran
     };
   });
 
-export const kegiatanList: Kegiatan[] = uraianAnggaran
+export const subKegiatanList: SubKegiatan[] = uraianAnggaran
   .filter(u => u.level === 3)
   .map((u, i) => {
     const subBidangKode = u.kode.split('.').slice(0, 2).join('.');
@@ -672,7 +672,7 @@ export const kegiatanList: Kegiatan[] = uraianAnggaran
     };
   });
 
-export const kegiatanPerBagian = kegiatanList.reduce((acc, k) => {
+export const subKegiatanPerBagian = subKegiatanList.reduce((acc, k) => {
   if (!acc[k.bidang]) acc[k.bidang] = [];
   acc[k.bidang].push({
     id: k.id,
@@ -685,7 +685,7 @@ export const kegiatanPerBagian = kegiatanList.reduce((acc, k) => {
   return acc;
 }, {} as Record<string, { id: string; nama: string; tanggal: string; progress: number; status: string; step: string }[]>);
 
-export const agendaHariIni = kegiatanList.slice(0, 4).map((k, i) => ({
+export const agendaHariIni = subKegiatanList.slice(0, 4).map((k, i) => ({
   id: k.id,
   waktu: `${9 + i}:00`,
   status: i < 2 ? 'berlangsung' as const : 'terjadwal' as const,

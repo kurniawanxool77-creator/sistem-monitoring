@@ -47,8 +47,8 @@ export function LaporanAnggaran() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Level</label>
             <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <option>Per Bidang</option>
-              <option>Per Sub Bidang</option>
               <option>Per Kegiatan</option>
+              <option>Per SubKegiatan</option>
             </select>
           </div>
         </div>

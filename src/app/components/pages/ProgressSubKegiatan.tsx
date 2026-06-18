@@ -3,8 +3,8 @@ import { Link } from 'react-router';
 import {
   RefreshCw, Building2, Wallet, Megaphone, Gavel, Archive, HelpCircle, RotateCcw,
 } from 'lucide-react';
-import { Kegiatan } from '../../lib/data';
-import { UpdateProgressModal } from './UpdateProgressModal';
+import { SubKegiatan } from '../../lib/data';
+import { UpdateProgressModal } from '../modals/UpdateProgressModal';
 import { useAppData } from '../../hooks/useAppData';
 
 const ALL_CARDS = [
@@ -56,9 +56,9 @@ const CARDS_CONFIG: Record<string, {
   },
 };
 
-export function ProgressKegiatan() {
-  const { getKegiatanList, addRealisasi, updateKegiatanMetadata, getBagianList } = useAppData();
-  const kegiatans = getKegiatanList();
+export function ProgressSubKegiatan() {
+  const { getSubKegiatanList, addRealisasi, updateSubKegiatanMetadata, getBagianList } = useAppData();
+  const subKegiatans = getSubKegiatanList();
   
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
@@ -75,14 +75,14 @@ export function ProgressKegiatan() {
   const [filterStatus, setFilterStatus] = useState<string>('Semua');
   const [updateProgressFor, setUpdateProgressFor] = useState<string | null>(null);
 
-  function toggleStep(kegiatanId: string, stepId: string) {
-    const k = kegiatans.find(x => x.id === kegiatanId);
+  function toggleStep(subKegiatanId: string, stepId: string) {
+    const k = subKegiatans.find(x => x.id === subKegiatanId);
     if (!k) return;
     const newSteps = k.steps.map((s) =>
       s.id === stepId ? { ...s, selesai: !s.selesai } : s
     );
-    updateKegiatanMetadata({
-      id: kegiatanId,
+    updateSubKegiatanMetadata({
+      id: subKegiatanId,
       penanggungJawab: k.penanggungJawab,
       tanggalMulai: k.tanggalMulai,
       tanggalSelesai: k.tanggalSelesai,
@@ -91,16 +91,16 @@ export function ProgressKegiatan() {
     });
   }
 
-  function handleSaveRealisasi(kegiatanId: string, amount: number) {
-    addRealisasi(kegiatanId, amount);
+  function handleSaveRealisasi(subKegiatanId: string, amount: number) {
+    addRealisasi(subKegiatanId, amount);
   }
 
-  function handleSaveEdit(kegiatanId: string, updatedFields: Partial<Kegiatan>) {
-    const k = kegiatans.find(x => x.id === kegiatanId);
+  function handleSaveEdit(subKegiatanId: string, updatedFields: Partial<SubKegiatan>) {
+    const k = subKegiatans.find(x => x.id === subKegiatanId);
     if (!k) return;
     
-    updateKegiatanMetadata({
-      id: kegiatanId,
+    updateSubKegiatanMetadata({
+      id: subKegiatanId,
       penanggungJawab: updatedFields.penanggungJawab !== undefined ? updatedFields.penanggungJawab : k.penanggungJawab,
       tanggalMulai: updatedFields.tanggalMulai !== undefined ? updatedFields.tanggalMulai : k.tanggalMulai,
       tanggalSelesai: updatedFields.tanggalSelesai !== undefined ? updatedFields.tanggalSelesai : k.tanggalSelesai,
@@ -109,8 +109,8 @@ export function ProgressKegiatan() {
     });
   }
 
-  // Get active kegiatan data for selected department
-  const currentDeptKegiatans = kegiatans.filter((k) => k.bidang === selectedBagian);
+  // Get active subKegiatan data for selected department
+  const currentDeptKegiatans = subKegiatans.filter((k) => k.bidang === selectedBagian);
 
   // Calculate average progress for selected department
   const selectedBagianProgress = currentDeptKegiatans.length > 0
@@ -118,14 +118,14 @@ export function ProgressKegiatan() {
     : 0;
 
   // Get unique sub-bagian for filtering
-  const uniqueSubBagian = Array.from(new Set(currentDeptKegiatans.map((k) => k.subBidang)));
+  const uniqueSubBagian = Array.from(new Set(currentDeptKegiatans.map((k) => k.subKegiatan_parent)));
 
-  // Filtered kegiatan to display in table
+  // Filtered subKegiatan to display in table
   const filteredKegiatans = currentDeptKegiatans
-    .filter((k) => filterSubBagian === 'Semua' || k.subBidang === filterSubBagian)
+    .filter((k) => filterSubBagian === 'Semua' || k.subKegiatan_parent === filterSubBagian)
     .filter((k) => filterStatus === 'Semua' || k.status === filterStatus);
 
-  const updateKegiatan = updateProgressFor ? kegiatans.find((k) => k.id === updateProgressFor) : null;
+  const updateKegiatan = updateProgressFor ? subKegiatans.find((k) => k.id === updateProgressFor) : null;
 
   return (
     <div className="space-y-6">
@@ -142,8 +142,8 @@ export function ProgressKegiatan() {
           const isSelected = selectedBagian === bagianNama;
 
           // Calculate stats for this card
-          const cardKegiatans = kegiatans.filter((k) => k.bidang === bagianNama);
-          const uniqueSubDepts = Array.from(new Set(cardKegiatans.map((k) => k.subBidang)));
+          const cardKegiatans = subKegiatans.filter((k) => k.bidang === bagianNama);
+          const uniqueSubDepts = Array.from(new Set(cardKegiatans.map((k) => k.subKegiatan_parent)));
           const progressVal = cardKegiatans.length > 0
             ? Math.round(cardKegiatans.reduce((acc, k) => acc + k.progress, 0) / cardKegiatans.length)
             : 0;
@@ -207,16 +207,16 @@ export function ProgressKegiatan() {
         {/* Filters area */}
         <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
           <span className="text-xs font-semibold text-gray-500 tracking-wider uppercase">
-            Rincian Perkegiatan {selectedBagian.replace('Bagian ', '').toUpperCase()}:
+            Rincian Per Kegiatan {selectedBagian.replace('Bagian ', '').toUpperCase()}:
           </span>
           <div className="flex items-center gap-3">
-            {/* Sub Bidang Filter */}
+            {/* Kegiatan Filter */}
             <select
               value={filterSubBagian}
               onChange={(e) => setFilterSubBagian(e.target.value)}
               className="text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
             >
-              <option value="Semua">Semua Sub Bidang</option>
+              <option value="Semua">Semua Kegiatan</option>
               {uniqueSubBagian.map((sub) => (
                 <option key={sub} value={sub}>{sub}</option>
               ))}
@@ -236,7 +236,7 @@ export function ProgressKegiatan() {
 
             <button
               onClick={() => {
-                localStorage.removeItem('kegiatan_metadata_v2');
+                localStorage.removeItem('subKegiatan_metadata_v2');
                 window.location.reload();
               }}
               className="text-xs font-semibold text-gray-500 hover:text-red-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none hover:bg-red-50 hover:border-red-200 transition-colors flex items-center gap-1 cursor-pointer"
@@ -254,7 +254,7 @@ export function ProgressKegiatan() {
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Sub Bidang
+                  Kegiatan
                 </th>
                 <th scope="col" className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Kegiatan
@@ -284,7 +284,7 @@ export function ProgressKegiatan() {
                 filteredKegiatans.map((k) => (
                   <tr key={k.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
                     <td className="px-4 py-2.5 text-xs text-gray-600 font-medium">
-                      {k.subBidang}
+                      {k.subKegiatan_parent}
                     </td>
                     <td className="px-4 py-2.5 text-xs">
                       <div className="flex items-center gap-1.5">
@@ -348,7 +348,7 @@ export function ProgressKegiatan() {
       {/* Update Progress Modal */}
       {updateProgressFor && updateKegiatan && (
         <UpdateProgressModal
-          kegiatan={updateKegiatan}
+          subKegiatan={updateKegiatan}
           steps={updateKegiatan.steps}
           progress={updateKegiatan.progress}
           onClose={() => setUpdateProgressFor(null)}

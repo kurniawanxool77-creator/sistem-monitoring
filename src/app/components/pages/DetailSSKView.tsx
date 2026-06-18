@@ -60,15 +60,15 @@ export function DetailSSKView() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Kegiatan</label>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">SubKegiatan</label>
               <select className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-slate-50 font-medium">
-                <option>{data.kegiatan}</option>
+                <option>{data.subKegiatan}</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Sub Kegiatan</label>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Sub SubKegiatan</label>
               <select className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-slate-50 font-medium">
-                <option>{data.subKegiatan}</option>
+                <option>{data.subSubKegiatan}</option>
               </select>
             </div>
           </div>
@@ -79,7 +79,7 @@ export function DetailSSKView() {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="px-6 py-4 bg-teal-50 border-b border-teal-100 flex items-center gap-2">
           <List className="w-5 h-5 text-teal-600" />
-          <h3 className="font-bold text-teal-800">Sub Sub Kegiatan Belanja</h3>
+          <h3 className="font-bold text-teal-800">Sub Sub SubKegiatan Belanja</h3>
         </div>
         
         <div className="p-0">
@@ -87,8 +87,8 @@ export function DetailSSKView() {
           <div className="p-6 bg-teal-50/30 flex flex-wrap gap-y-4 justify-between relative">
             <div className="space-y-4 flex-1">
               <div className="grid grid-cols-[150px_1fr] gap-4 text-sm">
-                <div className="text-slate-500 font-medium">Sub Kegiatan</div>
-                <div className="font-bold text-slate-800">: {data.subKegiatan}</div>
+                <div className="text-slate-500 font-medium">Sub SubKegiatan</div>
+                <div className="font-bold text-slate-800">: {data.subSubKegiatan}</div>
               </div>
               <div className="grid grid-cols-[150px_1fr] gap-4 text-sm">
                 <div className="text-slate-500 font-medium">Pagu APBD (Rp)</div>

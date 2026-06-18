@@ -1,12 +1,12 @@
-import { UraianKegiatanTable } from './UraianKegiatanTable';
+import { UraianSubKegiatanTable } from '../shared/UraianSubKegiatanTable';
 
 export function RealisasiPage() {
   return (
     <div className="space-y-6">
 
 
-      {/* Uraian Kegiatan Table */}
-      <UraianKegiatanTable />
+      {/* Uraian SubKegiatan Table */}
+      <UraianSubKegiatanTable />
     </div>
   );
 }

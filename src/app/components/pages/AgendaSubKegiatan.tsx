@@ -4,24 +4,24 @@ import {
   Plus, Search, Edit, Trash2, Eye, X, UserPlus, Minus,
   Check, CheckCircle2, FileCheck, ChevronRight, RefreshCw,
 } from 'lucide-react';
-import { sumberDanaList, Kegiatan, anggotaData } from '../../lib/data';
-import { UpdateProgressModal } from './UpdateProgressModal';
+import { sumberDanaList, SubSubKegiatan, anggotaData } from '../../lib/data';
+import { UpdateProgressModal } from '../modals/UpdateProgressModal';
 import { useAppData } from '../../hooks/useAppData';
 
 function formatRupiah(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 }
 
-import { KegiatanFormModal } from './KegiatanFormModal';
+import { SubKegiatanFormModal } from '../modals/SubKegiatanFormModal';
 
-export function AgendaKegiatan() {
+export function AgendaSubKegiatan() {
   const {
     dataUraian: uraianAnggaranData,
-    getKegiatanList,
+    getSubKegiatanList,
     addRealisasi,
-    updateKegiatanMetadata,
-    approveKegiatan,
-    deleteKegiatan,
+    updateSubKegiatanMetadata,
+    approveSubKegiatan,
+    deleteSubKegiatan,
     addActivityLog
   } = useAppData();
 
@@ -29,7 +29,7 @@ export function AgendaKegiatan() {
   const user = userStr ? JSON.parse(userStr) : null;
   const isSuperadmin = user?.role === 'superadmin';
 
-  const kegiatans = getKegiatanList();
+  const subKegiatans = getSubKegiatanList();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('semua');
@@ -40,19 +40,19 @@ export function AgendaKegiatan() {
   const [showEditModalFor, setShowEditModalFor] = useState<string | null>(null);
   const [modalInitialPanel, setModalInitialPanel] = useState<'progress' | 'realisasi'>('progress');
 
-  function openUpdateModal(kegiatanId: string, panel: 'progress' | 'realisasi') {
+  function openUpdateModal(subKegiatanId: string, panel: 'progress' | 'realisasi') {
     setModalInitialPanel(panel);
-    setUpdateProgressFor(kegiatanId);
+    setUpdateProgressFor(subKegiatanId);
   }
 
-  function toggleStep(kegiatanId: string, stepId: string) {
-    const k = kegiatans.find(x => x.id === kegiatanId);
+  function toggleStep(subKegiatanId: string, stepId: string) {
+    const k = subKegiatans.find(x => x.id === subKegiatanId);
     if (!k) return;
     const newSteps = k.steps.map((s) =>
       s.id === stepId ? { ...s, selesai: !s.selesai } : s
     );
-    updateKegiatanMetadata({
-      id: kegiatanId,
+    updateSubKegiatanMetadata({
+      id: subKegiatanId,
       penanggungJawab: k.penanggungJawab,
       tanggalMulai: k.tanggalMulai,
       tanggalSelesai: k.tanggalSelesai,
@@ -61,16 +61,16 @@ export function AgendaKegiatan() {
     });
   }
 
-  function handleSaveRealisasi(kegiatanId: string, amount: number) {
-    addRealisasi(kegiatanId, amount);
+  function handleSaveRealisasi(subKegiatanId: string, amount: number) {
+    addRealisasi(subKegiatanId, amount);
   }
 
-  function handleSaveEdit(kegiatanId: string, updatedFields: Partial<Kegiatan>) {
-    const k = kegiatans.find(x => x.id === kegiatanId);
+  function handleSaveEdit(subKegiatanId: string, updatedFields: Partial<SubSubKegiatan>) {
+    const k = subKegiatans.find(x => x.id === subKegiatanId);
     if (!k) return;
     
-    updateKegiatanMetadata({
-      id: kegiatanId,
+    updateSubKegiatanMetadata({
+      id: subKegiatanId,
       penanggungJawab: updatedFields.penanggungJawab !== undefined ? updatedFields.penanggungJawab : k.penanggungJawab,
       tanggalMulai: updatedFields.tanggalMulai !== undefined ? updatedFields.tanggalMulai : k.tanggalMulai,
       tanggalSelesai: updatedFields.tanggalSelesai !== undefined ? updatedFields.tanggalSelesai : k.tanggalSelesai,
@@ -79,23 +79,23 @@ export function AgendaKegiatan() {
     });
   }
 
-  const filteredKegiatan = kegiatans.filter((kegiatan) => {
-    const matchSearch = kegiatan.nama.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = filterStatus === 'semua' || kegiatan.status === filterStatus;
-    const matchBagian = filterBagian === 'semua' || kegiatan.bidang === filterBagian;
+  const filteredSubKegiatan = subKegiatans.filter((subKegiatan) => {
+    const matchSearch = subKegiatan.nama.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchStatus = filterStatus === 'semua' || subKegiatan.status === filterStatus;
+    const matchBagian = filterBagian === 'semua' || subKegiatan.bidang === filterBagian;
     return matchSearch && matchStatus && matchBagian;
   });
 
-  const allBidangOptions = Array.from(new Set(kegiatans.map((k) => k.bidang)));
+  const allBidangOptions = Array.from(new Set(subKegiatans.map((k) => k.bidang)));
 
-  function handleDeleteKegiatan(id: string, nama: string) {
-    if (confirm(`Apakah Anda yakin ingin menghapus kegiatan "${nama}"?`)) {
-      deleteKegiatan(id, user?.nama || 'Unknown User', nama);
+  function handleDeleteSubKegiatan(id: string, nama: string) {
+    if (confirm(`Apakah Anda yakin ingin menghapus subKegiatan "${nama}"?`)) {
+      deleteSubKegiatan(id, user?.nama || 'Unknown User', nama);
     }
   }
 
-  // kegiatan yang sedang dibuka update progress-nya
-  const updateKegiatan = updateProgressFor ? kegiatans.find((k) => k.id === updateProgressFor) : null;
+  // subKegiatan yang sedang dibuka update progress-nya
+  const updateSubKegiatan = updateProgressFor ? subKegiatans.find((k) => k.id === updateProgressFor) : null;
 
   return (
     <div className="space-y-6">
@@ -157,10 +157,10 @@ export function AgendaKegiatan() {
               </tr>
             </thead>
             <tbody>
-              {filteredKegiatan.map((kegiatan, index) => {
-                const isExpanded = expandedRow === kegiatan.id;
-                const steps = kegiatan.steps;
-                const progress = kegiatan.progress;
+              {filteredSubKegiatan.map((subKegiatan, index) => {
+                const isExpanded = expandedRow === subKegiatan.id;
+                const steps = subKegiatan.steps;
+                const progress = subKegiatan.progress;
                 const doneCount = steps.filter((s) => s.selesai).length;
                 const allDone = doneCount === steps.length;
                 const currentStepIdx = steps.findIndex((s) => !s.selesai);
@@ -168,11 +168,11 @@ export function AgendaKegiatan() {
                 return (
                   <>
                     {/* Main row */}
-                    <tr key={kegiatan.id}
+                    <tr key={subKegiatan.id}
                       className={`border-b border-gray-100 transition-colors ${isExpanded ? 'bg-blue-50/40' : 'hover:bg-gray-50'}`}>
                       <td className="py-3 px-4">
                         <button
-                          onClick={() => { setExpandedRow(isExpanded ? null : kegiatan.id); }}
+                          onClick={() => { setExpandedRow(isExpanded ? null : subKegiatan.id); }}
                           className="text-sm text-gray-700 hover:text-blue-600 font-medium w-full text-left"
                           title="Klik untuk lihat progress"
                         >
@@ -180,25 +180,25 @@ export function AgendaKegiatan() {
                         </button>
                       </td>
                       <td className="py-3 px-4">
-                        <Link to={`/agenda/${kegiatan.id}`}
+                        <Link to={`/agenda/${subKegiatan.id}`}
                           className="text-sm font-medium text-blue-600 hover:underline">
-                          {kegiatan.nama}
+                          {subKegiatan.nama}
                         </Link>
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{kegiatan.bidang}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{kegiatan.penanggungJawab}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{subKegiatan.bidang}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{subKegiatan.penanggungJawab}</td>
                       <td className="py-3 px-4 text-sm text-gray-600">
-                        {new Date(kegiatan.tanggalMulai).toLocaleDateString('id-ID')}
+                        {new Date(subKegiatan.tanggalMulai).toLocaleDateString('id-ID')}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-600">
-                        {new Date(kegiatan.tanggalSelesai).toLocaleDateString('id-ID')}
+                        {new Date(subKegiatan.tanggalSelesai).toLocaleDateString('id-ID')}
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium ${kegiatan.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
-                            kegiatan.status === 'Berjalan' ? 'bg-blue-100 text-blue-700' :
-                              kegiatan.status === 'Terlambat' ? 'bg-red-100 text-red-700' :
+                        <span className={`whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium ${subKegiatan.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
+                            subKegiatan.status === 'Berjalan' ? 'bg-blue-100 text-blue-700' :
+                              subKegiatan.status === 'Terlambat' ? 'bg-red-100 text-red-700' :
                                 'bg-gray-100 text-gray-700'
-                          }`}>{kegiatan.status}</span>
+                          }`}>{subKegiatan.status}</span>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2 w-32">
@@ -212,7 +212,7 @@ export function AgendaKegiatan() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        {kegiatan.isApproved ? (
+                        {subKegiatan.isApproved ? (
                           <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
                             <CheckCircle2 className="w-4 h-4" /> Disetujui
                           </span>
@@ -224,28 +224,28 @@ export function AgendaKegiatan() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-1.5">
-                          {!kegiatan.isApproved && isSuperadmin && (
+                          {!subKegiatan.isApproved && isSuperadmin && (
                             <button
-                              onClick={() => approveKegiatan(kegiatan.id, user?.nama || 'Superadmin')}
+                              onClick={() => approveSubKegiatan(subKegiatan.id, user?.nama || 'Superadmin')}
                               className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
                               title="Approve Kegiatan"
                             >
                               <Check className="w-4 h-4" />
                             </button>
                           )}
-                          <Link to={`/agenda/${kegiatan.id}`}
+                          <Link to={`/agenda/${subKegiatan.id}`}
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Lihat Detail">
                             <Eye className="w-4 h-4" />
                           </Link>
                           <button
-                            onClick={() => setShowEditModalFor(kegiatan.id)}
+                            onClick={() => setShowEditModalFor(subKegiatan.id)}
                             className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors cursor-pointer"
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => handleDeleteKegiatan(kegiatan.id, kegiatan.nama)}
+                            onClick={() => handleDeleteSubKegiatan(subKegiatan.id, subKegiatan.nama)}
                             className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" 
                             title="Hapus"
                           >
@@ -257,7 +257,7 @@ export function AgendaKegiatan() {
 
                     {/* ── Expandable progress row ── */}
                     {isExpanded && (
-                      <tr key={`${kegiatan.id}-progress`} className="border-b-2 border-blue-100">
+                      <tr key={`${subKegiatan.id}-progress`} className="border-b-2 border-blue-100">
                         <td colSpan={9} className="bg-gradient-to-b from-blue-50/60 to-slate-50 px-8 pt-6 pb-5">
 
                           {/* Title */}
@@ -265,7 +265,7 @@ export function AgendaKegiatan() {
                             <div>
                               <h4 className="text-sm font-bold text-gray-800">
                                 Progress Tahapan
-                                <span className="ml-2 text-blue-600">— {kegiatan.nama}</span>
+                                <span className="ml-2 text-blue-600">— {subKegiatan.nama}</span>
                               </h4>
                               <p className="text-xs text-gray-500 mt-0.5">
                                 {doneCount}/{steps.length} tahap selesai · Klik lingkaran untuk detail
@@ -279,7 +279,7 @@ export function AgendaKegiatan() {
                               )}
                               {/* Update Progress button */}
                               <button
-                                onClick={() => openUpdateModal(kegiatan.id, 'progress')}
+                                onClick={() => openUpdateModal(subKegiatan.id, 'progress')}
                                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 shadow-md shadow-blue-200 transition-all hover:scale-105 cursor-pointer"
                               >
                                 <RefreshCw className="w-4 h-4" />
@@ -317,7 +317,7 @@ export function AgendaKegiatan() {
                                 return (
                                   <button
                                     key={step.id}
-                                    onClick={() => openUpdateModal(kegiatan.id, 'progress')}
+                                    onClick={() => openUpdateModal(subKegiatan.id, 'progress')}
                                     title={`${step.nama} — klik untuk update`}
                                     className="flex flex-col items-center focus:outline-none group cursor-pointer"
                                     style={{ minWidth: 64 }}
@@ -366,13 +366,13 @@ export function AgendaKegiatan() {
 
                           {/* Info footer */}
                           <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mt-5 pt-3 border-t border-blue-100 text-xs text-gray-500">
-                            <span><span className="font-semibold text-gray-700">PJ:</span> {kegiatan.penanggungJawab}</span>
-                            <span><span className="font-semibold text-gray-700">Pagu:</span> {formatRupiah(kegiatan.paguAnggaran)}</span>
+                            <span><span className="font-semibold text-gray-700">PJ:</span> {subKegiatan.penanggungJawab}</span>
+                            <span><span className="font-semibold text-gray-700">Pagu:</span> {formatRupiah(subKegiatan.paguAnggaran)}</span>
                             <span>
                               <span className="font-semibold text-gray-700">Realisasi:</span>{' '}
-                              {formatRupiah(kegiatan.realisasiAnggaran)}{' '}
+                              {formatRupiah(subKegiatan.realisasiAnggaran)}{' '}
                               <span className="text-emerald-600 font-semibold">
-                                ({Math.round((kegiatan.realisasiAnggaran / kegiatan.paguAnggaran) * 100)}%)
+                                ({Math.round((subKegiatan.realisasiAnggaran / subKegiatan.paguAnggaran) * 100)}%)
                               </span>
                             </span>
                           </div>
@@ -389,7 +389,7 @@ export function AgendaKegiatan() {
         {/* Pagination */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
           <div className="text-sm text-gray-600">
-            Menampilkan {filteredKegiatan.length} dari {kegiatans.length} kegiatan
+            Menampilkan {filteredSubKegiatan.length} dari {subKegiatans.length} kegiatan
           </div>
           <div className="flex items-center gap-2">
             <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm">Sebelumnya</button>
@@ -401,25 +401,25 @@ export function AgendaKegiatan() {
       </div>
 
       {/* ── Update Progress Modal ── */}
-      {updateProgressFor && updateKegiatan && (
+      {updateProgressFor && updateSubKegiatan && (
         <UpdateProgressModal
-          kegiatan={updateKegiatan}
-          steps={updateKegiatan.steps}
-          progress={updateKegiatan.progress}
+          subKegiatan={updateSubKegiatan}
+          steps={updateSubKegiatan.steps}
+          progress={updateSubKegiatan.progress}
           onClose={() => setUpdateProgressFor(null)}
-          onToggleStep={(stepId) => toggleStep(updateKegiatan.id, stepId)}
+          onToggleStep={(stepId) => toggleStep(updateSubKegiatan.id, stepId)}
           initialPanel={modalInitialPanel}
         />
       )}
 
       {/* ── Tambah Kegiatan Modal ── */}
       {showAddModal && (
-        <KegiatanFormModal mode="add" onClose={() => setShowAddModal(false)} />
+        <SubKegiatanFormModal mode="add" onClose={() => setShowAddModal(false)} />
       )}
 
       {/* ── Edit Kegiatan Modal ── */}
       {showEditModalFor && (
-        <KegiatanFormModal mode="edit" initialData={kegiatans.find(k => k.id === showEditModalFor)} onClose={() => setShowEditModalFor(null)} />
+        <SubKegiatanFormModal mode="edit" initialData={subKegiatans.find(k => k.id === showEditModalFor)} onClose={() => setShowEditModalFor(null)} />
       )}
     </div>
 
