@@ -6,7 +6,7 @@ import { PAGU_TOTAL } from '../../lib/data';
 function formatRp(n: number, short = false) {
   if (short) {
     if (n >= 1_000_000_000) return `Rp ${(n / 1_000_000_000).toFixed(2)}M`;
-    if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toFixed(0)}Jt`;
+    if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toFixed(2)}Jt`;
     return `Rp ${n.toLocaleString('id-ID')}`;
   }
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -256,11 +256,11 @@ export function UraianSubKegiatanTable() {
                       </td>
 
                       <td className="py-3 px-4 text-right tabular-nums text-slate-700">
-                        {formatRp(u.target, true)}
+                        {formatRp(u.target)}
                       </td>
 
                       <td className={`py-3 px-4 text-right tabular-nums font-medium ${pct >= 80 ? 'text-emerald-600' : pct >= 60 ? 'text-blue-600' : 'text-amber-500'}`}>
-                        {formatRp(u.realisasi, true)}
+                        {formatRp(u.realisasi)}
                       </td>
 
                       <td className={`py-3 px-4 text-right tabular-nums font-bold bg-blue-50/30 ${
@@ -269,7 +269,7 @@ export function UraianSubKegiatanTable() {
                         sisa / u.target < 0.15 ? 'text-orange-600' :
                         'text-blue-700'
                       }`}>
-                        {sisa < 0 ? <span className="text-red-600">Melebihi Pagu</span> : formatRp(sisa, true)}
+                        {sisa < 0 ? <span className="text-red-600">Melebihi Pagu</span> : formatRp(sisa)}
                       </td>
 
                       <td className="py-3 px-4">
@@ -289,9 +289,9 @@ export function UraianSubKegiatanTable() {
             <tfoot className="bg-slate-100 border-t-2 border-slate-300">
               <tr>
                 <td colSpan={2} className="py-3 px-4 font-bold text-slate-700">TOTAL</td>
-                <td className="py-3 px-4 text-right font-black text-slate-800 tabular-nums">{formatRp(uraianTotal, true)}</td>
-                <td className="py-3 px-4 text-right font-black text-emerald-700 tabular-nums">{formatRp(uraianRealisasiTotal, true)}</td>
-                <td className={`py-3 px-4 text-right font-black tabular-nums ${sisaTotal < 0 ? 'text-red-600' : 'text-blue-700'}`}>{formatRp(sisaTotal, true)}</td>
+                <td className="py-3 px-4 text-right font-black text-slate-800 tabular-nums">{formatRp(uraianTotal)}</td>
+                <td className="py-3 px-4 text-right font-black text-emerald-700 tabular-nums">{formatRp(uraianRealisasiTotal)}</td>
+                <td className={`py-3 px-4 text-right font-black tabular-nums ${sisaTotal < 0 ? 'text-red-600' : 'text-blue-700'}`}>{formatRp(sisaTotal)}</td>
                 <td className="py-3 px-4 text-center font-black text-slate-700">
                   {uraianTotal > 0 ? Math.round((uraianRealisasiTotal / uraianTotal) * 100) : 0}%
                 </td>

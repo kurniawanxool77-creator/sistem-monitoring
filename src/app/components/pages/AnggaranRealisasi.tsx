@@ -15,7 +15,7 @@ import { useAppData } from '../../hooks/AppDataContext';
 function formatRp(n: number, short = false) {
   if (short) {
     if (n >= 1_000_000_000) return `Rp ${(n / 1_000_000_000).toFixed(2)}M`;
-    if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toFixed(0)}Jt`;
+    if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toFixed(2)}Jt`;
     return `Rp ${n.toLocaleString('id-ID')}`;
   }
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -362,10 +362,10 @@ export function AnggaranRealisasi() {
                             </div>
                           </td>
                           <td className="py-3 px-6 text-right tabular-nums text-slate-700 font-medium">
-                            {t > 0 ? formatRp(t, true) : <span className="text-slate-300">-</span>}
+                            {t > 0 ? formatRp(t) : <span className="text-slate-300">-</span>}
                           </td>
                           <td className={`py-3 px-6 text-right tabular-nums font-medium ${pct >= 80 ? 'text-emerald-600' : pct >= 60 ? 'text-blue-600' : 'text-amber-500'}`}>
-                            {r > 0 ? formatRp(r, true) : <span className="text-slate-300">-</span>}
+                            {r > 0 ? formatRp(r) : <span className="text-slate-300">-</span>}
                           </td>
                           <td className="py-3 px-4 text-center">
                             <button
@@ -385,8 +385,8 @@ export function AnggaranRealisasi() {
 
               <tr className="bg-blue-100 font-bold border-t-2 border-blue-300">
                 <td colSpan={2} className="py-3 px-4 text-blue-900 text-right">TOTAL {selectedYear}</td>
-                <td className="py-3 px-4 text-right text-blue-800">{formatRp(currentYearTargets.reduce((a, b) => a + b, 0), true)}</td>
-                <td className="py-3 px-4 text-right text-emerald-700">{formatRp(totalRealisasi, true)}</td>
+                <td className="py-3 px-4 text-right text-blue-800">{formatRp(currentYearTargets.reduce((a, b) => a + b, 0))}</td>
+                <td className="py-3 px-4 text-right text-emerald-700">{formatRp(totalRealisasi)}</td>
                 <td className="py-3 px-4 text-center">
                   <span className="text-base font-black text-blue-800">{pctSerapan}%</span>
                 </td>
