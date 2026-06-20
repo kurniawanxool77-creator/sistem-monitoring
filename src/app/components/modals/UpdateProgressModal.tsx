@@ -184,6 +184,12 @@ export function UpdateProgressModal({
   function handleSaveRealisasi() {
     if (!realisasiForm.nominal) return;
     const amount = Number(realisasiForm.nominal);
+    
+    if (subKegiatan.realisasiAnggaran + amount > subKegiatan.paguAnggaran) {
+      alert(`Gagal: Total realisasi melebihi Target Pagu!\nPagu: ${formatRp(subKegiatan.paguAnggaran)}\nRealisasi saat ini: ${formatRp(subKegiatan.realisasiAnggaran)}\nSisa yang bisa diinput: ${formatRp(subKegiatan.paguAnggaran - subKegiatan.realisasiAnggaran)}`);
+      return;
+    }
+
     addLog(`Input realisasi ${realisasiForm.bulan}: ${formatRp(amount)}`);
     if (onSaveRealisasi) {
       onSaveRealisasi(amount);

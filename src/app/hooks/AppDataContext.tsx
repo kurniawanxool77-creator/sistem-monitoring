@@ -305,9 +305,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         endWarning.setDate(endWarning.getDate() - 3);
 
         let status: 'Belum Mulai' | 'Berjalan' | 'Selesai' | 'Terlambat' = 'Belum Mulai';
+        const nowMs = now.setHours(0,0,0,0);
+        const endMs = end.setHours(0,0,0,0);
         if (progress >= 100) status = 'Selesai';
-        else if (now > end) status = 'Terlambat';
-        else if (now >= endWarning && progress < 100) status = 'Terlambat';
+        else if (nowMs > endMs) status = 'Terlambat';
         else if (progress > 0 || now >= start) status = 'Berjalan';
 
         const step: 'Persiapan' | 'Pelaksanaan' | 'Closed' = progress >= 100 ? 'Closed' : progress >= 50 ? 'Pelaksanaan' : 'Persiapan';
