@@ -198,8 +198,7 @@ export function ProgressSubKegiatan() {
             : 0;
 
           const progressColorClass = progressVal === 100 ? 'text-emerald-600' :
-            progressVal >= 60 ? 'text-blue-600' :
-              progressVal >= 30 ? 'text-amber-600' : 'text-red-500';
+            progressVal >= 50 ? 'text-amber-500' : 'text-red-600';
 
           return (
             <div
@@ -237,10 +236,10 @@ export function ProgressSubKegiatan() {
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                   <div
-                    className={`h-2 rounded-full transition-all duration-500 ${progressVal === 100 ? 'bg-emerald-500' :
-                      progressVal >= 60 ? 'bg-blue-500' :
-                        progressVal >= 30 ? 'bg-amber-500' : 'bg-red-400'
-                      }`}
+                    className={`h-2 rounded-full transition-all duration-500 ${
+                      progressVal === 100 ? 'bg-emerald-500' :
+                      progressVal >= 50 ? 'bg-amber-400' : 'bg-red-500'
+                    }`}
                     style={{ width: `${progressVal}%` }}
                   />
                 </div>
@@ -359,10 +358,10 @@ export function ProgressSubKegiatan() {
                       <div className="flex items-center gap-2">
                         <div className="w-20 bg-gray-100 rounded-full h-1.5 overflow-hidden flex-shrink-0">
                           <div
-                            className={`h-1.5 rounded-full transition-all duration-500 ${k.progress === 100 ? 'bg-emerald-500' :
-                              k.progress >= 60 ? 'bg-blue-500' :
-                                k.progress >= 30 ? 'bg-amber-500' : 'bg-red-400'
-                              }`}
+                            className={`h-1.5 rounded-full transition-all duration-500 ${
+                              k.progress === 100 ? 'bg-emerald-500' :
+                              k.progress >= 50 ? 'bg-amber-400' : 'bg-red-500'
+                            }`}
                             style={{ width: `${k.progress}%` }}
                           />
                         </div>

@@ -208,13 +208,19 @@ export function Dashboard() {
                     <span className={`font-semibold ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
                       {bagian.nama}
                     </span>
-                    <span className={`font-bold ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
+                    <span className={`font-bold ${
+                      bagian.progress === 100 ? 'text-emerald-600' :
+                      bagian.progress >= 50 ? 'text-amber-500' : 'text-red-600'
+                    }`}>
                       {bagian.progress}%
                     </span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2">
                     <div
-                      className={`${bagian.warna} h-2 rounded-full transition-all`}
+                      className={`h-2 rounded-full transition-all ${
+                        bagian.progress === 100 ? 'bg-emerald-500' :
+                        bagian.progress >= 50 ? 'bg-amber-400' : 'bg-red-500'
+                      }`}
                       style={{ width: `${bagian.progress}%` }}
                     />
                   </div>
@@ -263,12 +269,15 @@ export function Dashboard() {
                       <div
                         className={`h-1.5 rounded-full ${
                           kg.progress === 100 ? 'bg-emerald-500' :
-                          kg.status === 'Terlambat' ? 'bg-red-400' : 'bg-blue-500'
+                          kg.progress >= 50 ? 'bg-amber-400' : 'bg-red-500'
                         }`}
                         style={{ width: `${kg.progress}%` }}
                       />
                     </div>
-                    <span className="text-xs font-bold text-gray-700 min-w-[36px] text-right">{kg.progress}%</span>
+                    <span className={`text-xs font-bold min-w-[36px] text-right ${
+                      kg.progress === 100 ? 'text-emerald-600' :
+                      kg.progress >= 50 ? 'text-amber-500' : 'text-red-600'
+                    }`}>{kg.progress}%</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">{kg.tanggal}</span>

@@ -169,13 +169,20 @@ export function DetailSubKegiatan() {
           </div>
           <div>
             <div className="text-sm text-gray-600 mb-1">Realisasi</div>
-            <div className="text-2xl font-bold text-emerald-600">
+            <div className={`text-2xl font-bold ${
+              progressPercentage >= 80 ? 'text-red-600' :
+              progressPercentage >= 60 ? 'text-amber-500' : 'text-emerald-600'
+            }`}>
               {subKegiatan.realisasiAnggaran > 0 ? `Rp ${subKegiatan.realisasiAnggaran.toLocaleString('id-ID')}` : '0'}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-600 mb-1">Sisa Anggaran</div>
-            <div className="text-2xl font-bold text-amber-600">
+            <div className={`text-2xl font-bold ${
+              (subKegiatan.paguAnggaran - subKegiatan.realisasiAnggaran) <= 0 ? 'text-red-600' :
+              (subKegiatan.paguAnggaran - subKegiatan.realisasiAnggaran) / subKegiatan.paguAnggaran < 0.20 ? 'text-amber-600' :
+              'text-emerald-600'
+            }`}>
               {(subKegiatan.paguAnggaran - subKegiatan.realisasiAnggaran) > 0 ? `Rp ${(subKegiatan.paguAnggaran - subKegiatan.realisasiAnggaran).toLocaleString('id-ID')}` : '0'}
             </div>
           </div>
@@ -184,11 +191,17 @@ export function DetailSubKegiatan() {
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">Persentase Realisasi</span>
-            <span className="text-sm font-bold text-gray-900">{progressPercentage.toFixed(2)}%</span>
+            <span className={`text-sm font-bold ${
+              progressPercentage >= 80 ? 'text-red-600' :
+              progressPercentage >= 60 ? 'text-amber-500' : 'text-emerald-600'
+            }`}>{progressPercentage.toFixed(2)}%</span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-4">
             <div
-              className="bg-gradient-to-r from-blue-500 to-blue-600 h-4 rounded-full transition-all"
+              className={`h-4 rounded-full transition-all ${
+                progressPercentage >= 80 ? 'bg-red-500' :
+                progressPercentage >= 60 ? 'bg-amber-400' : 'bg-emerald-500'
+              }`}
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
