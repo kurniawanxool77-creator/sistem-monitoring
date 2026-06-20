@@ -115,6 +115,9 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
   const isLevel4 = !!form.subSubKegiatanId || newInputMode === 'subSubKegiatan';
   const isLevel1 = !!form.bidangId && !form.kegiatanId && newInputMode !== 'kegiatan';
 
+  const finalKodeForCheck = form.subSubKegiatanId || form.subKegiatanTemplateId || form.kegiatanId || form.bidangId;
+  const dbHasChildren = mode === 'edit' && initialData && dataUraian.some(u => u.kode.startsWith(initialData.id + '.') && u.kode.split('.').length === initialData.id.split('.').length + 1);
+
   useEffect(() => {
     if (isLevel1 && !form.isWadah) {
       setForm(f => ({ ...f, isWadah: true }));
@@ -375,7 +378,7 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
             <label className="block text-sm font-bold text-gray-800 mb-3">Pilih Peran Agenda <span className="text-red-500">*</span></label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none ${form.isWadah ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} ${isLevel4 ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                <input type="radio" name="role" value="wadah" className="sr-only" disabled={mode === 'edit' || isLevel4}
+                <input type="radio" name="role" value="wadah" className="sr-only" disabled={isLevel4}
                   checked={form.isWadah}
                   onChange={() => setForm(f => ({ ...f, isWadah: true }))}
                 />
@@ -388,8 +391,8 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
                 <Check className={`h-5 w-5 text-blue-600 ${form.isWadah ? 'block' : 'hidden'}`} />
               </label>
 
-              <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none ${!form.isWadah ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} ${isLevel1 ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                <input type="radio" name="role" value="riil" className="sr-only" disabled={mode === 'edit' || isLevel1}
+              <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none ${!form.isWadah ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} ${(isLevel1 || dbHasChildren) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <input type="radio" name="role" value="riil" className="sr-only" disabled={isLevel1 || Boolean(dbHasChildren)}
                   checked={!form.isWadah}
                   onChange={() => setForm(f => ({ ...f, isWadah: false }))}
                 />

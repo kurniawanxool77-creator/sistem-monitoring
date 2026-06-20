@@ -409,16 +409,18 @@ export function AgendaSubKegiatan() {
                                   {u.uraian}
                                 </button>
                               </div>
-                              <div className="text-[11px] text-gray-500 mt-1.5 flex items-center gap-2 flex-wrap">
-                                <div className="flex items-center gap-1">
-                                  <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-semibold border border-gray-200">PJ</span>
-                                  <span className="font-medium text-gray-700">{existingSub?.penanggungJawab || '-'}</span>
+                              {!isWadah && subKegiatan && (
+                                <div className="text-[11px] text-gray-500 mt-1.5 flex items-center gap-2 flex-wrap">
+                                  <div className="flex items-center gap-1">
+                                    <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-semibold border border-gray-200">PJ</span>
+                                    <span className="font-medium text-gray-700">{existingSub?.penanggungJawab || '-'}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="px-1.5 py-0.5 bg-blue-50 rounded text-blue-600 font-semibold border border-blue-100">SUMBER</span>
+                                    <span className="font-medium text-blue-700">{existingSub?.sumberDana || '-'}</span>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <span className="px-1.5 py-0.5 bg-blue-50 rounded text-blue-600 font-semibold border border-blue-100">SUMBER</span>
-                                  <span className="font-medium text-blue-700">{existingSub?.sumberDana || '-'}</span>
-                                </div>
-                              </div>
+                              )}
                             </div>
                           </div>
                         </td>
