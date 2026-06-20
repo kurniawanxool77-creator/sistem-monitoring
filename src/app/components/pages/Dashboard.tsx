@@ -34,7 +34,7 @@ export function Dashboard() {
   const { getBagianList, getSubKegiatanList, dataUraian, activityLogs } = useAppData();
   
   const bagianList = getBagianList();
-  const subKegiatanList = getSubKegiatanList();
+  const subKegiatanList = getSubKegiatanList().filter(k => !k.isWadah);
 
   const [selectedBagian, setSelectedBagian] = useState(bagianList.length > 0 ? bagianList[0].nama : 'Sekretariat DPRD');
 
