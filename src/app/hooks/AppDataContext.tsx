@@ -256,9 +256,9 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
         const steps = meta?.steps && meta.steps.length > 0 ? meta.steps : defaultSteps;
 
-        // Container (Agenda Induk) = memiliki anak ATAU secara eksplisit diset isWadah
+        // Container (Agenda Induk) = Level 1, ATAU memiliki anak, ATAU secara eksplisit diset isWadah
         const hasChildren = dataUraian.some(x => x.kode.startsWith(u.kode + '.') && x.kode.split('.').length === u.kode.split('.').length + 1);
-        const isInduk = hasChildren || (meta && meta.isWadah);
+        const isInduk = u.level === 1 || hasChildren || (meta && meta.isWadah);
 
         let progress: number;
         if (isInduk) {

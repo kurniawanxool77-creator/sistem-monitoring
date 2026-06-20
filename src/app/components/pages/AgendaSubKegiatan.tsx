@@ -307,7 +307,8 @@ export function AgendaSubKegiatan() {
                  const getPhysicalProgress = (kode: string): number => {
                   const dbHasChildren = activeUraianData.some((x) => x.kode.startsWith(kode + '.') && x.kode.split('.').length === kode.split('.').length + 1);
                   const meta = subKegiatanMeta.find((m) => m.id === kode);
-                  const isWadah = meta ? meta.isWadah : false;
+                  const level = kode.split('.').length;
+                  const isWadah = level === 1 ? true : (meta ? meta.isWadah : false);
                   
                   if (!dbHasChildren && !isWadah) {
                     // Leaf node
@@ -348,7 +349,7 @@ export function AgendaSubKegiatan() {
 
                   // Cek apakah node ini Wadah atau Kegiatan Riil
                   const isLevel4Node = u.kode.split('.').length === 4;
-                  const isWadah = isLevel4Node ? false : (existingSub?.isWadah || dbHasChildren);
+                  const isWadah = u.level === 1 ? true : isLevel4Node ? false : (existingSub?.isWadah || dbHasChildren);
                   const subKegiatan = isWadah ? null : (existingSub || { id: u.kode, nama: u.uraian, steps: [], progress: 0, status: 'Belum Mulai' } as any);
 
                   const steps = subKegiatan?.steps || [];
