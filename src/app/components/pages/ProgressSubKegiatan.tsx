@@ -299,7 +299,7 @@ export function ProgressSubKegiatan() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {currentData.length === 0 ? (
+              {paginatedKegiatans.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-16 text-center text-gray-400">
                     <div className="flex flex-col items-center justify-center">
@@ -309,7 +309,7 @@ export function ProgressSubKegiatan() {
                   </td>
                 </tr>
               ) : (
-                currentData.map((k) => (
+                paginatedKegiatans.map((k) => (
                   <tr key={k.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-4 py-2.5 text-xs text-gray-600">
                       {k.subKegiatan_parent}
