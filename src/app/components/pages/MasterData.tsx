@@ -1,7 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Database, Plus, Edit, Trash2, ChevronDown, ChevronRight, DollarSign, X, Save, TrendingDown, Users, FolderTree, FileText, CheckSquare } from 'lucide-react';
-import { anggotaData } from '../../lib/data';
+import { anggotaData as defaultAnggotaData } from '../../lib/data';
 import { useAppData } from '../../hooks/AppDataContext';
+
+interface AnggotaItem {
+  id: string;
+  nama: string;
+  jabatan: string;
+  bidang: string;
+}
 
 type TabKey = 'bidang' | 'kegiatan' | 'subKegiatan' | 'subSubKegiatan' | 'anggota';
 
@@ -34,35 +41,88 @@ export function MasterData() {
   const user = userStr ? JSON.parse(userStr) : null;
   const isSuperadmin = user?.role === 'superadmin';
 
-  function handleEditUraian(kode: string, oldNama: string, oldTarget: number) {
-    if (!isSuperadmin) return alert("Hanya Superadmin yang bisa mengedit Master Data.");
-    const newNama = prompt("Masukkan nama baru:", oldNama);
-    if (!newNama || newNama === oldNama) return;
-    const newTargetStr = prompt("Masukkan pagu/target baru (opsional):", String(oldTarget));
-    const newTarget = newTargetStr ? Number(newTargetStr) : oldTarget;
-    
-    updateUraian(kode, {
-      uraian: newNama,
-      target: newTarget
-    });
+  // ── Anggota state (localStorage backed) ──
+  const ANGGOTA_KEY = 'master_anggota_v1';
+  const [anggotaList, setAnggotaList] = useState<AnggotaItem[]>(() => {
+    const saved = localStorage.getItem(ANGGOTA_KEY);
+    if (saved) { try { return JSON.parse(saved); } catch { } }
+    return [...defaultAnggotaData];
+  });
+  useEffect(() => { localStorage.setItem(ANGGOTA_KEY, JSON.stringify(anggotaList)); }, [anggotaList]);
 
+  // ── Edit Uraian Modal State ──
+  const [editModal, setEditModal] = useState<{ kode: string; nama: string; target: number } | null>(null);
+  const [editNama, setEditNama] = useState('');
+  const [editTarget, setEditTarget] = useState('');
+
+  // ── Edit Anggota Modal State ──
+  const [editAnggotaModal, setEditAnggotaModal] = useState<AnggotaItem | null>(null);
+  const [editAnggotaNama, setEditAnggotaNama] = useState('');
+  const [editAnggotaJabatan, setEditAnggotaJabatan] = useState('');
+  const [editAnggotaBidang, setEditAnggotaBidang] = useState('');
+
+  // ── Delete Confirmation Modal State ──
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'anggota' | 'uraian'; id: string; nama: string } | null>(null);
+
+  function confirmDelete() {
+    if (!deleteConfirm) return;
+    
+    if (deleteConfirm.type === 'anggota') {
+      setAnggotaList(prev => prev.filter(a => a.id !== deleteConfirm.id));
+      addActivityLog({ user: user?.nama || 'Unknown', action: 'Hapus Anggota', details: `Menghapus anggota: ${deleteConfirm.nama}` });
+    } else {
+      deleteUraian(deleteConfirm.id);
+      addActivityLog({
+        user: user?.nama || 'Unknown User',
+        action: 'Hapus Master Data',
+        details: `Menghapus Uraian ${deleteConfirm.id}: "${deleteConfirm.nama}" beserta semua turunannya`
+      });
+    }
+    setDeleteConfirm(null);
+  }
+
+  function openEditUraianModal(kode: string, nama: string, target: number) {
+    if (!isSuperadmin) return alert('Hanya Superadmin yang bisa mengedit Master Data.');
+    setEditNama(nama);
+    setEditTarget(String(target));
+    setEditModal({ kode, nama, target });
+  }
+
+  function saveEditUraian() {
+    if (!editModal || !editNama.trim()) return;
+    const newTarget = Number(editTarget) || editModal.target;
+    updateUraian(editModal.kode, { uraian: editNama.trim(), target: newTarget });
     addActivityLog({
       user: user?.nama || 'Unknown User',
       action: 'Edit Master Data',
-      details: `Mengubah Uraian ${kode} dari "${oldNama}" menjadi "${newNama}" dengan Pagu: ${newTarget}`
+      details: `Mengubah Uraian ${editModal.kode} dari "${editModal.nama}" menjadi "${editNama.trim()}"`
     });
+    setEditModal(null);
+  }
+
+  function openEditAnggotaModal(item: AnggotaItem) {
+    if (!isSuperadmin) return alert('Hanya Superadmin yang bisa mengedit Master Data.');
+    setEditAnggotaNama(item.nama);
+    setEditAnggotaJabatan(item.jabatan);
+    setEditAnggotaBidang(item.bidang);
+    setEditAnggotaModal(item);
+  }
+
+  function saveEditAnggota() {
+    if (!editAnggotaModal || !editAnggotaNama.trim()) return;
+    setAnggotaList(prev => prev.map(a => a.id === editAnggotaModal.id ? { ...a, nama: editAnggotaNama.trim(), jabatan: editAnggotaJabatan.trim(), bidang: editAnggotaBidang } : a));
+    addActivityLog({ user: user?.nama || 'Unknown', action: 'Edit Anggota', details: `Mengubah data anggota: ${editAnggotaNama.trim()}` });
+    setEditAnggotaModal(null);
+  }
+
+  function handleDeleteAnggota(id: string, nama: string) {
+    if (!isSuperadmin) return alert('Hanya Superadmin yang bisa menghapus.');
+    setDeleteConfirm({ type: 'anggota', id, nama });
   }
 
   function handleDeleteUraian(kode: string, nama: string) {
     if (!isSuperadmin) return alert("Hanya Superadmin yang bisa menghapus Master Data.");
-    if (confirm(`Peringatan: Menghapus "${nama}" akan ikut menghapus seluruh data turunannya secara permanen. Lanjutkan?`)) {
-      deleteUraian(kode);
-      addActivityLog({
-        user: user?.nama || 'Unknown User',
-        action: 'Hapus Master Data',
-        details: `Menghapus Uraian ${kode}: "${nama}" beserta semua turunannya`
-      });
-    }
+    setDeleteConfirm({ type: 'uraian', id: kode, nama });
   }
 
   // Flatten all bidang (level 1)
@@ -155,7 +215,7 @@ export function MasterData() {
     { key: 'kegiatan', label: 'Kegiatan', count: allKegiatan.length },
     { key: 'subKegiatan', label: 'SubKegiatan', count: allSubKegiatan.length },
     { key: 'subSubKegiatan', label: 'Sub SubKegiatan', count: allSubSubKegiatan.length },
-    { key: 'anggota', label: 'Anggota & Jabatan', count: anggotaData.length },
+    { key: 'anggota', label: 'Anggota & Jabatan', count: anggotaList.length },
   ];
 
   return (
@@ -213,7 +273,7 @@ export function MasterData() {
           },
           { 
             title: 'TOTAL ANGGOTA', 
-            value: anggotaData.length, 
+            value: anggotaList.length, 
             subtitle: 'Master Data', 
             detail: 'Personel terdata', 
             detailColor: 'text-amber-600', 
@@ -297,7 +357,7 @@ export function MasterData() {
                           <td className="py-3 px-4 text-center font-semibold text-gray-700">{jmlSubSubKegiatan}</td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-center gap-1.5">
-                              <button onClick={() => handleEditUraian(bidang.id, bidang.nama, bidang.pagu)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors title='Edit'"><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => openEditUraianModal(bidang.id, bidang.nama, bidang.pagu)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors title='Edit'"><Edit className="w-4 h-4" /></button>
                               <button onClick={() => handleDeleteUraian(bidang.id, bidang.nama)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors title='Hapus'"><Trash2 className="w-4 h-4" /></button>
                             </div>
                           </td>
@@ -352,7 +412,7 @@ export function MasterData() {
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-center gap-1.5">
-                              <button onClick={() => handleEditUraian(sub.id, sub.nama, 0)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title='Edit'><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => openEditUraianModal(sub.id, sub.nama, 0)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title='Edit'><Edit className="w-4 h-4" /></button>
                               <button onClick={() => handleDeleteUraian(sub.id, sub.nama)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors" title='Hapus'><Trash2 className="w-4 h-4" /></button>
                             </div>
                           </td>
@@ -403,7 +463,7 @@ export function MasterData() {
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-center gap-1.5">
-                              <button onClick={() => handleEditUraian(k.id, k.nama, 0)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title='Edit'><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => openEditUraianModal(k.id, k.nama, 0)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title='Edit'><Edit className="w-4 h-4" /></button>
                               <button onClick={() => handleDeleteUraian(k.id, k.nama)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors" title='Hapus'><Trash2 className="w-4 h-4" /></button>
                             </div>
                           </td>
@@ -456,7 +516,7 @@ export function MasterData() {
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-center gap-1.5">
-                              <button onClick={() => handleEditUraian(sk.kode, sk.nama, 0)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title='Edit'><Edit className="w-4 h-4" /></button>
+                              <button onClick={() => openEditUraianModal(sk.kode, sk.nama, 0)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title='Edit'><Edit className="w-4 h-4" /></button>
                               <button onClick={() => handleDeleteUraian(sk.kode, sk.nama)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors" title='Hapus'><Trash2 className="w-4 h-4" /></button>
                             </div>
                           </td>
@@ -483,7 +543,7 @@ export function MasterData() {
                   </tr>
                 </thead>
                 <tbody>
-                  {anggotaData.map((item, idx) => {
+                  {anggotaList.map((item, idx) => {
                     const color = BIDANG_COLORS[item.bidang] ?? 'bg-gray-100 text-gray-600';
                     const initials = item.nama.split(' ').slice(0, 2).map(w => w[0]).join('');
                     return (
@@ -505,8 +565,8 @@ export function MasterData() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center justify-center gap-1.5">
-                            <button className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors"><Edit className="w-4 h-4" /></button>
-                            <button className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
+                            <button onClick={() => openEditAnggotaModal(item)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors title='Edit'"><Edit className="w-4 h-4" /></button>
+                            <button onClick={() => handleDeleteAnggota(item.id, item.nama)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors title='Hapus'"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -679,6 +739,106 @@ export function MasterData() {
           </div>
         </div>
       )}
+
+      {/* ── Edit Uraian Modal ── */}
+      {editModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900">Edit Data Master</h2>
+              <button onClick={() => setEditModal(null)} className="p-2 hover:bg-gray-100 rounded-xl text-gray-500"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama / Uraian</label>
+                <input type="text" value={editNama} onChange={e => setEditNama(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+            <div className="flex gap-3 px-6 pb-6">
+              <button onClick={() => setEditModal(null)} className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Batal</button>
+              <button onClick={saveEditUraian} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700">
+                <Save className="w-4 h-4" /> Simpan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Anggota Modal ── */}
+      {editAnggotaModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900">Edit Data Anggota</h2>
+              <button onClick={() => setEditAnggotaModal(null)} className="p-2 hover:bg-gray-100 rounded-xl text-gray-500"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Lengkap</label>
+                <input type="text" value={editAnggotaNama} onChange={e => setEditAnggotaNama(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Jabatan</label>
+                <input type="text" value={editAnggotaJabatan} onChange={e => setEditAnggotaJabatan(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang</label>
+                <select value={editAnggotaBidang} onChange={e => setEditAnggotaBidang(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                  <option value="">Pilih Bidang</option>
+                  {allBidang.map(b => <option key={b.id} value={b.nama}>{b.nama}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 px-6 pb-6">
+              <button onClick={() => setEditAnggotaModal(null)} className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Batal</button>
+              <button onClick={saveEditAnggota} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700">
+                <Save className="w-4 h-4" /> Simpan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Confirmation Modal ── */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="px-6 py-4 bg-red-50 border-b border-red-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm">Konfirmasi Hapus</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Tindakan ini tidak dapat dibatalkan</p>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-700 mb-1">Apakah Anda yakin ingin menghapus {deleteConfirm.type === 'anggota' ? 'anggota' : 'data'} ini:</p>
+              <p className="text-sm font-bold text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                {deleteConfirm.nama} {deleteConfirm.type === 'uraian' && <span className="text-gray-400 font-normal text-xs">({deleteConfirm.id})</span>}
+              </p>
+              {deleteConfirm.type === 'uraian' && (
+                <p className="text-xs text-red-500 mt-2">Semua data turunan juga akan ikut terhapus secara permanen.</p>
+              )}
+            </div>
+            <div className="flex gap-3 px-6 pb-6">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-md shadow-red-200"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

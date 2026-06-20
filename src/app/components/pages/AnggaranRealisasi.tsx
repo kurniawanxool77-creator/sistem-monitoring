@@ -186,7 +186,7 @@ export function AnggaranRealisasi() {
 
   // Generate available years for dropdown (include globalPagu keys and targetBidang keys + standard future years)
   const availableYears = Array.from(new Set([
-    currentYear - 2, currentYear - 1, currentYear, currentYear + 1, currentYear + 2,
+    ...Array.from({ length: 15 }, (_, i) => currentYear - 3 + i),
     ...Object.keys(globalPagu).map(Number),
     ...Object.keys(targetBidangBulan).map(Number)
   ])).sort((a, b) => a - b);

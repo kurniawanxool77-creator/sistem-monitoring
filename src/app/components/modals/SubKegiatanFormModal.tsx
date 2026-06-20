@@ -70,7 +70,13 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
           }
           return steps;
         })(),
-        isWadah: initialData.id.split('.').length === 4 ? false : (initialData.isWadah || false),
+        isWadah: (() => {
+          if (initialData.id.split('.').length === 4) return false;
+          // Baca isWadah langsung dari metadata store, bukan dari initialData
+          // karena initialData.isWadah bisa di-override oleh getSubKegiatanList
+          const metaEntry = subKegiatanMeta.find(m => m.id === initialData.id);
+          return metaEntry?.isWadah || false;
+        })(),
       }
       : INITIAL_FORM
   );
@@ -93,7 +99,11 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
           sumberDana: initialData.sumberDana || '',
           anggaranSubKegiatan: initialData.anggaranDiminta !== undefined ? initialData.anggaranDiminta.toString() : '0',
           realisasiAnggaran: initialData.realisasiAnggaran?.toString() || '0',
-          isWadah: initialData.id.split('.').length === 4 ? false : (initialData.isWadah || false),
+          isWadah: (() => {
+            if (initialData.id.split('.').length === 4) return false;
+            const metaEntry = subKegiatanMeta.find(m => m.id === initialData.id);
+            return metaEntry?.isWadah || false;
+          })(),
         };
       });
     }

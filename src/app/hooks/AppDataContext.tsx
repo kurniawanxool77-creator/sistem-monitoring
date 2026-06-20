@@ -151,7 +151,16 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   // Leaf node = use stored realization value
   // Parent node = sum dari children's realization
   const dataUraian = useMemo(() => {
-    const computed = [...allDataUraian].map(u => ({ ...u }));
+    const computed = [...allDataUraian].map(u => ({ ...u })).sort((a, b) => {
+      const partsA = a.kode.split('.').map(Number);
+      const partsB = b.kode.split('.').map(Number);
+      for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+        const valA = partsA[i] || 0;
+        const valB = partsB[i] || 0;
+        if (valA !== valB) return valA - valB;
+      }
+      return 0;
+    });
 
     // Sort by level descending (4 to 1) for bottom-up
     const sorted = [...computed].sort((a, b) => b.level - a.level);
@@ -167,8 +176,9 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       const meta = subKegiatanMeta.find(m => m.id === u.kode);
       const isWadah = meta ? meta.isWadah : false;
 
-      // Node Container: Bidang (Level 1), memiliki anak, atau secara eksplisit diset isWadah (Agenda Induk)
-      if (u.level === 1 || hasChildren || isWadah) {
+      // Node Container: Bidang (Level 1) atau secara eksplisit diset isWadah (Agenda Induk)
+      // Jika user memilih "Kegiatan" (isWadah=false), tetap simpan realisasi meskipun punya anak di hierarchy
+      if (u.level === 1 || isWadah) {
         u.realisasi = 0;
       }
     });
@@ -256,9 +266,11 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
         const steps = meta?.steps && meta.steps.length > 0 ? meta.steps : defaultSteps;
 
-        // Container (Agenda Induk) = Level 1, ATAU memiliki anak, ATAU secara eksplisit diset isWadah
-        const hasChildren = dataUraian.some(x => x.kode.startsWith(u.kode + '.') && x.kode.split('.').length === u.kode.split('.').length + 1);
-        const isInduk = u.level === 1 || hasChildren || (meta && meta.isWadah);
+        // Container (Agenda Induk) = Level 1 SELALU wadah.
+        // Untuk level lain, gunakan setting eksplisit dari metadata user.
+        // Jika user memilih "Kegiatan" (isWadah=false), hormati pilihan tersebut
+        // meskipun node memiliki anak di uraian hierarchy.
+        const isInduk = u.level === 1 || (meta?.isWadah === true);
 
         let progress: number;
         if (isInduk) {
@@ -332,7 +344,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           isApproved,
           sumberDana: meta?.sumberDana || 'Belum ditentukan',
           anggaranDiminta: meta?.anggaranDiminta || 0,
-          isWadah: isInduk,
+          isWadah: isInduk || false,
         };
       });
   };

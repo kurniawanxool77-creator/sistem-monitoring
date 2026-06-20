@@ -3,16 +3,18 @@ import { FileText, Download, Eye, Printer, Share2 } from 'lucide-react';
 import { useAppData } from '../../hooks/AppDataContext';
 
 export function LaporanSubKegiatan() {
-  const { getSubKegiatanList } = useAppData();
+  const { getSubKegiatanList, getBagianList } = useAppData();
   const subKegiatanList = getSubKegiatanList();
+  const bagianList = getBagianList();
 
   const [filterQuery, setFilterQuery] = useState('');
   const [filterBagian, setFilterBagian] = useState('semua');
   const [filterBulan, setFilterBulan] = useState('semua');
+  const [filterTahun, setFilterTahun] = useState('semua');
   const [filterStatus, setFilterStatus] = useState('semua');
 
   // Filter the subKegiatan
-  const filteredSubKegiatan = subKegiatanList.filter(k => {
+  const filteredSubKegiatan = subKegiatanList.filter(k => !k.isWadah).filter(k => {
     if (filterQuery && !k.nama.toLowerCase().includes(filterQuery.toLowerCase())) return false;
     if (filterBagian !== 'semua' && !k.bidang.toLowerCase().includes(filterBagian.toLowerCase())) return false;
     
@@ -21,6 +23,9 @@ export function LaporanSubKegiatan() {
       const monthStr = String(filterBulan).padStart(2, '0');
       if (!k.tanggalMulai.includes(`-${monthStr}-`)) return false;
     }
+    
+    // Check year if filterTahun is not 'semua'
+    if (filterTahun !== 'semua' && !k.tanggalMulai.startsWith(filterTahun)) return false;
     
     if (filterStatus !== 'semua' && k.status.toLowerCase() !== filterStatus.toLowerCase()) return false;
     return true;
@@ -37,8 +42,7 @@ export function LaporanSubKegiatan() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="font-bold text-gray-900 mb-4">Filter Laporan</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Nama Kegiatan</label>
             <input
@@ -57,11 +61,9 @@ export function LaporanSubKegiatan() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="semua">Semua Bidang</option>
-              <option value="sekretariat">Sekretariat DPRD</option>
-              <option value="humas">Humas</option>
-              <option value="persidangan">Persidangan</option>
-              <option value="umum">Umum</option>
-              <option value="keuangan">Keuangan</option>
+              {bagianList.map((b) => (
+                <option key={b.id} value={b.nama}>{b.nama}</option>
+              ))}
             </select>
           </div>
           <div>
@@ -72,12 +74,22 @@ export function LaporanSubKegiatan() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="semua">Semua Bulan</option>
-              <option value="1">Januari</option>
-              <option value="2">Februari</option>
-              <option value="3">Maret</option>
-              <option value="4">April</option>
-              <option value="5">Mei</option>
-              <option value="6">Juni</option>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                <option key={m} value={m}>{new Date(2000, m - 1).toLocaleString('id-ID', { month: 'long' })}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tahun</label>
+            <select
+              value={filterTahun}
+              onChange={(e) => setFilterTahun(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="semua">Semua Tahun</option>
+              {Array.from({ length: 15 }, (_, i) => new Date().getFullYear() - 3 + i).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
             </select>
           </div>
           <div>

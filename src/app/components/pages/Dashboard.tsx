@@ -89,8 +89,6 @@ export function Dashboard() {
   }));
 
   const subKegiatanPerBagian = subKegiatanList.reduce((acc, k) => {
-    // Exclude Bidang (Level 1)
-    if (k.id.split('.').length === 1) return acc;
     if (!acc[k.bidang]) acc[k.bidang] = [];
     acc[k.bidang].push({
       id: k.id,

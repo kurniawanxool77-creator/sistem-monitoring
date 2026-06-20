@@ -39,22 +39,25 @@ export function KalenderSubKegiatan() {
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
 
-  const eventsExtended: KalenderEvent[] = subKegiatanList.map(k => {
-    return {
-      id: k.id,
-      date: k.tanggalMulai,
-      title: k.nama,
-      color: k.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 
-             k.status === 'Terlambat' ? 'bg-red-100 text-red-700 border-red-200' :
-             k.status === 'Berjalan' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-             'bg-gray-100 text-gray-700 border-gray-200',
-      bagian: k.bidang,
-      mulai: k.tanggalMulai,
-      akhir: k.tanggalSelesai,
-      kategori: k.status,
-      tahapan: k.steps
-    };
-  });
+  // Hanya tampilkan Kegiatan riil (bukan Agenda Induk / Bidang) di kalender
+  const eventsExtended: KalenderEvent[] = subKegiatanList
+    .filter(k => !k.isWadah)
+    .map(k => {
+      return {
+        id: k.id,
+        date: k.tanggalMulai,
+        title: k.nama,
+        color: k.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 
+               k.status === 'Terlambat' ? 'bg-red-100 text-red-700 border-red-200' :
+               k.status === 'Berjalan' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+               'bg-gray-100 text-gray-700 border-gray-200',
+        bagian: k.bidang,
+        mulai: k.tanggalMulai,
+        akhir: k.tanggalSelesai,
+        kategori: k.status,
+        tahapan: k.steps
+      };
+    });
 
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());

@@ -100,6 +100,7 @@ export function ProgressSubKegiatan() {
   const [selectedBagian, setSelectedBagian] = useState<string>(CARDS_ORDER.length > 0 ? CARDS_ORDER[0] : 'Sekretariat DPRD');
   const [filterSubBagian, setFilterSubBagian] = useState<string>('Semua');
   const [filterStatus, setFilterStatus] = useState<string>('Semua');
+  const [filterTahun, setFilterTahun] = useState<string>('Semua');
   const [updateProgressFor, setUpdateProgressFor] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -107,7 +108,7 @@ export function ProgressSubKegiatan() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterSubBagian, filterStatus, selectedBagian]);
+  }, [filterSubBagian, filterStatus, filterTahun, selectedBagian]);
 
   function toggleStep(subKegiatanId: string, stepId: string) {
     const k = subKegiatans.find(x => x.id === subKegiatanId);
@@ -153,12 +154,16 @@ export function ProgressSubKegiatan() {
 
   // Get unique sub-bagian for filtering
   const uniqueSubBagian = Array.from(new Set(currentDeptKegiatans.map((k) => k.subKegiatan_parent)));
+  
+  // Get unique years for filtering
+  const uniqueYears = Array.from({ length: 15 }, (_, i) => (new Date().getFullYear() - 3 + i).toString());
 
   // Filtered subKegiatan to display in table
   const filteredKegiatans = currentDeptKegiatans
     .filter((k) => k.id.split('.').length > 1) // Exclude Bidang (Level 1)
     .filter((k) => filterSubBagian === 'Semua' || k.subKegiatan_parent === filterSubBagian)
-    .filter((k) => filterStatus === 'Semua' || k.status === filterStatus);
+    .filter((k) => filterStatus === 'Semua' || k.status === filterStatus)
+    .filter((k) => filterTahun === 'Semua' || new Date(k.tanggalMulai).getFullYear().toString() === filterTahun);
 
   // Sort by urgency
   const sortedKegiatans = [...filteredKegiatans].sort((a, b) => {
@@ -209,6 +214,7 @@ export function ProgressSubKegiatan() {
                 setSelectedBagian(bagianNama);
                 setFilterSubBagian('Semua');
                 setFilterStatus('Semua');
+                setFilterTahun('Semua');
               }}
               className={`p-4 bg-white rounded-xl border transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between shadow-sm ${isSelected
                 ? `${config.borderActive} transform scale-[1.02] shadow-md`
@@ -264,6 +270,16 @@ export function ProgressSubKegiatan() {
               ))}
             </select>
             <select
+              value={filterTahun}
+              onChange={(e) => setFilterTahun(e.target.value)}
+              className="text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+            >
+              <option value="Semua">Semua Tahun</option>
+              {uniqueYears.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
@@ -273,18 +289,6 @@ export function ProgressSubKegiatan() {
               <option value="Selesai">Selesai</option>
               <option value="Terlambat">Terlambat</option>
             </select>
-            <button
-              onClick={() => {
-                if (confirm('Reset semua data ke kondisi awal?')) {
-                  localStorage.clear();
-                  window.location.reload();
-                }
-              }}
-              className="text-xs font-semibold text-gray-500 hover:text-red-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 flex items-center gap-1 cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Reset Data
-            </button>
           </div>
         </div>
 
@@ -318,8 +322,8 @@ export function ProgressSubKegiatan() {
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-1.5">
-                        <Link to={`/agenda/${k.id}`} className="font-semibold text-blue-600 group-hover:text-blue-700 transition-colors">{k.nama}</Link>
-                        <HelpCircle className="w-3.5 h-3.5 text-gray-400" title={k.deskripsi} />
+                        <Link to={`/agenda/${k.id}`} className="text-sm font-bold text-gray-800 hover:text-blue-600 hover:underline transition-colors">{k.nama}</Link>
+                        <span title={k.deskripsi}><HelpCircle className="w-3.5 h-3.5 text-gray-400" /></span>
                       </div>
                       <div className="text-[11px] text-gray-500 mt-0.5">
                         PJ: <span className="font-semibold text-gray-600">{k.penanggungJawab}</span> • {new Date(k.tanggalMulai).toLocaleDateString('id-ID')} – {new Date(k.tanggalSelesai).toLocaleDateString('id-ID')}

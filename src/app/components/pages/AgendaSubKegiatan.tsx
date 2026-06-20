@@ -227,21 +227,6 @@ export function AgendaSubKegiatan() {
           <Plus className="w-5 h-5" />
           Tambah Kegiatan
         </button>
-        <button
-          onClick={() => {
-            if (confirm('Reset semua data ke kondisi awal? Semua perubahan akan hilang.')) {
-              localStorage.removeItem('master_uraian_anggaran_v5');
-              localStorage.removeItem('kegiatan_metadata_v4');
-              localStorage.removeItem('activity_logs');
-              window.location.reload();
-            }
-          }}
-          className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-red-600 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer"
-          title="Reset semua data ke kondisi awal"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Reset Data
-        </button>
       </div>
 
       {/* Filters */}
@@ -270,7 +255,7 @@ export function AgendaSubKegiatan() {
           <select value={filterTahun} onChange={(e) => setFilterTahun(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <option value="semua">Semua Tahun</option>
-            {[new Date().getFullYear() - 2, new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1].map(y => (
+            {Array.from({ length: 15 }, (_, i) => new Date().getFullYear() - 3 + i).map(y => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
@@ -348,8 +333,9 @@ export function AgendaSubKegiatan() {
                   const existingSub = subKegiatans.find((k) => k.id === u.kode) || subKegiatanMeta.find((m) => m.id === u.kode);
 
                   // Cek apakah node ini Wadah atau Kegiatan Riil
+                  // Gunakan metadata user sebagai sumber kebenaran
                   const isLevel4Node = u.kode.split('.').length === 4;
-                  const isWadah = u.level === 1 ? true : isLevel4Node ? false : (existingSub?.isWadah || dbHasChildren);
+                  const isWadah = u.level === 1 ? true : isLevel4Node ? false : (existingSub?.isWadah || false);
                   const subKegiatan = isWadah ? null : (existingSub || { id: u.kode, nama: u.uraian, steps: [], progress: 0, status: 'Belum Mulai' } as any);
 
                   const steps = subKegiatan?.steps || [];
@@ -560,9 +546,6 @@ export function AgendaSubKegiatan() {
       {showEditModalFor && (() => {
         const dbHasChildrenModal = uraianAnggaranData.some(x => x.kode.startsWith(showEditModalFor + '.') && x.kode.split('.').length === showEditModalFor.split('.').length + 1);
         const existing = subKegiatans.find(k => k.id === showEditModalFor);
-        if (existing && dbHasChildrenModal) {
-          existing.isWadah = true;
-        }
         const uraian = uraianAnggaranData.find(u => u.kode === showEditModalFor);
         const meta = subKegiatanMeta.find(m => m.id === showEditModalFor);
         const fallback: any = {
@@ -579,7 +562,7 @@ export function AgendaSubKegiatan() {
           deskripsi: meta?.deskripsi || '',
           step: 'Persiapan',
           steps: meta?.steps || [],
-          isWadah: showEditModalFor.split('.').length === 4 ? false : (dbHasChildrenModal ? true : (meta?.isWadah ?? true)),
+          isWadah: showEditModalFor.split('.').length === 4 ? false : (meta?.isWadah ?? false),
           sumberDana: meta?.sumberDana || '',
           anggaranDiminta: meta?.anggaranDiminta !== undefined ? meta.anggaranDiminta : 0
         };
