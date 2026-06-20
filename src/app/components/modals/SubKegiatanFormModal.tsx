@@ -113,6 +113,16 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
   const selectedSubSubKegiatan = listSubSubKegiatan.find((s) => s.kode === form.subSubKegiatanId);
 
   const isLevel4 = !!form.subSubKegiatanId || newInputMode === 'subSubKegiatan';
+  const isLevel1 = !!form.bidangId && !form.kegiatanId && newInputMode !== 'kegiatan';
+
+  useEffect(() => {
+    if (isLevel1 && !form.isWadah) {
+      setForm(f => ({ ...f, isWadah: true }));
+    }
+    if (isLevel4 && form.isWadah) {
+      setForm(f => ({ ...f, isWadah: false }));
+    }
+  }, [isLevel1, isLevel4, form.isWadah]);
 
   // ── Handlers ──
   function handleBidangChange(val: string) {
@@ -378,8 +388,8 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
                 <Check className={`h-5 w-5 text-blue-600 ${form.isWadah ? 'block' : 'hidden'}`} />
               </label>
 
-              <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none ${!form.isWadah ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'}`}>
-                <input type="radio" name="role" value="riil" className="sr-only" disabled={mode === 'edit'}
+              <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none ${!form.isWadah ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} ${isLevel1 ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <input type="radio" name="role" value="riil" className="sr-only" disabled={mode === 'edit' || isLevel1}
                   checked={!form.isWadah}
                   onChange={() => setForm(f => ({ ...f, isWadah: false }))}
                 />
