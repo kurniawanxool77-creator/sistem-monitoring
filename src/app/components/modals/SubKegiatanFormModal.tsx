@@ -257,7 +257,7 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
 
       updateUraian(finalKode, {
         target: realisasi,
-        ...(form.isWadah ? {} : { realisasi: 0 })
+        ...(form.isWadah ? {} : { realisasi: realisasi })
       });
 
       updateSubKegiatanMetadata({
@@ -317,6 +317,7 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
       }));
       updateUraian(finalKode, {
         target: realisasi,
+        ...(form.isWadah ? {} : { realisasi: realisasi })
       });
 
       updateSubKegiatanMetadata({
@@ -557,7 +558,7 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Anggaran {mode === 'add' ? 'SubKegiatan' : 'Diminta'} <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Anggaran {mode === 'add' ? 'SubKegiatan' : 'Realisasi'} <span className="text-red-500">*</span></label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
               <input type="text" value={form.anggaranSubKegiatan ? Number(form.anggaranSubKegiatan).toLocaleString('id-ID') : ''}
