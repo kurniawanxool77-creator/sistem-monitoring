@@ -332,7 +332,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           isApproved,
           sumberDana: meta?.sumberDana || 'Belum ditentukan',
           anggaranDiminta: meta?.anggaranDiminta || 0,
-          isWadah: meta?.isWadah,
+          isWadah: isInduk,
         };
       });
   };

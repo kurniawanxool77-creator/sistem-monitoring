@@ -110,8 +110,8 @@ export function ProgressSubKegiatan() {
     });
   }
 
-  // Get active subKegiatan data for selected department
-  const currentDeptKegiatans = subKegiatans.filter((k) => k.bidang === selectedBagian);
+  // Get active subKegiatan data for selected department (only Leaf nodes / Kegiatan)
+  const currentDeptKegiatans = subKegiatans.filter((k) => k.bidang === selectedBagian && !k.isWadah);
 
   // Calculate average progress for selected department
   const selectedBagianProgress = currentDeptKegiatans.length > 0
