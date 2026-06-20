@@ -2,10 +2,41 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import {
   RefreshCw, Building2, Wallet, Megaphone, Gavel, Archive, HelpCircle, RotateCcw,
+  Briefcase, Lightbulb, Target, Zap, Rocket, Layers, Compass, Globe
 } from 'lucide-react';
 import { SubKegiatan } from '../../lib/data';
 import { UpdateProgressModal } from '../modals/UpdateProgressModal';
 import { useAppData } from '../../hooks/AppDataContext';
+
+const VIBRANT_COLORS = [
+  { bg: 'bg-rose-500', border: 'border-rose-600 ring-rose-500/10 shadow-[0_0_15px_rgba(244,63,94,0.15)] bg-rose-50/10' },
+  { bg: 'bg-violet-500', border: 'border-violet-600 ring-violet-500/10 shadow-[0_0_15px_rgba(139,92,246,0.15)] bg-violet-50/10' },
+  { bg: 'bg-fuchsia-500', border: 'border-fuchsia-600 ring-fuchsia-500/10 shadow-[0_0_15px_rgba(217,70,239,0.15)] bg-fuchsia-50/10' },
+  { bg: 'bg-cyan-500', border: 'border-cyan-600 ring-cyan-500/10 shadow-[0_0_15px_rgba(6,182,212,0.15)] bg-cyan-50/10' },
+  { bg: 'bg-amber-500', border: 'border-amber-600 ring-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.15)] bg-amber-50/10' },
+  { bg: 'bg-lime-500', border: 'border-lime-600 ring-lime-500/10 shadow-[0_0_15px_rgba(132,204,22,0.15)] bg-lime-50/10' },
+  { bg: 'bg-teal-500', border: 'border-teal-600 ring-teal-500/10 shadow-[0_0_15px_rgba(20,184,166,0.15)] bg-teal-50/10' },
+  { bg: 'bg-indigo-500', border: 'border-indigo-600 ring-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.15)] bg-indigo-50/10' },
+];
+
+const UNIVERSAL_ICONS = [
+  Briefcase, Lightbulb, Target, Zap, Rocket, Layers, Compass, Globe, Wallet
+];
+
+function getDynamicConfig(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colorIdx = Math.abs(hash) % VIBRANT_COLORS.length;
+  const iconIdx = Math.abs(hash) % UNIVERSAL_ICONS.length;
+  
+  return {
+    iconBg: VIBRANT_COLORS[colorIdx].bg,
+    borderActive: `ring-2 ${VIBRANT_COLORS[colorIdx].border}`,
+    icon: UNIVERSAL_ICONS[iconIdx]
+  };
+}
 
 const CARDS_CONFIG: Record<string, {
   label: string;
@@ -21,7 +52,7 @@ const CARDS_CONFIG: Record<string, {
     icon: Building2,
     iconBg: 'bg-emerald-500',
     iconText: 'text-white',
-    borderActive: 'border-blue-600 ring-2 ring-blue-500/10 shadow-[0_0_15px_rgba(37,99,235,0.15)] bg-blue-50/10',
+    borderActive: 'border-emerald-600 ring-2 ring-emerald-500/10 shadow-[0_0_15px_rgba(16,185,129,0.15)] bg-emerald-50/10',
   },
   'Bagian Humas': {
     label: 'Bagian Humas',
@@ -29,7 +60,7 @@ const CARDS_CONFIG: Record<string, {
     icon: Megaphone,
     iconBg: 'bg-orange-500',
     iconText: 'text-white',
-    borderActive: 'border-blue-600 ring-2 ring-blue-500/10 shadow-[0_0_15px_rgba(37,99,235,0.15)] bg-blue-50/10',
+    borderActive: 'border-orange-600 ring-2 ring-orange-500/10 shadow-[0_0_15px_rgba(249,115,22,0.15)] bg-orange-50/10',
   },
   'Bagian Persidangan': {
     label: 'Bagian Persidangan',
@@ -37,7 +68,7 @@ const CARDS_CONFIG: Record<string, {
     icon: Gavel,
     iconBg: 'bg-purple-500',
     iconText: 'text-white',
-    borderActive: 'border-blue-600 ring-2 ring-blue-500/10 shadow-[0_0_15px_rgba(37,99,235,0.15)] bg-blue-50/10',
+    borderActive: 'border-purple-600 ring-2 ring-purple-500/10 shadow-[0_0_15px_rgba(168,85,247,0.15)] bg-purple-50/10',
   },
   'Bagian Umum': {
     label: 'Bagian Umum',
@@ -45,7 +76,7 @@ const CARDS_CONFIG: Record<string, {
     icon: Archive,
     iconBg: 'bg-blue-500',
     iconText: 'text-white',
-    borderActive: 'border-blue-600 ring-2 ring-blue-500/10 shadow-[0_0_15px_rgba(37,99,235,0.15)] bg-blue-50/10',
+    borderActive: 'border-blue-600 ring-2 ring-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)] bg-blue-50/10',
   },
 };
 
@@ -146,13 +177,14 @@ export function ProgressSubKegiatan() {
       {/* Grid of Department Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {CARDS_ORDER.map((bagianNama, index) => {
+          const defaultDynamic = getDynamicConfig(bagianNama);
           const config = CARDS_CONFIG[bagianNama] || {
             label: bagianNama,
             desc: 'Kegiatan ' + bagianNama,
-            icon: Building2,
-            iconBg: 'bg-blue-500',
+            icon: defaultDynamic.icon,
+            iconBg: defaultDynamic.iconBg,
             iconText: 'text-white',
-            borderActive: 'border-blue-600 ring-2 ring-blue-500/10 shadow-[0_0_15px_rgba(37,99,235,0.15)] bg-blue-50/10',
+            borderActive: defaultDynamic.borderActive,
           };
 
           const IconComponent = config.icon;

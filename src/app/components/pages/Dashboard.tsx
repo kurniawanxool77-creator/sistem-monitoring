@@ -21,6 +21,24 @@ const BIDANG_COLORS: Record<string, string> = {
   'Keuangan': '#ef4444', // red
 };
 
+const VIBRANT_HEX_COLORS = [
+  '#f43f5e', // rose
+  '#8b5cf6', // violet
+  '#d946ef', // fuchsia
+  '#06b6d4', // cyan
+  '#f59e0b', // amber
+  '#84cc16', // lime
+  '#14b8a6', // teal
+  '#6366f1', // indigo
+];
+
+function getDynamicHexColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return VIBRANT_HEX_COLORS[Math.abs(hash) % VIBRANT_HEX_COLORS.length];
+}
 const stepColors: Record<string, string> = {
   Persiapan: 'bg-gray-400',
   Koordinasi: 'bg-blue-400',
@@ -48,9 +66,9 @@ export function Dashboard() {
     return {
       name: u.uraian,
       value: u.realisasi,
-      color: BIDANG_COLORS[u.uraian] || '#3b82f6',
+      color: BIDANG_COLORS[u.uraian] || getDynamicHexColor(u.uraian),
     };
-  }).filter(item => item.value > 0);
+  });
 
   const sisa = totalPagu - totalRealisasi;
   if (sisa > 0) {
@@ -63,10 +81,11 @@ export function Dashboard() {
   subKegiatanList.forEach(k => {
      jenisCounts[k.bidang] = (jenisCounts[k.bidang] || 0) + 1;
   });
-  const jenisData = Object.entries(jenisCounts).map(([name, value]) => ({
-     name,
-     value,
-     color: BIDANG_COLORS[name] || '#3b82f6'
+  
+  const jenisData = level1Data.map(u => ({
+     name: u.uraian,
+     value: jenisCounts[u.uraian] || 0,
+     color: BIDANG_COLORS[u.uraian] || getDynamicHexColor(u.uraian)
   }));
 
   const subKegiatanPerBagian = subKegiatanList.reduce((acc, k) => {
