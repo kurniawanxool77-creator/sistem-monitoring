@@ -508,7 +508,8 @@ export function UpdateProgressModal({
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
             {/* ── INPUT REALISASI ── */}
             {activePanel === 'realisasi' && (
