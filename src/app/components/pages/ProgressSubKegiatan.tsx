@@ -197,8 +197,8 @@ export function ProgressSubKegiatan() {
             ? Math.round(cardKegiatans.reduce((acc, k) => acc + k.progress, 0) / cardKegiatans.length)
             : 0;
 
-          const progressColorClass = progressVal === 100 ? 'text-emerald-600' :
-            progressVal >= 50 ? 'text-amber-500' : 'text-red-600';
+          const progressColorClass = progressVal >= 71 ? 'text-emerald-600' :
+            progressVal >= 41 ? 'text-amber-500' : 'text-red-600';
 
           return (
             <div
@@ -208,27 +208,23 @@ export function ProgressSubKegiatan() {
                 setFilterSubBagian('Semua');
                 setFilterStatus('Semua');
               }}
-              className={`p-4 bg-white rounded-xl border transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 ${isSelected
+              className={`p-4 bg-white rounded-xl border transition-all duration-300 ease-out cursor-pointer flex flex-col justify-between shadow-sm ${isSelected
                 ? `${config.borderActive} transform scale-[1.02] shadow-md`
-                : 'border-gray-200 hover:border-blue-300 hover:shadow-lg hover:-translate-y-1 hover:bg-gray-50/20 active:scale-95'
+                : 'border-gray-200 hover:border-blue-300 hover:shadow-lg hover:-translate-y-1 hover:bg-gray-50/20'
                 }`}
             >
-              {/* Top part: Title/Desc on Left, Icon on Right */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1 pr-2 min-w-0">
-                  <div className="text-sm font-bold text-gray-900 leading-tight truncate" title={`${index + 1}. ${config.label}`}>
+                  <div className="text-sm font-bold text-gray-900 leading-tight truncate">
                     {index + 1}. {config.label}
                   </div>
-                  <div className="text-xs text-gray-500 truncate mt-1" title={config.desc}>
-                    {config.desc}
-                  </div>
+                  <div className="text-xs text-gray-500 truncate mt-1">{config.desc}</div>
                 </div>
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${config.iconBg} ${config.iconText}`}>
                   <IconComponent className="w-6 h-6" />
                 </div>
               </div>
 
-              {/* Progress bar inside Card */}
               <div className="mt-4">
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <span className="text-gray-500 font-medium">{uniqueSubDepts.length} Sub-Bagian</span>
@@ -237,8 +233,8 @@ export function ProgressSubKegiatan() {
                 <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                   <div
                     className={`h-2 rounded-full transition-all duration-500 ${
-                      progressVal === 100 ? 'bg-emerald-500' :
-                      progressVal >= 50 ? 'bg-amber-400' : 'bg-red-500'
+                      progressVal >= 71 ? 'bg-emerald-500' :
+                      progressVal >= 41 ? 'bg-amber-400' : 'bg-red-500'
                     }`}
                     style={{ width: `${progressVal}%` }}
                   />
@@ -249,50 +245,40 @@ export function ProgressSubKegiatan() {
         })}
       </div>
 
-      {/* Detail Section Banner */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-
-        {/* Filters area */}
         <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
           <span className="text-xs font-semibold text-gray-500 tracking-wider uppercase">
             Rincian Per Kegiatan {selectedBagian.replace('Bagian ', '').toUpperCase()}:
           </span>
           <div className="flex items-center gap-3">
-            {/* Kegiatan Filter */}
             <select
               value={filterSubBagian}
               onChange={(e) => setFilterSubBagian(e.target.value)}
-              className="text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+              className="text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
             >
               <option value="Semua">Semua Kegiatan</option>
               {uniqueSubBagian.map((sub) => (
                 <option key={sub} value={sub}>{sub}</option>
               ))}
             </select>
-
-            {/* Status Filter */}
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+              className="text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
             >
               <option value="Semua">Semua Status</option>
               <option value="Berjalan">Berjalan</option>
               <option value="Selesai">Selesai</option>
               <option value="Terlambat">Terlambat</option>
             </select>
-
             <button
               onClick={() => {
-                if (confirm('Reset semua data ke kondisi awal? Semua perubahan akan hilang.')) {
-                  localStorage.removeItem('master_uraian_anggaran_v5');
-                  localStorage.removeItem('kegiatan_metadata_v4');
-                  localStorage.removeItem('activity_logs');
+                if (confirm('Reset semua data ke kondisi awal?')) {
+                  localStorage.clear();
                   window.location.reload();
                 }
               }}
-              className="text-xs font-semibold text-gray-500 hover:text-red-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none hover:bg-red-50 hover:border-red-200 transition-colors flex items-center gap-1 cursor-pointer"
-              title="Reset data ke default"
+              className="text-xs font-semibold text-gray-500 hover:text-red-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 flex items-center gap-1 cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Reset Data
@@ -300,52 +286,38 @@ export function ProgressSubKegiatan() {
           </div>
         </div>
 
-        {/* Detailed Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Agenda Induk
-                </th>
-                <th scope="col" className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Kegiatan
-                </th>
-                <th scope="col" className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Target Selesai
-                </th>
-                <th scope="col" className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Progress
-                </th>
-                <th scope="col" className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Status
-                </th>
-                <th scope="col" className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Progress
-                </th>
+        <div className="overflow-x-auto min-h-[300px]">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-white border-b border-gray-200">
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">Agenda Induk</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-1/3">Kegiatan</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Target Selesai</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-40">Progress</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Status</th>
+                <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-center w-28">Progres</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-              {paginatedKegiatans.length === 0 ? (
+            <tbody className="divide-y divide-gray-100">
+              {currentData.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-gray-500 text-sm font-medium">
-                    Tidak ada kegiatan yang berjalan dengan kriteria filter tersebut.
+                  <td colSpan={6} className="px-4 py-16 text-center text-gray-400">
+                    <div className="flex flex-col items-center justify-center">
+                      <CheckCircle className="w-12 h-12 mb-3 text-gray-300" />
+                      <p className="text-sm font-medium">Tidak ada kegiatan di bagian/filter ini</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                paginatedKegiatans.map((k) => (
-                  <tr key={k.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
-                    <td className="px-4 py-2.5 text-xs text-gray-600 font-medium">
+                currentData.map((k) => (
+                  <tr key={k.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <td className="px-4 py-2.5 text-xs text-gray-600">
                       {k.subKegiatan_parent}
                     </td>
-                    <td className="px-4 py-2.5 text-xs">
+                    <td className="px-4 py-2.5">
                       <div className="flex items-center gap-1.5">
-                        <Link to={`/agenda/${k.id}`} className="text-xs font-medium text-blue-600 hover:underline">
-                          {k.nama}
-                        </Link>
-                        <span className="text-gray-400 hover:text-blue-500 cursor-pointer flex-shrink-0" title={k.deskripsi}>
-                          <HelpCircle className="w-3 h-3" />
-                        </span>
+                        <Link to={`/agenda/${k.id}`} className="font-semibold text-blue-600 group-hover:text-blue-700 transition-colors">{k.nama}</Link>
+                        <HelpCircle className="w-3.5 h-3.5 text-gray-400" title={k.deskripsi} />
                       </div>
                       <div className="text-[11px] text-gray-500 mt-0.5">
                         PJ: <span className="font-semibold text-gray-600">{k.penanggungJawab}</span> • {new Date(k.tanggalMulai).toLocaleDateString('id-ID')} – {new Date(k.tanggalSelesai).toLocaleDateString('id-ID')}
@@ -359,8 +331,8 @@ export function ProgressSubKegiatan() {
                         <div className="w-20 bg-gray-100 rounded-full h-1.5 overflow-hidden flex-shrink-0">
                           <div
                             className={`h-1.5 rounded-full transition-all duration-500 ${
-                              k.progress === 100 ? 'bg-emerald-500' :
-                              k.progress >= 50 ? 'bg-amber-400' : 'bg-red-500'
+                              k.progress >= 71 ? 'bg-emerald-500' :
+                              k.progress >= 41 ? 'bg-amber-400' : 'bg-red-500'
                             }`}
                             style={{ width: `${k.progress}%` }}
                           />

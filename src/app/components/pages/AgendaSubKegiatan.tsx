@@ -444,8 +444,8 @@ export function AgendaSubKegiatan() {
                           <div className="flex items-center gap-2 w-full max-w-[120px]">
                             <div className="flex-1 bg-gray-200 rounded-full h-1.5">
                               <div className={`h-1.5 rounded-full transition-all duration-500 ${
-                                progress === 100 ? 'bg-emerald-500' :
-                                progress >= 50 ? 'bg-amber-400' : 'bg-red-500'
+                                progress >= 71 ? 'bg-emerald-500' :
+                                progress >= 41 ? 'bg-amber-400' : 'bg-red-500'
                                 }`} style={{ width: `${progress}%` }} />
                             </div>
                             <span className="text-[11px] font-bold text-gray-700 w-8 text-right">{progress}%</span>

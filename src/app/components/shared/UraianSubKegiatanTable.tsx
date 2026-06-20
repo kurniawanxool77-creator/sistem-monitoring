@@ -259,14 +259,14 @@ export function UraianSubKegiatanTable() {
                         {formatRp(u.target)}
                       </td>
 
-                      <td className={`py-3 px-4 text-right tabular-nums font-medium ${pct >= 80 ? 'text-red-600' : pct >= 60 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                      <td className={`py-3 px-4 text-right tabular-nums font-medium ${pct >= 71 ? 'text-red-600' : pct >= 41 ? 'text-amber-500' : 'text-emerald-600'}`}>
                         {formatRp(u.realisasi)}
                       </td>
 
                       <td className={`py-3 px-4 text-right tabular-nums font-bold bg-blue-50/30 ${
                         sisa < 0 ? 'text-red-600' :
                         sisa === 0 ? 'text-red-500' :
-                        sisa / u.target < 0.20 ? 'text-amber-600' :
+                        sisa / u.target < 0.30 ? 'text-amber-600' :
                         'text-emerald-600'
                       }`}>
                         {sisa < 0 ? <span className="text-red-600">Melebihi Pagu</span> : formatRp(sisa)}
@@ -275,9 +275,9 @@ export function UraianSubKegiatanTable() {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <div className="flex-1 bg-slate-100 rounded-full h-1.5 min-w-[60px]">
-                            <div className={`h-1.5 rounded-full transition-all ${pct >= 80 ? 'bg-red-500' : pct >= 60 ? 'bg-amber-400' : 'bg-emerald-500'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+                            <div className={`h-1.5 rounded-full transition-all ${pct >= 71 ? 'bg-red-500' : pct >= 41 ? 'bg-amber-400' : 'bg-emerald-500'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
                           </div>
-                          <span className={`text-xs font-bold min-w-[36px] text-right ${pct >= 80 ? 'text-red-600' : pct >= 60 ? 'text-amber-500' : 'text-emerald-600'}`}>{pct}%</span>
+                          <span className={`text-xs font-bold min-w-[36px] text-right ${pct >= 71 ? 'text-red-600' : pct >= 41 ? 'text-amber-500' : 'text-emerald-600'}`}>{pct}%</span>
                         </div>
                       </td>
                     </tr>

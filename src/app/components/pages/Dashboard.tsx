@@ -209,8 +209,8 @@ export function Dashboard() {
                       {bagian.nama}
                     </span>
                     <span className={`font-bold ${
-                      bagian.progress === 100 ? 'text-emerald-600' :
-                      bagian.progress >= 50 ? 'text-amber-500' : 'text-red-600'
+                      bagian.progress >= 71 ? 'text-emerald-600' :
+                      bagian.progress >= 41 ? 'text-amber-500' : 'text-red-600'
                     }`}>
                       {bagian.progress}%
                     </span>
@@ -218,8 +218,8 @@ export function Dashboard() {
                   <div className="w-full bg-gray-100 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all ${
-                        bagian.progress === 100 ? 'bg-emerald-500' :
-                        bagian.progress >= 50 ? 'bg-amber-400' : 'bg-red-500'
+                        bagian.progress >= 71 ? 'bg-emerald-500' :
+                        bagian.progress >= 41 ? 'bg-amber-400' : 'bg-red-500'
                       }`}
                       style={{ width: `${bagian.progress}%` }}
                     />
@@ -268,15 +268,15 @@ export function Dashboard() {
                     <div className="flex-1 bg-gray-100 rounded-full h-1.5">
                       <div
                         className={`h-1.5 rounded-full ${
-                          kg.progress === 100 ? 'bg-emerald-500' :
-                          kg.progress >= 50 ? 'bg-amber-400' : 'bg-red-500'
+                          kg.progress >= 71 ? 'bg-emerald-500' :
+                          kg.progress >= 41 ? 'bg-amber-400' : 'bg-red-500'
                         }`}
                         style={{ width: `${kg.progress}%` }}
                       />
                     </div>
                     <span className={`text-xs font-bold min-w-[36px] text-right ${
-                      kg.progress === 100 ? 'text-emerald-600' :
-                      kg.progress >= 50 ? 'text-amber-500' : 'text-red-600'
+                      kg.progress >= 71 ? 'text-emerald-600' :
+                      kg.progress >= 41 ? 'text-amber-500' : 'text-red-600'
                     }`}>{kg.progress}%</span>
                   </div>
                   <div className="flex items-center justify-between">

@@ -327,17 +327,17 @@ export function AnggaranRealisasi() {
                       <td className="py-3.5 px-6 text-right tabular-nums text-slate-700 font-bold">
                         {m.target > 0 ? formatRp(m.target, true) : <span className="text-slate-300">-</span>}
                       </td>
-                      <td className={`py-3.5 px-6 text-right tabular-nums font-bold ${m.persentase >= 80 ? 'text-red-600' : m.persentase >= 60 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                      <td className={`py-3.5 px-6 text-right tabular-nums font-bold ${m.persentase >= 71 ? 'text-red-600' : m.persentase >= 41 ? 'text-amber-500' : 'text-emerald-600'}`}>
                         {m.realization > 0 ? formatRp(m.realization, true) : <span className="text-slate-300">-</span>}
                       </td>
                       <td className="py-3.5 px-4">
                         {hasData ? (
                           <div className="flex flex-col items-center gap-1.5">
                             <div className="w-full max-w-[80px] bg-slate-100 rounded-full h-1.5 mx-auto overflow-hidden">
-                              <div className={`h-full rounded-full transition-all duration-500 ${m.persentase >= 80 ? 'bg-red-500' : m.persentase >= 60 ? 'bg-amber-400' : 'bg-emerald-500'}`}
+                              <div className={`h-full rounded-full transition-all duration-500 ${m.persentase >= 71 ? 'bg-red-500' : m.persentase >= 41 ? 'bg-amber-400' : 'bg-emerald-500'}`}
                                 style={{ width: `${Math.min(m.persentase, 100)}%` }} />
                             </div>
-                            <span className={`text-[11px] font-bold ${m.persentase >= 80 ? 'text-red-600' : m.persentase >= 60 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                            <span className={`text-[11px] font-bold ${m.persentase >= 71 ? 'text-red-600' : m.persentase >= 41 ? 'text-amber-500' : 'text-emerald-600'}`}>
                               {m.persentase}%
                             </span>
                           </div>
@@ -364,7 +364,7 @@ export function AnggaranRealisasi() {
                           <td className="py-3 px-6 text-right tabular-nums text-slate-700 font-medium">
                             {t > 0 ? formatRp(t) : <span className="text-slate-300">-</span>}
                           </td>
-                          <td className={`py-3 px-6 text-right tabular-nums font-medium ${pct >= 80 ? 'text-red-600' : pct >= 60 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                          <td className={`py-3 px-6 text-right tabular-nums font-medium ${pct >= 71 ? 'text-red-600' : pct >= 41 ? 'text-amber-500' : 'text-emerald-600'}`}>
                             {r > 0 ? formatRp(r) : <span className="text-slate-300">-</span>}
                           </td>
                           <td className="py-3 px-4 text-center">

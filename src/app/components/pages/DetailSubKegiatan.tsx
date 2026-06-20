@@ -170,8 +170,8 @@ export function DetailSubKegiatan() {
           <div>
             <div className="text-sm text-gray-600 mb-1">Realisasi</div>
             <div className={`text-2xl font-bold ${
-              progressPercentage >= 80 ? 'text-red-600' :
-              progressPercentage >= 60 ? 'text-amber-500' : 'text-emerald-600'
+              progressPercentage >= 71 ? 'text-red-600' :
+              progressPercentage >= 41 ? 'text-amber-500' : 'text-emerald-600'
             }`}>
               {subKegiatan.realisasiAnggaran > 0 ? `Rp ${subKegiatan.realisasiAnggaran.toLocaleString('id-ID')}` : '0'}
             </div>
@@ -192,15 +192,15 @@ export function DetailSubKegiatan() {
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">Persentase Realisasi</span>
             <span className={`text-sm font-bold ${
-              progressPercentage >= 80 ? 'text-red-600' :
-              progressPercentage >= 60 ? 'text-amber-500' : 'text-emerald-600'
+              progressPercentage >= 71 ? 'text-red-600' :
+              progressPercentage >= 41 ? 'text-amber-500' : 'text-emerald-600'
             }`}>{progressPercentage.toFixed(2)}%</span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-4">
             <div
               className={`h-4 rounded-full transition-all ${
-                progressPercentage >= 80 ? 'bg-red-500' :
-                progressPercentage >= 60 ? 'bg-amber-400' : 'bg-emerald-500'
+                progressPercentage >= 71 ? 'bg-red-500' :
+                progressPercentage >= 41 ? 'bg-amber-400' : 'bg-emerald-500'
               }`}
               style={{ width: `${progressPercentage}%` }}
             />
