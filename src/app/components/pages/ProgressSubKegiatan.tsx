@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import {
   RefreshCw, Building2, Wallet, Megaphone, Gavel, Archive, HelpCircle, RotateCcw,
-  Briefcase, Lightbulb, Target, Zap, Rocket, Layers, Compass, Globe
+  Briefcase, Lightbulb, Target, Zap, Rocket, Layers, Compass, Globe, CheckCircle
 } from 'lucide-react';
 import { SubKegiatan } from '../../lib/data';
 import { UpdateProgressModal } from '../modals/UpdateProgressModal';
@@ -23,7 +23,9 @@ const UNIVERSAL_ICONS = [
   Briefcase, Lightbulb, Target, Zap, Rocket, Layers, Compass, Globe, Wallet
 ];
 
-function getDynamicConfig(name: string) {
+function getDynamicConfig(name: string = '') {
+  if (!name) return { iconBg: 'bg-gray-500', borderActive: 'ring-2 border-gray-600', icon: Briefcase };
+  
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -248,7 +250,7 @@ export function ProgressSubKegiatan() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
           <span className="text-xs font-semibold text-gray-500 tracking-wider uppercase">
-            Rincian Per Kegiatan {selectedBagian.replace('Bagian ', '').toUpperCase()}:
+            Rincian Per Kegiatan {(selectedBagian || '').replace('Bagian ', '').toUpperCase()}:
           </span>
           <div className="flex items-center gap-3">
             <select
