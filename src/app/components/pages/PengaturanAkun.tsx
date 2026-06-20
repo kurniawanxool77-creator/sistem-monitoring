@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Mail, Briefcase, Hash, Save, Shield, Camera, Trash2 } from 'lucide-react';
-import { useAppData } from '../../hooks/useAppData';
+import { useAppData } from '../../hooks/AppDataContext';
 
 export function PengaturanAkun() {
   const [user, setUser] = useState<any>(null);

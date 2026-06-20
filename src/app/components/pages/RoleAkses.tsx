@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { useAppData, AppUser } from '../../hooks/useAppData';
+import { useAppData, AppUser } from '../../hooks/AppDataContext';
 
 export function RoleAkses() {
   const { appUsers, addUser, updateUser, deleteUser, getBagianList } = useAppData();
@@ -58,12 +58,14 @@ export function RoleAkses() {
       });
     } else {
       addUser({
+        id: Math.random().toString(36).substring(7),
         nama: formData.nama,
         email: formData.email,
         password: formData.password,
         role: formData.role,
         bidangKode: formData.role === 'superadmin' ? 'ALL' : formData.bidangKode,
         status: formData.status,
+        lastLogin: '-',
       });
     }
     setShowAddModal(false);

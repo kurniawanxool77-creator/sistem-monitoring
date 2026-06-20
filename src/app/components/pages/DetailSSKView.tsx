@@ -68,7 +68,7 @@ export function DetailSSKView() {
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Sub SubKegiatan</label>
               <select className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-slate-50 font-medium">
-                <option>{data.subSubKegiatan}</option>
+                <option>{data.subKegiatan}</option>
               </select>
             </div>
           </div>
@@ -88,7 +88,7 @@ export function DetailSSKView() {
             <div className="space-y-4 flex-1">
               <div className="grid grid-cols-[150px_1fr] gap-4 text-sm">
                 <div className="text-slate-500 font-medium">Sub SubKegiatan</div>
-                <div className="font-bold text-slate-800">: {data.subSubKegiatan}</div>
+                <div className="font-bold text-slate-800">: {data.subKegiatan}</div>
               </div>
               <div className="grid grid-cols-[150px_1fr] gap-4 text-sm">
                 <div className="text-slate-500 font-medium">Pagu APBD (Rp)</div>

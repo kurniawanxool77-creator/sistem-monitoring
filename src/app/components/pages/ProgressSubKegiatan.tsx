@@ -1,18 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import {
   RefreshCw, Building2, Wallet, Megaphone, Gavel, Archive, HelpCircle, RotateCcw,
 } from 'lucide-react';
 import { SubKegiatan } from '../../lib/data';
 import { UpdateProgressModal } from '../modals/UpdateProgressModal';
-import { useAppData } from '../../hooks/useAppData';
-
-const ALL_CARDS = [
-  'Sekretariat DPRD',
-  'Bagian Humas',
-  'Bagian Persidangan',
-  'Bagian Umum'
-];
+import { useAppData } from '../../hooks/AppDataContext';
 
 const CARDS_CONFIG: Record<string, {
   label: string;
@@ -57,23 +50,31 @@ const CARDS_CONFIG: Record<string, {
 };
 
 export function ProgressSubKegiatan() {
-  const { getSubKegiatanList, addRealisasi, updateSubKegiatanMetadata, getBagianList } = useAppData();
+  const { getSubKegiatanList, addRealisasi, updateSubKegiatanMetadata, getBagianList, dataUraian } = useAppData();
   const subKegiatans = getSubKegiatanList();
-  
+
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
   const bagianList = getBagianList();
 
-  const userBidang = user?.role === 'superadmin' 
-    ? null 
+  const userBidang = user?.role === 'superadmin'
+    ? null
     : bagianList.find(b => b.id === user?.bidangKode)?.nama;
 
-  const CARDS_ORDER = userBidang ? [userBidang] : ALL_CARDS;
+  const allBidangList = dataUraian.filter(u => u.level === 1).map(u => u.uraian);
+  const CARDS_ORDER = userBidang ? [userBidang] : allBidangList;
 
-  const [selectedBagian, setSelectedBagian] = useState<string>(CARDS_ORDER[0] || 'Sekretariat DPRD');
+  const [selectedBagian, setSelectedBagian] = useState<string>(CARDS_ORDER.length > 0 ? CARDS_ORDER[0] : 'Sekretariat DPRD');
   const [filterSubBagian, setFilterSubBagian] = useState<string>('Semua');
   const [filterStatus, setFilterStatus] = useState<string>('Semua');
   const [updateProgressFor, setUpdateProgressFor] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterSubBagian, filterStatus, selectedBagian]);
 
   function toggleStep(subKegiatanId: string, stepId: string) {
     const k = subKegiatans.find(x => x.id === subKegiatanId);
@@ -98,7 +99,7 @@ export function ProgressSubKegiatan() {
   function handleSaveEdit(subKegiatanId: string, updatedFields: Partial<SubKegiatan>) {
     const k = subKegiatans.find(x => x.id === subKegiatanId);
     if (!k) return;
-    
+
     updateSubKegiatanMetadata({
       id: subKegiatanId,
       penanggungJawab: updatedFields.penanggungJawab !== undefined ? updatedFields.penanggungJawab : k.penanggungJawab,
@@ -122,8 +123,18 @@ export function ProgressSubKegiatan() {
 
   // Filtered subKegiatan to display in table
   const filteredKegiatans = currentDeptKegiatans
+    .filter((k) => k.id.split('.').length > 1) // Exclude Bidang (Level 1)
     .filter((k) => filterSubBagian === 'Semua' || k.subKegiatan_parent === filterSubBagian)
     .filter((k) => filterStatus === 'Semua' || k.status === filterStatus);
+
+  // Sort by urgency
+  const sortedKegiatans = [...filteredKegiatans].sort((a, b) => {
+    const priority: Record<string, number> = { 'Terlambat': 1, 'Belum Mulai': 2, 'Berjalan': 3, 'Selesai': 4 };
+    return (priority[a.status] || 99) - (priority[b.status] || 99);
+  });
+
+  const totalPages = Math.ceil(sortedKegiatans.length / itemsPerPage);
+  const paginatedKegiatans = sortedKegiatans.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const updateKegiatan = updateProgressFor ? subKegiatans.find((k) => k.id === updateProgressFor) : null;
 
@@ -135,8 +146,14 @@ export function ProgressSubKegiatan() {
       {/* Grid of Department Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {CARDS_ORDER.map((bagianNama, index) => {
-          const config = CARDS_CONFIG[bagianNama];
-          if (!config) return null;
+          const config = CARDS_CONFIG[bagianNama] || {
+            label: bagianNama,
+            desc: 'Kegiatan ' + bagianNama,
+            icon: Building2,
+            iconBg: 'bg-blue-500',
+            iconText: 'text-white',
+            borderActive: 'border-blue-600 ring-2 ring-blue-500/10 shadow-[0_0_15px_rgba(37,99,235,0.15)] bg-blue-50/10',
+          };
 
           const IconComponent = config.icon;
           const isSelected = selectedBagian === bagianNama;
@@ -189,8 +206,8 @@ export function ProgressSubKegiatan() {
                 <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                   <div
                     className={`h-2 rounded-full transition-all duration-500 ${progressVal === 100 ? 'bg-emerald-500' :
-                        progressVal >= 60 ? 'bg-blue-500' :
-                          progressVal >= 30 ? 'bg-amber-500' : 'bg-red-400'
+                      progressVal >= 60 ? 'bg-blue-500' :
+                        progressVal >= 30 ? 'bg-amber-500' : 'bg-red-400'
                       }`}
                     style={{ width: `${progressVal}%` }}
                   />
@@ -236,8 +253,12 @@ export function ProgressSubKegiatan() {
 
             <button
               onClick={() => {
-                localStorage.removeItem('subKegiatan_metadata_v2');
-                window.location.reload();
+                if (confirm('Reset semua data ke kondisi awal? Semua perubahan akan hilang.')) {
+                  localStorage.removeItem('master_uraian_anggaran_v5');
+                  localStorage.removeItem('kegiatan_metadata_v4');
+                  localStorage.removeItem('activity_logs');
+                  window.location.reload();
+                }
               }}
               className="text-xs font-semibold text-gray-500 hover:text-red-600 bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none hover:bg-red-50 hover:border-red-200 transition-colors flex items-center gap-1 cursor-pointer"
               title="Reset data ke default"
@@ -254,7 +275,7 @@ export function ProgressSubKegiatan() {
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Kegiatan
+                  Agenda Induk
                 </th>
                 <th scope="col" className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Kegiatan
@@ -269,19 +290,19 @@ export function ProgressSubKegiatan() {
                   Status
                 </th>
                 <th scope="col" className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Aksi
+                  Progress
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {filteredKegiatans.length === 0 ? (
+              {paginatedKegiatans.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-gray-500 text-sm font-medium">
                     Tidak ada kegiatan yang berjalan dengan kriteria filter tersebut.
                   </td>
                 </tr>
               ) : (
-                filteredKegiatans.map((k) => (
+                paginatedKegiatans.map((k) => (
                   <tr key={k.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
                     <td className="px-4 py-2.5 text-xs text-gray-600 font-medium">
                       {k.subKegiatan_parent}
@@ -334,7 +355,7 @@ export function ProgressSubKegiatan() {
                           }`}
                       >
                         <RefreshCw className="w-3 h-3" />
-                        Update Progress
+                        Progres
                       </button>
                     </td>
                   </tr>
@@ -342,6 +363,43 @@ export function ProgressSubKegiatan() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6 rounded-b-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-600">Tampilkan</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+              className="border-gray-300 rounded-md text-xs py-1 pl-2 pr-6 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={75}>75</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-xs text-gray-600">data</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-2.5 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Sebelumnya
+            </button>
+            <span className="text-xs text-gray-600">
+              Hal {currentPage} dari {totalPages || 1}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="px-2.5 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Selanjutnya
+            </button>
+          </div>
         </div>
       </div>
 
@@ -354,7 +412,7 @@ export function ProgressSubKegiatan() {
           onClose={() => setUpdateProgressFor(null)}
           onToggleStep={(stepId) => toggleStep(updateKegiatan.id, stepId)}
           onSaveRealisasi={(amount) => handleSaveRealisasi(updateKegiatan.id, amount)}
-          onSaveEdit={(updatedFields) => handleSaveEdit(updateKegiatan.id, updatedFields)}
+
         />
       )}
     </div>

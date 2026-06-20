@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, AlertCircle, CheckCircle2, Plus, X, Search } from 'lucide-react';
-import { useAppData } from '../../hooks/useAppData';
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, AlertCircle, CheckCircle2, Plus, X, Wallet } from 'lucide-react';
+import { useAppData } from '../../hooks/AppDataContext';
+import { PAGU_TOTAL } from '../../lib/data';
 
 function formatRp(n: number, short = false) {
   if (short) {
@@ -12,7 +13,7 @@ function formatRp(n: number, short = false) {
 }
 
 export function UraianSubKegiatanTable() {
-  const { dataUraian: uraianAnggaran, addRealisasi, addActivityLog } = useAppData();
+  const { dataUraian: uraianAnggaran, updateUraian, addActivityLog } = useAppData();
   const [expandedKode, setExpandedKode] = useState<Set<string>>(new Set(['1', '2', '3', '4', '5']));
   const [selectedBidang, setSelectedBidang] = useState<string | null>(null);
 
@@ -32,7 +33,7 @@ export function UraianSubKegiatanTable() {
     });
   }
 
-  function isVisible(kode: string) {
+  function isVisible(kode: string): boolean {
     const parts = kode.split('.');
     if (parts.length === 1) return true;
     const parent = parts.slice(0, -1).join('.');
@@ -51,38 +52,53 @@ export function UraianSubKegiatanTable() {
   // Ambil data per Bidang (level 1) untuk kartu ringkasan
   const bidangList = uraianAnggaran.filter(u => u.level === 1);
 
-  // Semua uraian level 3 dan 4 untuk pilihan di modal
-  const leafItems = uraianAnggaran.filter(u => u.level === 3 || u.level === 4);
-  const filteredLeafItems = leafItems.filter(u => {
-    const q = searchQuery.toLowerCase();
-    return u.uraian.toLowerCase().includes(q) || u.kode.toLowerCase().includes(q);
-  });
+  const totalPaguDialokasikan = bidangList.reduce((acc, b) => acc + b.target, 0);
+  const sisaPaguGlobal = PAGU_TOTAL - totalPaguDialokasikan;
 
-  const selectedItem = uraianAnggaran.find(u => u.kode === selectedKode);
+  // Auto-fill form when selectedKode changes
+  useEffect(() => {
+    if (selectedKode) {
+      const b = bidangList.find(x => x.kode === selectedKode);
+      if (b) {
+        setJumlah(formatInputRupiah(b.target.toString()));
+      }
+    } else {
+      setJumlah('');
+    }
+  }, [selectedKode]); // Remove bidangList from deps to avoid loop
 
-  function handleTambah() {
+  function handleSimpanPagu() {
     if (!selectedKode || !jumlah) return;
     const amount = parseInt(jumlah.replace(/[^0-9]/g, ''), 10);
-    if (isNaN(amount) || amount <= 0) return;
+    if (isNaN(amount) || amount < 0) return;
+
+    const b = bidangList.find(x => x.kode === selectedKode);
+    if (!b) return;
+
+    const currentTarget = b.target;
+    // Check available pagu if increasing
+    const difference = amount - currentTarget;
+    if (difference > sisaPaguGlobal) {
+      alert(`Sisa pagu global tidak mencukupi! Sisa: ${formatRp(sisaPaguGlobal)}`);
+      return;
+    }
 
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
 
-    addRealisasi(selectedKode, amount);
+    updateUraian(selectedKode, { target: amount });
+    
     addActivityLog({
       user: user?.nama || 'Admin',
-      action: 'Tambah Realisasi Anggaran',
-      details: `Realisasi sebesar ${formatRp(amount)} ditambahkan ke ${selectedItem?.uraian ?? selectedKode}${keterangan ? `. Keterangan: ${keterangan}` : ''}.`
+      action: 'Set Pagu Bidang',
+      details: `Mengubah pagu bidang ${b.uraian} (${selectedKode}) menjadi ${formatRp(amount)}`
     });
-
     setSukses(true);
     setTimeout(() => {
       setSukses(false);
       setShowModal(false);
       setSelectedKode('');
       setJumlah('');
-      setKeterangan('');
-      setSearchQuery('');
     }, 1500);
   }
 
@@ -90,8 +106,6 @@ export function UraianSubKegiatanTable() {
     setShowModal(false);
     setSelectedKode('');
     setJumlah('');
-    setKeterangan('');
-    setSearchQuery('');
     setSukses(false);
   }
 
@@ -113,7 +127,7 @@ export function UraianSubKegiatanTable() {
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold rounded-lg transition-all shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            Tambah Realisasi
+            Tambah Pagu Bidang
           </button>
         </div>
 
@@ -202,7 +216,7 @@ export function UraianSubKegiatanTable() {
                 <th className="text-right py-3 px-4 font-semibold text-slate-600">Target (Pagu)</th>
                 <th className="text-right py-3 px-4 font-semibold text-slate-600">Realisasi</th>
                 <th className="text-right py-3 px-4 font-semibold text-blue-700 bg-blue-50">Sisa Anggaran</th>
-                <th className="text-center py-3 px-4 font-semibold text-slate-600 w-40">% Capaian</th>
+                <th className="text-center py-3 px-4 font-semibold text-slate-600 w-40">% Persentase</th>
               </tr>
             </thead>
             <tbody>
@@ -250,11 +264,12 @@ export function UraianSubKegiatanTable() {
                       </td>
 
                       <td className={`py-3 px-4 text-right tabular-nums font-bold bg-blue-50/30 ${
-                        sisa <= 0 ? 'text-red-600' :
+                        sisa < 0 ? 'text-red-600' :
+                        sisa === 0 ? 'text-emerald-600' :
                         sisa / u.target < 0.15 ? 'text-orange-600' :
                         'text-blue-700'
                       }`}>
-                        {sisa <= 0 ? <span className="text-red-600">Melebihi Pagu</span> : formatRp(sisa, true)}
+                        {sisa < 0 ? <span className="text-red-600">Melebihi Pagu</span> : formatRp(sisa, true)}
                       </td>
 
                       <td className="py-3 px-4">
@@ -286,16 +301,16 @@ export function UraianSubKegiatanTable() {
         </div>
       </div>
 
-      {/* ── MODAL TAMBAH REALISASI ── */}
+      {/* ── MODAL TAMBAH PAGU BIDANG ── */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
               <div>
-                <h2 className="text-lg font-bold text-slate-800">Tambah Realisasi Anggaran</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Catat realisasi penyerapan anggaran kegiatan</p>
+                <h2 className="text-lg font-bold text-slate-800">Set Pagu Bidang</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Alokasikan pagu global ke masing-masing bidang</p>
               </div>
-              <button onClick={handleCloseModal} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors">
+              <button onClick={handleCloseModal} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -305,106 +320,81 @@ export function UraianSubKegiatanTable() {
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
                   <CheckCircle2 className="w-9 h-9 text-emerald-500" />
                 </div>
-                <p className="font-bold text-emerald-700 text-lg">Realisasi berhasil ditambahkan!</p>
+                <p className="font-bold text-emerald-700 text-lg">Pagu Bidang berhasil diperbarui!</p>
               </div>
             ) : (
-              <div className="px-6 py-5 space-y-5">
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Pilih Sub Kegiatan / Sub-Sub Kegiatan <span className="text-red-500">*</span>
-                  </label>
-                  {selectedItem ? (
-                    <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs text-blue-500 font-mono">{selectedItem.kode}</div>
-                        <div className="text-sm font-semibold text-blue-800 truncate">{selectedItem.uraian}</div>
-                        <div className="text-xs text-slate-500 mt-0.5">
-                          Pagu: {formatRp(selectedItem.target, true)} · Sisa: {formatRp(selectedItem.target - selectedItem.realisasi, true)}
-                        </div>
-                      </div>
-                      <button onClick={() => setSelectedKode('')} className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-200 hover:bg-blue-300 text-blue-700 flex-shrink-0 transition-colors">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="relative mb-2">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                          type="text"
-                          placeholder="Cari uraian atau kode..."
-                          value={searchQuery}
-                          onChange={e => setSearchQuery(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
-                        />
-                      </div>
-                      <div className="max-h-44 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
-                        {filteredLeafItems.length === 0 ? (
-                          <div className="py-6 text-center text-sm text-slate-400">Tidak ada data</div>
-                        ) : filteredLeafItems.map(item => (
-                          <button
-                            key={item.kode}
-                            onClick={() => { setSelectedKode(item.kode); setSearchQuery(''); }}
-                            className="w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs text-slate-400 flex-shrink-0">{item.kode}</span>
-                              <span className="text-sm text-slate-700 truncate">{item.uraian}</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Jumlah Realisasi (Rp) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500">Rp</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="0"
-                      value={jumlah}
-                      onChange={e => setJumlah(formatInputRupiah(e.target.value))}
-                      className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
-                    />
+              <div className="p-6 space-y-6">
+                
+                {/* Global Pagu Summary */}
+                <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Wallet className="w-6 h-6 text-blue-600" />
                   </div>
-                  {selectedItem && jumlah && (
-                    <p className={`text-xs mt-1.5 font-medium ${parseInt(jumlah.replace(/\D/g,''), 10) > selectedItem.target - selectedItem.realisasi ? 'text-red-500' : 'text-emerald-600'}`}>
-                      {parseInt(jumlah.replace(/\D/g,''), 10) > selectedItem.target - selectedItem.realisasi
-                        ? '⚠ Jumlah melebihi sisa pagu anggaran!'
-                        : `✓ Sisa setelah input: ${formatRp(selectedItem.target - selectedItem.realisasi - parseInt(jumlah.replace(/\D/g,''), 10), true)}`
-                      }
-                    </p>
-                  )}
+                  <div className="flex-1 grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-slate-500 font-medium mb-0.5">Total Pagu Global</div>
+                      <div className="font-bold text-slate-800 text-sm">{formatRp(PAGU_TOTAL, true)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 font-medium mb-0.5">Sisa Belum Dialokasikan</div>
+                      <div className={`font-bold text-sm ${sisaPaguGlobal < 0 ? 'text-red-600' : 'text-blue-700'}`}>
+                        {formatRp(sisaPaguGlobal, true)}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Keterangan <span className="text-slate-400 font-normal">(opsional)</span></label>
-                  <textarea
-                    rows={2}
-                    placeholder="Misal: Pembayaran termin ke-1, pengadaan ATK, dll."
-                    value={keterangan}
-                    onChange={e => setKeterangan(e.target.value)}
-                    className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 resize-none"
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Pilih Bidang <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={selectedKode}
+                      onChange={(e) => setSelectedKode(e.target.value)}
+                      className="w-full px-4 py-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 bg-white"
+                    >
+                      <option value="">-- Pilih Bidang --</option>
+                      {bidangList.map(b => (
+                        <option key={b.kode} value={b.kode}>{b.uraian}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Pagu Bidang (Rp) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500">Rp</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="0"
+                        value={jumlah}
+                        disabled={!selectedKode}
+                        onChange={e => setJumlah(formatInputRupiah(e.target.value))}
+                        className="w-full pl-10 pr-4 py-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 disabled:bg-slate-50 disabled:cursor-not-allowed font-medium text-slate-800"
+                      />
+                    </div>
+                    {selectedKode && (
+                      <p className="text-xs text-slate-500 mt-2">
+                        Mengubah pagu ini akan memotong dari sisa pagu global yang belum dialokasikan.
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex gap-3 pt-1">
-                  <button onClick={handleCloseModal} className="flex-1 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                <div className="flex gap-3 pt-2">
+                  <button onClick={handleCloseModal} className="flex-1 py-3 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
                     Batal
                   </button>
                   <button
-                    onClick={handleTambah}
+                    onClick={handleSimpanPagu}
                     disabled={!selectedKode || !jumlah}
-                    className="flex-1 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="flex-1 py-3 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   >
-                    Simpan Realisasi
+                    Simpan Pagu
                   </button>
                 </div>
               </div>

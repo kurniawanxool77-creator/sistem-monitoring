@@ -4,7 +4,7 @@ import {
   MapPin, Clock, Users, Building2, ChevronRight as ChevronRightIcon,
   CheckCircle2, Circle, Tag,
 } from 'lucide-react';
-import { useAppData } from '../../hooks/useAppData';
+import { useAppData } from '../../hooks/AppDataContext';
 
 const months = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',

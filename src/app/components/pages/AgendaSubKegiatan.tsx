@@ -1,12 +1,13 @@
+import React from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import {
   Plus, Search, Edit, Trash2, Eye, X, UserPlus, Minus,
-  Check, CheckCircle2, FileCheck, ChevronRight, RefreshCw,
+  Check, CheckCircle2, FileCheck, ChevronRight, RefreshCw, RotateCcw,
 } from 'lucide-react';
-import { sumberDanaList, SubSubKegiatan, anggotaData } from '../../lib/data';
+import { sumberDanaList, SubKegiatan, anggotaData } from '../../lib/data';
 import { UpdateProgressModal } from '../modals/UpdateProgressModal';
-import { useAppData } from '../../hooks/useAppData';
+import { useAppData } from '../../hooks/AppDataContext';
 
 function formatRupiah(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -17,11 +18,13 @@ import { SubKegiatanFormModal } from '../modals/SubKegiatanFormModal';
 export function AgendaSubKegiatan() {
   const {
     dataUraian: uraianAnggaranData,
+    subKegiatanMeta,
     getSubKegiatanList,
     addRealisasi,
     updateSubKegiatanMetadata,
     approveSubKegiatan,
     deleteSubKegiatan,
+    deleteUraian,
     addActivityLog
   } = useAppData();
 
@@ -34,6 +37,8 @@ export function AgendaSubKegiatan() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('semua');
   const [filterBagian, setFilterBagian] = useState('semua');
+  const [filterBulan, setFilterBulan] = useState('semua');
+  const [filterTahun, setFilterTahun] = useState('semua');
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [updateProgressFor, setUpdateProgressFor] = useState<string | null>(null);
@@ -45,11 +50,11 @@ export function AgendaSubKegiatan() {
     setUpdateProgressFor(subKegiatanId);
   }
 
-  function toggleStep(subKegiatanId: string, stepId: string) {
+  function toggleStep(subKegiatanId: string, stepId: string, catatan?: string) {
     const k = subKegiatans.find(x => x.id === subKegiatanId);
     if (!k) return;
     const newSteps = k.steps.map((s) =>
-      s.id === stepId ? { ...s, selesai: !s.selesai } : s
+      s.id === stepId ? { ...s, selesai: !s.selesai, catatan: !s.selesai ? catatan : undefined } : s
     );
     updateSubKegiatanMetadata({
       id: subKegiatanId,
@@ -65,10 +70,10 @@ export function AgendaSubKegiatan() {
     addRealisasi(subKegiatanId, amount);
   }
 
-  function handleSaveEdit(subKegiatanId: string, updatedFields: Partial<SubSubKegiatan>) {
+  function handleSaveEdit(subKegiatanId: string, updatedFields: Partial<SubKegiatan>) {
     const k = subKegiatans.find(x => x.id === subKegiatanId);
     if (!k) return;
-    
+
     updateSubKegiatanMetadata({
       id: subKegiatanId,
       penanggungJawab: updatedFields.penanggungJawab !== undefined ? updatedFields.penanggungJawab : k.penanggungJawab,
@@ -88,14 +93,127 @@ export function AgendaSubKegiatan() {
 
   const allBidangOptions = Array.from(new Set(subKegiatans.map((k) => k.bidang)));
 
-  function handleDeleteSubKegiatan(id: string, nama: string) {
-    if (confirm(`Apakah Anda yakin ingin menghapus subKegiatan "${nama}"?`)) {
-      deleteSubKegiatan(id, user?.nama || 'Unknown User', nama);
-    }
+  function handleDeleteSubKegiatan(kode: string, nama: string) {
+    setDeleteConfirm({ kode, nama });
+  }
+
+  function confirmDelete() {
+    if (!deleteConfirm) return;
+    const { kode } = deleteConfirm;
+    deleteSubKegiatan(kode);
+    addActivityLog({ user: user?.nama || 'Unknown', action: 'Hapus Kegiatan', details: `Menghapus: ${deleteConfirm.nama} (${kode})` });
+    setDeleteConfirm(null);
   }
 
   // subKegiatan yang sedang dibuka update progress-nya
   const updateSubKegiatan = updateProgressFor ? subKegiatans.find((k) => k.id === updateProgressFor) : null;
+
+  const [expandedKode, setExpandedKode] = React.useState<Set<string>>(new Set(uraianAnggaranData.filter(u => u.level === 1 || u.level === 2).map(u => u.kode)));
+  const [deleteConfirm, setDeleteConfirm] = React.useState<{ kode: string; nama: string } | null>(null);
+
+  function toggleExpand(kode: string) {
+    setExpandedKode(prev => {
+      const next = new Set(prev);
+      if (next.has(kode)) {
+        next.delete(kode);
+        uraianAnggaranData.filter(u => u.kode.startsWith(kode + '.')).forEach(child => next.delete(child.kode));
+      } else {
+        next.add(kode);
+      }
+      return next;
+    });
+  }
+
+  // Filter only active nodes (or nodes with active descendants) to show on Agenda page
+  const activeUraianData = uraianAnggaranData.filter(u => {
+    const hasMeta = subKegiatans.some(k => k.id === u.kode);
+    const hasBudget = u.target > 0 || u.realisasi > 0;
+    if (hasMeta || hasBudget) return true;
+
+    return uraianAnggaranData.some(child => {
+      if (child.kode === u.kode || !child.kode.startsWith(u.kode + '.')) return false;
+      const childMeta = subKegiatans.some(k => k.id === child.kode);
+      const childBudget = child.target > 0 || child.realisasi > 0;
+      return childMeta || childBudget;
+    });
+  });
+
+  const finalDataToRender = activeUraianData.filter(u => {
+    if (u.level > 1) {
+      const parentKode = u.kode.split('.').slice(0, -1).join('.');
+      if (!expandedKode.has(parentKode)) return false;
+    }
+
+    const sub = subKegiatans.find(k => k.id === u.kode);
+
+    // Helper to check match for a specific node
+    const checkMatch = (node: any, nodeSub: any) => {
+      let matchSearch = true;
+      if (searchTerm.trim() !== '') {
+        matchSearch = node.uraian.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (nodeSub && nodeSub.nama.toLowerCase().includes(searchTerm.toLowerCase()));
+      }
+
+      let matchBagian = true;
+      if (filterBagian !== 'semua') {
+        const topLevelKode = node.kode.split('.')[0];
+        const topLevel = activeUraianData.find(x => x.kode === topLevelKode);
+        matchBagian = topLevel ? topLevel.uraian === filterBagian : false;
+      }
+
+      let matchStatus = true;
+      if (filterStatus !== 'semua') {
+        matchStatus = nodeSub ? nodeSub.status === filterStatus : false;
+      }
+
+      let matchTanggal = true;
+      if (filterBulan !== 'semua' || filterTahun !== 'semua') {
+        if (nodeSub && nodeSub.tanggalMulai) {
+          const date = new Date(nodeSub.tanggalMulai);
+          if (!isNaN(date.getTime())) {
+            if (filterBulan !== 'semua' && date.getMonth() + 1 !== parseInt(filterBulan)) matchTanggal = false;
+            if (filterTahun !== 'semua' && date.getFullYear() !== parseInt(filterTahun)) matchTanggal = false;
+          } else {
+            matchTanggal = false;
+          }
+        } else {
+          matchTanggal = false;
+        }
+      }
+
+      return matchSearch && matchBagian && matchStatus && matchTanggal;
+    };
+
+    const isMatch = checkMatch(u, sub);
+    if (isMatch) return true;
+
+    // Check if any children match
+    const hasActiveFilters = searchTerm.trim() !== '' || filterBagian !== 'semua' || filterStatus !== 'semua' || filterBulan !== 'semua' || filterTahun !== 'semua';
+    if (hasActiveFilters) {
+      const childrenMatch = activeUraianData.some(child => {
+        if (!child.kode.startsWith(u.kode + '.')) return false;
+        const childSub = subKegiatans.find(k => k.id === child.kode);
+        return checkMatch(child, childSub);
+      });
+      if (childrenMatch) return true;
+      return false;
+    }
+
+    return true;
+  });
+
+  const ChevronDown = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+  );
+
+  function safeFormatDate(dStr: string) {
+    if (!dStr) return '-';
+    try {
+      return new Date(dStr).toLocaleDateString('id-ID');
+    } catch {
+      return '-';
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -109,11 +227,26 @@ export function AgendaSubKegiatan() {
           <Plus className="w-5 h-5" />
           Tambah Kegiatan
         </button>
+        <button
+          onClick={() => {
+            if (confirm('Reset semua data ke kondisi awal? Semua perubahan akan hilang.')) {
+              localStorage.removeItem('master_uraian_anggaran_v5');
+              localStorage.removeItem('kegiatan_metadata_v4');
+              localStorage.removeItem('activity_logs');
+              window.location.reload();
+            }
+          }}
+          className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-red-600 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer"
+          title="Reset semua data ke kondisi awal"
+        >
+          <RotateCcw className="w-4 h-4" />
+          Reset Data
+        </button>
       </div>
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <div className="md:col-span-2 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input type="text" placeholder="Cari nama kegiatan..." value={searchTerm}
@@ -127,6 +260,20 @@ export function AgendaSubKegiatan() {
               {allBidangOptions.map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
           )}
+          <select value={filterBulan} onChange={(e) => setFilterBulan(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="semua">Semua Bulan</option>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+              <option key={m} value={m}>{new Date(2000, m - 1).toLocaleString('id-ID', { month: 'long' })}</option>
+            ))}
+          </select>
+          <select value={filterTahun} onChange={(e) => setFilterTahun(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="semua">Semua Tahun</option>
+            {[new Date().getFullYear() - 2, new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1].map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <option value="semua">Semua Status</option>
@@ -144,259 +291,246 @@ export function AgendaSubKegiatan() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 w-12">No</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Nama Kegiatan</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Bagian</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">PJ</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Tgl Mulai</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Tgl Selesai</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
-                  <th className="text-left font-bold py-4 px-4 uppercase text-gray-500 w-[12%]">Progress</th>
-                  <th className="text-left font-bold py-4 px-4 uppercase text-gray-500 w-[10%]">Approval</th>
-                  <th className="text-left font-bold py-4 px-4 uppercase text-gray-500 w-[10%]">Aksi</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 w-24">Kode</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Nama Kegiatan & PJ</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 w-28">Tgl Mulai</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 w-28">Tgl Selesai</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 w-32">Target Pagu</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 w-32">Realisasi</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 w-28">Status</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 w-36">Progress</th>
+                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700 w-32">Edit</th>
               </tr>
             </thead>
             <tbody>
-              {filteredSubKegiatan.map((subKegiatan, index) => {
-                const isExpanded = expandedRow === subKegiatan.id;
-                const steps = subKegiatan.steps;
-                const progress = subKegiatan.progress;
-                const doneCount = steps.filter((s) => s.selesai).length;
-                const allDone = doneCount === steps.length;
-                const currentStepIdx = steps.findIndex((s) => !s.selesai);
+              {(() => {
+                 const getPhysicalProgress = (kode: string): number => {
+                  const dbHasChildren = activeUraianData.some((x) => x.kode.startsWith(kode + '.') && x.kode.split('.').length === kode.split('.').length + 1);
+                  const meta = subKegiatanMeta.find((m) => m.id === kode);
+                  const isWadah = meta ? meta.isWadah : false;
+                  
+                  if (!dbHasChildren && !isWadah) {
+                    // Leaf node
+                    const sub = subKegiatans.find((k) => k.id === kode) || meta;
+                    if (!sub || !sub.steps || sub.steps.length === 0) return 0;
+                    const done = sub.steps.filter(s => s.selesai).length;
+                    return (done / sub.steps.length) * 100;
+                  } else {
+                    // Container node: weighted average of all leaf descendants
+                    const leafDescendants = activeUraianData.filter(desc => 
+                      desc.kode.startsWith(kode + '.') && 
+                      !activeUraianData.some(child => child.kode.startsWith(desc.kode + '.') && child.kode.split('.').length === desc.kode.split('.').length + 1) &&
+                      (!subKegiatanMeta.find(m => m.id === desc.kode)?.isWadah)
+                    );
+                    
+                    if (leafDescendants.length === 0) return 0;
+                    
+                    let sumPagu = 0;
+                    let sumWeightedProgress = 0;
+                    
+                    leafDescendants.forEach(leaf => {
+                      const leafProgress = getPhysicalProgress(leaf.kode);
+                      sumPagu += leaf.target;
+                      sumWeightedProgress += (leafProgress * leaf.target);
+                    });
+                    
+                    return sumPagu > 0 ? (sumWeightedProgress / sumPagu) : 0;
+                  }
+                };
 
-                return (
-                  <>
-                    {/* Main row */}
-                    <tr key={subKegiatan.id}
-                      className={`border-b border-gray-100 transition-colors ${isExpanded ? 'bg-blue-50/40' : 'hover:bg-gray-50'}`}>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => { setExpandedRow(isExpanded ? null : subKegiatan.id); }}
-                          className="text-sm text-gray-700 hover:text-blue-600 font-medium w-full text-left"
-                          title="Klik untuk lihat progress"
-                        >
-                          {index + 1}
-                        </button>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Link to={`/agenda/${subKegiatan.id}`}
-                          className="text-sm font-medium text-blue-600 hover:underline">
-                          {subKegiatan.nama}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{subKegiatan.bidang}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{subKegiatan.penanggungJawab}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">
-                        {new Date(subKegiatan.tanggalMulai).toLocaleDateString('id-ID')}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-600">
-                        {new Date(subKegiatan.tanggalSelesai).toLocaleDateString('id-ID')}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium ${subKegiatan.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
-                            subKegiatan.status === 'Berjalan' ? 'bg-blue-100 text-blue-700' :
-                              subKegiatan.status === 'Terlambat' ? 'bg-red-100 text-red-700' :
-                                'bg-gray-100 text-gray-700'
-                          }`}>{subKegiatan.status}</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2 w-32">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2">
-                            <div className={`h-2 rounded-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' :
-                                progress >= 60 ? 'bg-blue-500' :
-                                  progress >= 30 ? 'bg-amber-500' : 'bg-red-400'
-                              }`} style={{ width: `${progress}%` }} />
-                          </div>
-                          <span className="text-sm font-semibold text-gray-800 w-10 text-right">{progress}%</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        {subKegiatan.isApproved ? (
-                          <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                            <CheckCircle2 className="w-4 h-4" /> Disetujui
-                          </span>
-                        ) : (
-                          <span className="text-xs font-medium text-amber-600">
-                            Menunggu
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5">
-                          {!subKegiatan.isApproved && isSuperadmin && (
-                            <button
-                              onClick={() => approveSubKegiatan(subKegiatan.id, user?.nama || 'Superadmin')}
-                              className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-                              title="Approve Kegiatan"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                          )}
-                          <Link to={`/agenda/${subKegiatan.id}`}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Lihat Detail">
-                            <Eye className="w-4 h-4" />
-                          </Link>
-                          <button
-                            onClick={() => setShowEditModalFor(subKegiatan.id)}
-                            className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors cursor-pointer"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteSubKegiatan(subKegiatan.id, subKegiatan.nama)}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" 
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                return finalDataToRender.map((u) => {
+                  const isExpanded = expandedKode.has(u.kode);
+                  const isRowExpanded = expandedRow === u.kode;
+                  const indent = (u.level - 1) * 20;
 
-                    {/* ── Expandable progress row ── */}
-                    {isExpanded && (
-                      <tr key={`${subKegiatan.id}-progress`} className="border-b-2 border-blue-100">
-                        <td colSpan={9} className="bg-gradient-to-b from-blue-50/60 to-slate-50 px-8 pt-6 pb-5">
+                  const dbHasChildren = activeUraianData.some((x) => x.kode.startsWith(u.kode + '.') && x.kode.split('.').length === u.kode.split('.').length + 1);
+                  const existingSub = subKegiatans.find((k) => k.id === u.kode) || subKegiatanMeta.find((m) => m.id === u.kode);
 
-                          {/* Title */}
-                          <div className="flex items-center justify-between mb-5">
-                            <div>
-                              <h4 className="text-sm font-bold text-gray-800">
-                                Progress Tahapan
-                                <span className="ml-2 text-blue-600">— {subKegiatan.nama}</span>
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-0.5">
-                                {doneCount}/{steps.length} tahap selesai · Klik lingkaran untuk detail
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              {allDone && (
-                                <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
-                                  <CheckCircle2 className="w-3.5 h-3.5" /> Semua Selesai
-                                </span>
-                              )}
-                              {/* Update Progress button */}
-                              <button
-                                onClick={() => openUpdateModal(subKegiatan.id, 'progress')}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 shadow-md shadow-blue-200 transition-all hover:scale-105 cursor-pointer"
-                              >
-                                <RefreshCw className="w-4 h-4" />
-                                Update Progress
+                  // Cek apakah node ini Wadah atau Kegiatan Riil
+                  const isLevel4Node = u.kode.split('.').length === 4;
+                  const isWadah = isLevel4Node ? false : (existingSub?.isWadah || dbHasChildren);
+                  const subKegiatan = isWadah ? null : (existingSub || { id: u.kode, nama: u.uraian, steps: [], progress: 0, status: 'Belum Mulai' } as any);
+
+                  const steps = subKegiatan?.steps || [];
+                  const doneCount = steps.filter((s: any) => s.selesai).length;
+                  const allDone = steps.length > 0 && doneCount === steps.length;
+                  const currentStepIdx = steps.findIndex((s: any) => !s.selesai);
+
+                  const parentBudgetProgress = u.target > 0 ? Math.min(100, Math.round((u.realisasi / u.target) * 100)) : 0;
+
+                  let progress = Math.round(getPhysicalProgress(u.kode));
+                  let status = progress === 100 ? 'Selesai' : progress > 0 ? 'Berjalan' : 'Belum Mulai';
+
+                  if (subKegiatan) {
+                    if (subKegiatan.progress !== undefined) {
+                      progress = subKegiatan.progress;
+                      status = subKegiatan.status;
+                    } else {
+                      // Compute progress and status dynamically for SubKegiatanMeta (Level 1/2 fallback)
+                      progress = steps.length > 0 ? Math.round((doneCount / steps.length) * 100) : 0;
+                      status = progress === 100 ? 'Selesai' : progress > 0 ? 'Berjalan' : 'Belum Mulai';
+                      if (progress < 100 && subKegiatan.tanggalSelesai && new Date(subKegiatan.tanggalSelesai) < new Date()) {
+                        status = 'Terlambat';
+                      }
+                    }
+                  }
+
+                  return (
+                    <React.Fragment key={u.kode}>
+                      {/* Main row */}
+                      <tr
+                        className={`border-b border-gray-100 transition-colors ${u.level === 1 ? 'bg-blue-50/50' :
+                          u.level === 2 ? 'bg-slate-50/50' :
+                            isRowExpanded ? 'bg-blue-50/40' : 'hover:bg-gray-50'
+                          }`}
+                      >
+                        <td className="py-3 px-4 text-xs font-mono text-slate-500 whitespace-nowrap" style={{ paddingLeft: 16 + indent }}>
+                          {u.kode}
+                        </td>
+                        <td className="py-3 px-4" style={{ paddingLeft: 16 + indent }}>
+                          <div className="flex items-start gap-2">
+                            {dbHasChildren ? (
+                              <button onClick={() => toggleExpand(u.kode)} className="mt-0.5 w-5 h-5 flex-shrink-0 flex items-center justify-center rounded hover:bg-slate-200 text-slate-500 transition-colors">
+                                {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                               </button>
-                              <span className={`text-2xl font-black ${progress === 100 ? 'text-emerald-600' : 'text-blue-600'}`}>
-                                {progress}%
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* ── Horizontal timeline ── */}
-                          <div className="relative px-2">
-                            {/* Background track */}
-                            <div className="absolute top-[22px] left-[36px] right-[36px] h-1.5 bg-gray-200 rounded-full" />
-
-                            {/* Done fill */}
-                            {doneCount > 0 && steps.length > 1 && (
-                              <div
-                                className="absolute top-[22px] left-[36px] h-1.5 rounded-full transition-all duration-700"
-                                style={{
-                                  width: `calc((100% - 72px) * ${(Math.max(doneCount - 1, 0)) / (steps.length - 1)})`,
-                                  background: allDone ? '#10b981' : '#3b82f6',
-                                }}
-                              />
+                            ) : (
+                              <div className="w-5 h-5 flex-shrink-0" />
                             )}
-
-                            {/* Step nodes */}
-                            <div className="relative z-10 flex items-start justify-between">
-                              {steps.map((step, idx) => {
-                                const isDone = step.selesai;
-                                const isLast = idx === steps.length - 1;
-                                const isCurrent = idx === currentStepIdx;
-
-                                return (
-                                  <button
-                                    key={step.id}
-                                    onClick={() => openUpdateModal(subKegiatan.id, 'progress')}
-                                    title={`${step.nama} — klik untuk update`}
-                                    className="flex flex-col items-center focus:outline-none group cursor-pointer"
-                                    style={{ minWidth: 64 }}
-                                  >
-                                    {/* Circle */}
-                                    <div className={`w-11 h-11 rounded-full flex items-center justify-center border-4 transition-all duration-300 shadow-sm group-hover:scale-110 ${isDone
-                                        ? isLast
-                                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-emerald-200 shadow-md'
-                                          : 'bg-blue-600 border-blue-600 text-white shadow-blue-200 shadow-md'
-                                        : isCurrent
-                                          ? 'bg-white border-blue-500 text-blue-600 shadow-blue-100 shadow-md animate-pulse'
-                                          : 'bg-white border-gray-300 text-gray-400 group-hover:border-blue-300'
-                                      }`}>
-                                      {isDone
-                                        ? isLast
-                                          ? <FileCheck className="w-5 h-5" />
-                                          : <Check className="w-5 h-5" strokeWidth={3} />
-                                        : <span className="text-xs font-black">
-                                          {String.fromCharCode(65 + idx)}
-                                        </span>
-                                      }
-                                    </div>
-
-                                    {/* Label */}
-                                    <div className="mt-2 text-center" style={{ maxWidth: 72 }}>
-                                      <div className={`text-[11px] font-semibold leading-tight ${isDone
-                                          ? isLast ? 'text-emerald-700' : 'text-blue-700'
-                                          : isCurrent ? 'text-blue-600' : 'text-gray-400'
-                                        }`}>
-                                        {isLast ? 'Finish' : step.nama.split(' ').slice(0, 2).join(' ')}
-                                      </div>
-                                      {isCurrent && (
-                                        <div className="text-[9px] text-amber-500 font-bold mt-0.5">● Aktif</div>
-                                      )}
-                                      {isDone && (
-                                        <div className={`text-[9px] font-bold mt-0.5 ${isLast ? 'text-emerald-600' : 'text-blue-500'}`}>
-                                          ✓ Done
-                                        </div>
-                                      )}
-                                    </div>
-                                  </button>
-                                );
-                              })}
+                            <div>
+                              <div className={`text-sm font-bold leading-tight transition-colors ${!isWadah && subKegiatan ? 'text-gray-800 group-hover:text-blue-600' : 'text-gray-800 hover:text-blue-600'}`}>
+                                <button
+                                  onClick={() => {
+                                    if (dbHasChildren) toggleExpand(u.kode);
+                                    else if (!isWadah && subKegiatan) setExpandedRow(prev => prev === u.kode ? null : u.kode);
+                                  }}
+                                  className="text-left focus:outline-none hover:underline"
+                                >
+                                  {u.uraian}
+                                </button>
+                              </div>
+                              <div className="text-[11px] text-gray-500 mt-1.5 flex items-center gap-2 flex-wrap">
+                                <div className="flex items-center gap-1">
+                                  <span className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 font-semibold border border-gray-200">PJ</span>
+                                  <span className="font-medium text-gray-700">{existingSub?.penanggungJawab || '-'}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <span className="px-1.5 py-0.5 bg-blue-50 rounded text-blue-600 font-semibold border border-blue-100">SUMBER</span>
+                                  <span className="font-medium text-blue-700">{existingSub?.sumberDana || '-'}</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
-
-                          {/* Info footer */}
-                          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mt-5 pt-3 border-t border-blue-100 text-xs text-gray-500">
-                            <span><span className="font-semibold text-gray-700">PJ:</span> {subKegiatan.penanggungJawab}</span>
-                            <span><span className="font-semibold text-gray-700">Pagu:</span> {formatRupiah(subKegiatan.paguAnggaran)}</span>
-                            <span>
-                              <span className="font-semibold text-gray-700">Realisasi:</span>{' '}
-                              {formatRupiah(subKegiatan.realisasiAnggaran)}{' '}
-                              <span className="text-emerald-600 font-semibold">
-                                ({Math.round((subKegiatan.realisasiAnggaran / subKegiatan.paguAnggaran) * 100)}%)
-                              </span>
-                            </span>
+                        </td>
+                        <td className="py-3 px-4 text-xs text-gray-600">
+                          {safeFormatDate(existingSub?.tanggalMulai || `${new Date().getFullYear()}-05-01`)}
+                        </td>
+                        <td className="py-3 px-4 text-xs text-gray-600">
+                          {safeFormatDate(existingSub?.tanggalSelesai || `${new Date().getFullYear()}-12-31`)}
+                        </td>
+                        <td className="py-3 px-4 text-right text-xs font-bold text-slate-700 whitespace-nowrap">
+                          {u.target > 0 ? (u.target >= 1_000_000_000 ? `Rp ${(u.target / 1_000_000_000).toFixed(2)}M` : u.target >= 1_000_000 ? `Rp ${(u.target / 1_000_000).toFixed(2)}Jt` : `Rp ${u.target.toLocaleString('id-ID')}`) : '0'}
+                        </td>
+                        <td className="py-3 px-4 text-right text-xs font-bold text-emerald-600 whitespace-nowrap">
+                          {u.target > 0 ? (u.realisasi >= 1_000_000_000 ? `Rp ${(u.realisasi / 1_000_000_000).toFixed(2)}M` : u.realisasi >= 1_000_000 ? `Rp ${(u.realisasi / 1_000_000).toFixed(2)}Jt` : `Rp ${u.realisasi.toLocaleString('id-ID')}`) : '0'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`whitespace-nowrap px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
+                            status === 'Berjalan' ? 'bg-blue-100 text-blue-700' :
+                              status === 'Terlambat' ? 'bg-red-100 text-red-700' :
+                                'bg-gray-100 text-gray-600'
+                            }`}>{status}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2 w-full max-w-[120px]">
+                            <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                              <div className={`h-1.5 rounded-full transition-all duration-500 ${progress === 100 ? 'bg-emerald-500' : progress >= 60 ? 'bg-blue-500' : progress >= 30 ? 'bg-amber-500' : 'bg-red-400'
+                                }`} style={{ width: `${progress}%` }} />
+                            </div>
+                            <span className="text-[11px] font-bold text-gray-700 w-8 text-right">{progress}%</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-1 justify-center">
+                            {u.level > 1 && (
+                              <>
+                                <button onClick={() => setShowEditModalFor(u.kode)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors" title="Edit">
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+                                <button onClick={() => handleDeleteSubKegiatan(u.kode, u.uraian)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="Hapus">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
-                    )}
-                  </>
-                );
-              })}
+
+                      {/* Expandable Progress row (only for leaf nodes) */}
+                      {isRowExpanded && subKegiatan && (
+                        <tr key={`${u.kode}-progress`} className="border-b border-gray-200 bg-blue-50/20">
+                          <td colSpan={9} className="px-12 py-6">
+                            <div className="flex items-center justify-between mb-5">
+                              <div>
+                                <h4 className="text-sm font-bold text-gray-800">
+                                  Progress Tahapan
+                                  <span className="ml-2 text-blue-600">— {subKegiatan.nama}</span>
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  {doneCount}/{steps.length} tahap selesai
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={() => openUpdateModal(subKegiatan.id, 'progress')}
+                                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm transition-all cursor-pointer"
+                                >
+                                  <RefreshCw className="w-4 h-4" />
+                                  Progres
+                                </button>
+                              </div>
+                            </div>
+                            {/* Horizontal timeline */}
+                            <div className="relative px-2">
+                              <div className="absolute top-[18px] left-[32px] right-[32px] h-1 bg-gray-200 rounded-full" />
+                              {doneCount > 0 && steps.length > 1 && (
+                                <div
+                                  className="absolute top-[18px] left-[32px] h-1 rounded-full transition-all duration-700"
+                                  style={{
+                                    width: `calc((100% - 64px) * ${(Math.max(doneCount - 1, 0)) / (steps.length - 1)})`,
+                                    background: allDone ? '#10b981' : '#3b82f6',
+                                  }}
+                                />
+                              )}
+                              <div className="relative z-10 flex items-start justify-between">
+                                {steps.map((step: any, idx: number) => {
+                                  const isDone = step.selesai;
+                                  const isLast = idx === steps.length - 1;
+                                  const isCurrent = idx === currentStepIdx;
+                                  return (
+                                    <div key={step.id} className="flex flex-col items-center" style={{ minWidth: 64 }}>
+                                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-[3px] transition-all bg-white ${isDone ? (isLast ? 'border-emerald-500 text-emerald-500' : 'border-blue-500 text-blue-500') :
+                                        isCurrent ? 'border-blue-400 text-blue-500' : 'border-gray-200 text-gray-400'
+                                        }`}>
+                                        {isDone ? (isLast ? <FileCheck className="w-4 h-4" /> : <Check className="w-4 h-4" strokeWidth={3} />) :
+                                          <span className="text-xs font-black">{String.fromCharCode(65 + idx)}</span>}
+                                      </div>
+                                      <div className={`mt-2 text-center text-[10px] font-semibold leading-tight max-w-[64px] ${isDone ? 'text-gray-800' : 'text-gray-400'}`}>
+                                        {isLast ? 'Finish' : step.nama}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
+              })()}
             </tbody>
           </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-          <div className="text-sm text-gray-600">
-            Menampilkan {filteredSubKegiatan.length} dari {subKegiatans.length} kegiatan
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm">Sebelumnya</button>
-            <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm">1</button>
-            <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm">2</button>
-            <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm">Selanjutnya</button>
-          </div>
         </div>
       </div>
 
@@ -407,7 +541,7 @@ export function AgendaSubKegiatan() {
           steps={updateSubKegiatan.steps}
           progress={updateSubKegiatan.progress}
           onClose={() => setUpdateProgressFor(null)}
-          onToggleStep={(stepId) => toggleStep(updateSubKegiatan.id, stepId)}
+          onToggleStep={(stepId, catatan) => toggleStep(updateSubKegiatan.id, stepId, catatan)}
           initialPanel={modalInitialPanel}
         />
       )}
@@ -418,10 +552,71 @@ export function AgendaSubKegiatan() {
       )}
 
       {/* ── Edit Kegiatan Modal ── */}
-      {showEditModalFor && (
-        <SubKegiatanFormModal mode="edit" initialData={subKegiatans.find(k => k.id === showEditModalFor)} onClose={() => setShowEditModalFor(null)} />
+      {showEditModalFor && (() => {
+        const dbHasChildrenModal = uraianAnggaranData.some(x => x.kode.startsWith(showEditModalFor + '.') && x.kode.split('.').length === showEditModalFor.split('.').length + 1);
+        const existing = subKegiatans.find(k => k.id === showEditModalFor);
+        if (existing && dbHasChildrenModal) {
+          existing.isWadah = true;
+        }
+        const uraian = uraianAnggaranData.find(u => u.kode === showEditModalFor);
+        const meta = subKegiatanMeta.find(m => m.id === showEditModalFor);
+        const fallback: any = {
+          id: showEditModalFor,
+          nama: uraian?.uraian || '',
+          bidang: '',
+          tanggalMulai: meta?.tanggalMulai || `${new Date().getFullYear()}-05-01T00:00:00.000Z`,
+          tanggalSelesai: meta?.tanggalSelesai || `${new Date().getFullYear()}-12-31T00:00:00.000Z`,
+          penanggungJawab: meta?.penanggungJawab || '',
+          status: 'Belum Mulai',
+          progress: 0,
+          paguAnggaran: uraian?.target || 0,
+          realisasiAnggaran: 0,
+          deskripsi: meta?.deskripsi || '',
+          step: 'Persiapan',
+          steps: meta?.steps || [],
+          isWadah: showEditModalFor.split('.').length === 4 ? false : (dbHasChildrenModal ? true : (meta?.isWadah ?? true)),
+          sumberDana: meta?.sumberDana || '',
+          anggaranDiminta: meta?.anggaranDiminta !== undefined ? meta.anggaranDiminta : 0
+        };
+        return <SubKegiatanFormModal mode="edit" initialData={existing || fallback} onClose={() => setShowEditModalFor(null)} />;
+      })()}
+      {/* ── Popup Konfirmasi Hapus ── */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="px-6 py-4 bg-red-50 border-b border-red-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm">Konfirmasi Hapus</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Tindakan ini tidak dapat dibatalkan</p>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-700 mb-1">Apakah Anda yakin ingin menghapus:</p>
+              <p className="text-sm font-bold text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                {deleteConfirm.nama} <span className="text-gray-400 font-normal text-xs">({deleteConfirm.kode})</span>
+              </p>
+              <p className="text-xs text-red-500 mt-2">Semua data turunan juga akan terhapus.</p>
+            </div>
+            <div className="flex gap-3 px-6 pb-6">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-md shadow-red-200"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
-
   );
 }

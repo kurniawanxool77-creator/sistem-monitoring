@@ -1,9 +1,32 @@
 import { useState } from 'react';
 import { FileText, Download, Eye, Share2, DollarSign } from 'lucide-react';
+import { useAppData } from '../../hooks/AppDataContext';
+
+function formatRp(n: number) {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
+}
+
+function formatRpShort(n: number) {
+  if (n >= 1_000_000_000) return `Rp ${(n / 1_000_000_000).toFixed(2)}M`;
+  if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toFixed(0)}Jt`;
+  return `Rp ${n.toLocaleString('id-ID')}`;
+}
 
 export function LaporanAnggaran() {
+  const { dataUraian } = useAppData();
   const [filterBagian, setFilterBagian] = useState('semua');
   const [filterPeriode, setFilterPeriode] = useState('semua');
+
+  const bidangList = dataUraian.filter(u => u.level === 1);
+  
+  const filteredBidang = filterBagian === 'semua' 
+    ? bidangList 
+    : bidangList.filter(b => b.uraian === filterBagian);
+
+  const totalPagu = filteredBidang.reduce((sum, b) => sum + b.target, 0);
+  const totalRealisasi = filteredBidang.reduce((sum, b) => sum + b.realisasi, 0);
+  const totalSisa = totalPagu - totalRealisasi;
+  const pctSerapan = totalPagu > 0 ? ((totalRealisasi / totalPagu) * 100).toFixed(2) : '0.00';
 
   return (
     <div className="space-y-6">
@@ -22,11 +45,9 @@ export function LaporanAnggaran() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="semua">Semua Bidang</option>
-              <option value="sekretariat">Sekretariat DPRD</option>
-              <option value="humas">Humas</option>
-              <option value="persidangan">Persidangan</option>
-              <option value="umum">Umum</option>
-              <option value="Keuangan">Keuangan</option>
+              {bidangList.map(b => (
+                <option key={b.kode} value={b.uraian}>{b.uraian}</option>
+              ))}
             </select>
           </div>
           <div>
@@ -84,7 +105,7 @@ export function LaporanAnggaran() {
 
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">LAPORAN ANGGARAN & REALISASI</h1>
-              <p className="text-gray-600">Periode: Tahun Anggaran 2025</p>
+              <p className="text-gray-600">Periode: Tahun Anggaran {new Date().getFullYear()}</p>
             </div>
 
             {/* Report Summary */}
@@ -93,19 +114,19 @@ export function LaporanAnggaran() {
               <div className="grid grid-cols-4 gap-4">
                 <div className="border border-gray-300 p-4 rounded-lg text-center">
                   <div className="text-sm text-gray-600 mb-1">Total Pagu</div>
-                  <div className="text-xl font-bold text-gray-900">Rp 18.5M</div>
+                  <div className="text-xl font-bold text-gray-900">{formatRpShort(totalPagu)}</div>
                 </div>
                 <div className="border border-gray-300 p-4 rounded-lg text-center">
                   <div className="text-sm text-gray-600 mb-1">Realisasi</div>
-                  <div className="text-xl font-bold text-gray-900">Rp 14.0M</div>
+                  <div className="text-xl font-bold text-gray-900">{formatRpShort(totalRealisasi)}</div>
                 </div>
                 <div className="border border-gray-300 p-4 rounded-lg text-center">
                   <div className="text-sm text-gray-600 mb-1">Sisa</div>
-                  <div className="text-xl font-bold text-gray-900">Rp 4.5M</div>
+                  <div className="text-xl font-bold text-gray-900">{formatRpShort(totalSisa)}</div>
                 </div>
                 <div className="border border-gray-300 p-4 rounded-lg text-center">
                   <div className="text-sm text-gray-600 mb-1">% Serapan</div>
-                  <div className="text-xl font-bold text-gray-900">75.68%</div>
+                  <div className="text-xl font-bold text-gray-900">{pctSerapan}%</div>
                 </div>
               </div>
             </div>
@@ -124,47 +145,31 @@ export function LaporanAnggaran() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="py-2 px-3 border">Sekretariat DPRD</td>
-                    <td className="py-2 px-3 border text-right">Rp 5.000.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 4.250.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 750.000.000</td>
-                    <td className="py-2 px-3 border text-center">85%</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-3 border">Humas</td>
-                    <td className="py-2 px-3 border text-right">Rp 3.500.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 2.450.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 1.050.000.000</td>
-                    <td className="py-2 px-3 border text-center">70%</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-3 border">Persidangan</td>
-                    <td className="py-2 px-3 border text-right">Rp 3.200.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 2.560.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 640.000.000</td>
-                    <td className="py-2 px-3 border text-center">80%</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-3 border">Umum</td>
-                    <td className="py-2 px-3 border text-right">Rp 3.200.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 2.560.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 640.000.000</td>
-                    <td className="py-2 px-3 border text-center">80%</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-3 border">Keuangan</td>
-                    <td className="py-2 px-3 border text-right">Rp 3.200.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 2.560.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 640.000.000</td>
-                    <td className="py-2 px-3 border text-center">80%</td>
-                  </tr>
+                  {filteredBidang.length > 0 ? (
+                    filteredBidang.map(b => {
+                      const sisa = b.target - b.realisasi;
+                      const pct = b.target > 0 ? Math.round((b.realisasi / b.target) * 100) : 0;
+                      return (
+                        <tr key={b.kode}>
+                          <td className="py-2 px-3 border">{b.uraian}</td>
+                          <td className="py-2 px-3 border text-right">{formatRp(b.target)}</td>
+                          <td className="py-2 px-3 border text-right">{formatRp(b.realisasi)}</td>
+                          <td className="py-2 px-3 border text-right">{formatRp(sisa)}</td>
+                          <td className="py-2 px-3 border text-center">{pct}%</td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="py-4 text-center text-gray-500 border">Tidak ada data bidang.</td>
+                    </tr>
+                  )}
                   <tr className="font-bold bg-gray-50">
                     <td className="py-2 px-3 border">TOTAL</td>
-                    <td className="py-2 px-3 border text-right">Rp 18.500.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 14.020.000.000</td>
-                    <td className="py-2 px-3 border text-right">Rp 4.480.000.000</td>
-                    <td className="py-2 px-3 border text-center">75.68%</td>
+                    <td className="py-2 px-3 border text-right">{formatRp(totalPagu)}</td>
+                    <td className="py-2 px-3 border text-right">{formatRp(totalRealisasi)}</td>
+                    <td className="py-2 px-3 border text-right">{formatRp(totalSisa)}</td>
+                    <td className="py-2 px-3 border text-center">{pctSerapan}%</td>
                   </tr>
                 </tbody>
               </table>
@@ -175,7 +180,7 @@ export function LaporanAnggaran() {
               <div className="flex justify-between items-start">
                 <div className="text-sm text-gray-600">
                   <p>Dokumen ini digenerate secara otomatis</p>
-                  <p>Tanggal: 12 Juni 2026</p>
+                  <p>Tanggal: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-600 mb-12">Mengetahui,</p>

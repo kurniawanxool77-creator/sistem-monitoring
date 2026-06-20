@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppData } from '../../hooks/useAppData';
+import { useAppData } from '../../hooks/AppDataContext';
 import { Clock, User, Activity, AlertCircle } from 'lucide-react';
 
 export function LogAktifitas() {

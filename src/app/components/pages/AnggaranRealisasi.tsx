@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   DollarSign, TrendingUp, PieChart as PieChartIcon,
-  X, Save, AlertCircle, Wallet, Edit2
+  X, Save, AlertCircle, Wallet, Edit2, ChevronDown, ChevronRight
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -10,7 +10,7 @@ import {
 import {
   PAGU_TOTAL, BULAN_NAMES,
 } from '../../lib/data';
-import { useAppData } from '../../hooks/useAppData';
+import { useAppData } from '../../hooks/AppDataContext';
 
 function formatRp(n: number, short = false) {
   if (short) {
@@ -26,51 +26,73 @@ export function AnggaranRealisasi() {
   const subKegiatans = getSubKegiatanList();
 
   const [showPaguModal, setShowPaguModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showEditBidangModal, setShowEditBidangModal] = useState(false);
-  const [selectedYear, setSelectedYear] = useState<number>(2026);
-  const [editingBulan, setEditingBulan] = useState<{ idx: number; nama: string; currentValue: number } | null>(null);
-  const [editingBidang, setEditingBidang] = useState<{ kode: string; nama: string; currentTarget: number } | null>(null);
 
-  // State untuk target per bulan
-  const [targetPerBulan, setTargetPerBulan] = useState<Record<number, number[]>>({
-    2024: [43_000_000_000, 44_000_000_000, 42_000_000_000, 45_000_000_000, 43_000_000_000, 44_000_000_000, 42_000_000_000, 45_000_000_000, 44_000_000_000, 45_000_000_000, 43_000_000_000, 45_000_000_000],
-    2025: [45_000_000_000, 46_000_000_000, 44_000_000_000, 47_000_000_000, 45_000_000_000, 46_000_000_000, 44_000_000_000, 47_000_000_000, 46_000_000_000, 47_000_000_000, 45_000_000_000, 44_000_000_000],
-    2026: Array(12).fill(0).map((_, i) => Math.round(PAGU_TOTAL / 12)),
-    2027: Array(12).fill(0),
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
+
+  // State untuk pagu global per tahun (tidak dibagi rata ke bulan otomatis)
+  const [globalPagu, setGlobalPagu] = useState<Record<number, number>>({
+    [currentYear]: PAGU_TOTAL
   });
 
-  // State untuk target per bidang (dari Master Data)
-  const [targetPerBidang, setTargetPerBidang] = useState<Record<string, number>>({});
+  // State untuk target per bidang per bulan
+  // [year][monthIdx][bidangKode] = target
+  const [targetBidangBulan, setTargetBidangBulan] = useState<Record<number, Record<number, Record<string, number>>>>({});
+
+  // Editing state
+  const [editingBidangBulan, setEditingBidangBulan] = useState<{
+    monthIdx: number;
+    monthNama: string;
+    kode: string;
+    nama: string;
+    currentTarget: number
+  } | null>(null);
 
   const [paguInput, setPaguInput] = useState('');
-  const [tahunAnggaranInput, setTahunAnggaranInput] = useState<number>(2026);
-  const [targetInput, setTargetInput] = useState('');
+  const [tahunAnggaranInput, setTahunAnggaranInput] = useState<number>(currentYear);
   const [bidangTargetInput, setBidangTargetInput] = useState('');
-
-  // Target per bulan untuk tahun ini
-  const currentYearTargets = targetPerBulan[selectedYear] || Array(12).fill(0);
 
   // Hitung target per bidang dari Master Data (uraian level 1)
   const bidangList = uraianAnggaran.filter(u => u.level === 1);
 
-  // Total pagu = dari target per bidang di Master Data
-  const paguTotal = bidangList.reduce((sum, b) => sum + b.target, 0);
+  // Total pagu diambil dari globalPagu
+  const paguTotal = globalPagu[selectedYear] || 0;
 
-  // Hitung realization per bulan dari seluruh kegiatan
+  // Realization per month
   const realizationPerBulan = Array(12).fill(0);
-  subKegiatans.forEach(k => {
+
+  // Realization per month per bidang
+  const realizationBidangBulan: Record<number, Record<string, number>> = {};
+  for (let i = 0; i < 12; i++) realizationBidangBulan[i] = {};
+
+  const leafSubKegiatans = subKegiatans.filter(k =>
+    !subKegiatans.some(child => child.id.startsWith(k.id + '.') && child.id.length > k.id.length)
+  );
+
+  leafSubKegiatans.forEach(k => {
     const realization = k.realisasiAnggaran || 0;
     if (realization > 0) {
       const startDate = new Date(k.tanggalMulai);
       const endDate = new Date(k.tanggalSelesai);
-      const startMonth = startDate.getMonth();
-      const endMonth = endDate.getMonth();
-      const totalMonths = Math.max(1, endMonth - startMonth + 1);
-      const perMonth = realization / totalMonths;
 
-      for (let m = startMonth; m <= endMonth && m < 12; m++) {
-        realizationPerBulan[m] += perMonth;
+      // Hanya hitung realisasi jika kegiatannya masuk di tahun yang dipilih
+      if (startDate.getFullYear() === selectedYear || endDate.getFullYear() === selectedYear) {
+        const startMonth = startDate.getFullYear() < selectedYear ? 0 : startDate.getMonth();
+        const endMonth = endDate.getFullYear() > selectedYear ? 11 : endDate.getMonth();
+        const totalMonths = Math.max(1, endMonth - startMonth + 1);
+        const perMonth = realization / totalMonths;
+
+        for (let m = startMonth; m <= endMonth && m < 12; m++) {
+          realizationPerBulan[m] += perMonth;
+
+          // Akumulasi ke bidang
+          const bidangObj = bidangList.find(b => b.uraian === k.bidang);
+          if (bidangObj) {
+            realizationBidangBulan[m][bidangObj.kode] = (realizationBidangBulan[m][bidangObj.kode] || 0) + perMonth;
+          }
+        }
       }
     }
   });
@@ -78,6 +100,13 @@ export function AnggaranRealisasi() {
   const totalRealisasi = realizationPerBulan.reduce((sum, v) => sum + v, 0);
   const totalSisa = paguTotal - totalRealisasi;
   const pctSerapan = paguTotal > 0 ? ((totalRealisasi / paguTotal) * 100).toFixed(1) : '0';
+
+  // Current year targets (derived from targetBidangBulan)
+  const currentYearTargetBidang = targetBidangBulan[selectedYear] || {};
+  const currentYearTargets = Array(12).fill(0).map((_, i) => {
+    const bidangTargets = currentYearTargetBidang[i] || {};
+    return Object.values(bidangTargets).reduce((sum, val) => sum + val, 0);
+  });
 
   // Monthly data
   const monthly = BULAN_NAMES.map((bulan, i) => {
@@ -87,28 +116,12 @@ export function AnggaranRealisasi() {
     const onTrack = pct >= 80;
 
     return {
+      idx: i,
       bulan,
       target,
       realization,
       persentase: pct,
       onTrack,
-    };
-  });
-
-  // Per bidang data
-  const perBidangData = bidangList.map(bidang => {
-    const kegiatanBidang = subKegiatans.filter(k => k.bidang === bidang.uraian);
-    const targetBidang = targetPerBidang[bidang.kode] || bidang.target;
-    const realizationBidang = kegiatanBidang.reduce((sum, k) => sum + (k.realisasiAnggaran || 0), 0);
-    const pct = targetBidang > 0 ? Math.round((realizationBidang / targetBidang) * 100) : 0;
-
-    return {
-      kode: bidang.kode,
-      nama: bidang.uraian,
-      target: targetBidang,
-      realization: realizationBidang,
-      persentase: pct,
-      jumlahKegiatan: kegiatanBidang.length,
     };
   });
 
@@ -127,10 +140,10 @@ export function AnggaranRealisasi() {
   // Handle save pagu
   function handleSavePagu() {
     const val = Number(paguInput.replace(/\D/g, ''));
-    if (val > 0) {
-      setTargetPerBulan(prev => ({
+    if (val >= 0) {
+      setGlobalPagu(prev => ({
         ...prev,
-        [tahunAnggaranInput]: Array(12).fill(0).map(() => Math.round(val / 12))
+        [tahunAnggaranInput]: val
       }));
       setSelectedYear(tahunAnggaranInput);
       setPaguInput('');
@@ -138,54 +151,45 @@ export function AnggaranRealisasi() {
     }
   }
 
-  // Handle open edit modal bulan
-  function handleOpenEditModal(idx: number, nama: string, currentValue: number) {
-    setEditingBulan({ idx, nama, currentValue });
-    setTargetInput(currentValue.toString());
-    setShowEditModal(true);
-  }
-
-  // Handle save target per bulan
-  function handleSaveTarget() {
-    if (!editingBulan) return;
-    const val = Number(targetInput.replace(/\D/g, '')) || 0;
-
-    setTargetPerBulan(prev => {
-      const current = prev[selectedYear] || Array(12).fill(0);
-      const newTargets = [...current];
-      newTargets[editingBulan.idx] = val;
-      return {
-        ...prev,
-        [selectedYear]: newTargets
-      };
-    });
-
-    setShowEditModal(false);
-    setEditingBulan(null);
-    setTargetInput('');
-  }
-
-  // Handle open edit modal bidang
-  function handleOpenEditBidangModal(kode: string, nama: string, currentTarget: number) {
-    setEditingBidang({ kode, nama, currentTarget });
+  // Handle open edit modal bidang bulan
+  function handleOpenEditBidangBulanModal(monthIdx: number, monthNama: string, kode: string, nama: string, currentTarget: number) {
+    setEditingBidangBulan({ monthIdx, monthNama, kode, nama, currentTarget });
     setBidangTargetInput(currentTarget.toString());
     setShowEditBidangModal(true);
   }
 
-  // Handle save target per bidang
+  // Handle save target per bidang per bulan
   function handleSaveTargetBidang() {
-    if (!editingBidang) return;
+    if (!editingBidangBulan) return;
     const val = Number(bidangTargetInput.replace(/\D/g, '')) || 0;
 
-    setTargetPerBidang(prev => ({
-      ...prev,
-      [editingBidang.kode]: val
-    }));
+    setTargetBidangBulan(prev => {
+      const yearData = prev[selectedYear] || {};
+      const monthData = yearData[editingBidangBulan.monthIdx] || {};
+
+      return {
+        ...prev,
+        [selectedYear]: {
+          ...yearData,
+          [editingBidangBulan.monthIdx]: {
+            ...monthData,
+            [editingBidangBulan.kode]: val
+          }
+        }
+      };
+    });
 
     setShowEditBidangModal(false);
-    setEditingBidang(null);
+    setEditingBidangBulan(null);
     setBidangTargetInput('');
   }
+
+  // Generate available years for dropdown (include globalPagu keys and targetBidang keys + standard future years)
+  const availableYears = Array.from(new Set([
+    currentYear - 2, currentYear - 1, currentYear, currentYear + 1, currentYear + 2,
+    ...Object.keys(globalPagu).map(Number),
+    ...Object.keys(targetBidangBulan).map(Number)
+  ])).sort((a, b) => a - b);
 
   return (
     <div className="space-y-6">
@@ -195,7 +199,7 @@ export function AnggaranRealisasi() {
           { title: "TOTAL PAGU", value: formatRp(paguTotal, true), color: "bg-blue-500", icon: DollarSign, detail: `Tahun Anggaran ${selectedYear}` },
           { title: "TOTAL REALISASI", value: formatRp(totalRealisasi, true), color: "bg-emerald-500", icon: TrendingUp, detail: "Terserap" },
           { title: "SISA ANGGARAN", value: formatRp(totalSisa, true), color: "bg-amber-500", icon: Wallet, detail: "Sisa Pagu" },
-          { title: "PERSENTASE CAPAIAN", value: `${pctSerapan}%`, color: "bg-purple-500", icon: PieChartIcon, detail: "Dari Total Pagu" }
+          { title: "PERSENTASE", value: `${pctSerapan}%`, color: "bg-purple-500", icon: PieChartIcon, detail: "Dari Total Pagu" }
         ].map((c, i) => (
           <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg hover:border-blue-300 active:scale-95 flex flex-col justify-between">
             <div className="flex items-start justify-between mb-4">
@@ -216,9 +220,12 @@ export function AnggaranRealisasi() {
       <div className="flex items-center justify-between bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <label className="text-sm font-bold text-slate-700">Tahun Anggaran:</label>
-          <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}
+          <select value={selectedYear} onChange={(e) => {
+            setSelectedYear(Number(e.target.value));
+            setExpandedMonth(null);
+          }}
             className="px-3.5 py-1.5 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm text-slate-800">
-            {Object.keys(targetPerBulan).map(Number).sort((a, b) => a - b).map(y => (
+            {availableYears.map(y => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
@@ -280,149 +287,109 @@ export function AnggaranRealisasi() {
         </div>
       </div>
 
-      {/* Target Per Bulan */}
+      {/* Target Per Bulan (Accordion) */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
+        <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
           <h3 className="text-sm font-bold text-gray-800">Target & Realisasi Per Bulan</h3>
-          <span className="text-xs text-gray-500">Klik icon edit untuk mengubah target per bulan</span>
+          <span className="text-xs text-gray-500">Klik baris bulan untuk melihat dan mengatur target per bidang</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 border-b border-slate-200">
               <tr>
-                <th className="text-left py-3 px-4 font-semibold text-gray-600 w-8">No</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-600">Bulan</th>
-                <th className="text-right py-3 px-4 font-semibold text-gray-600">Target</th>
-                <th className="text-right py-3 px-4 font-semibold text-emerald-600">Realisasi</th>
-                <th className="text-center py-3 px-4 font-semibold text-gray-600">% Capaian</th>
-                <th className="text-center py-3 px-4 font-semibold text-gray-600">Aksi</th>
+                <th className="text-center py-3 px-4 font-semibold text-slate-500 w-12">No</th>
+                <th className="text-left py-3 px-4 font-semibold text-slate-500">Bulan / Bidang</th>
+                <th className="text-right py-3 px-6 font-semibold text-slate-600 w-48">Target</th>
+                <th className="text-right py-3 px-6 font-semibold text-slate-600 w-48">Realisasi</th>
+                <th className="text-center py-3 px-4 font-semibold text-slate-600 w-36">Capaian / Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {monthly.map((m, i) => {
-                const hasData = m.target > 0;
+              {monthly.map((m) => {
+                const isExpanded = expandedMonth === m.idx;
+                const hasData = m.target > 0 || m.realization > 0;
 
                 return (
-                  <tr key={m.bulan} className={`border-b border-gray-100 ${hasData ? 'hover:bg-gray-50' : 'bg-gray-50/50'}`}>
-                    <td className="py-3 px-4 text-gray-500">{i + 1}</td>
-                    <td className="py-3 px-4 font-medium text-gray-800">{m.bulan}</td>
-                    <td className="py-3 px-4 text-right tabular-nums text-blue-600 font-medium">
-                      {hasData ? formatRp(m.target, true) : '-'}
-                    </td>
-                    <td className="py-3 px-4 text-right tabular-nums text-emerald-700 font-semibold">
-                      {m.realization > 0 ? formatRp(m.realization, true) : '-'}
-                    </td>
-                    <td className="py-3 px-4">
-                      {hasData ? (
-                        <div className="flex flex-col items-center gap-1">
-                          <div className="w-full max-w-[80px] bg-gray-100 rounded-full h-1.5 mx-auto">
-                            <div className={`h-1.5 rounded-full ${m.onTrack ? 'bg-emerald-500' : 'bg-amber-400'}`}
-                              style={{ width: `${Math.min(m.persentase, 100)}%` }} />
-                          </div>
-                          <span className={`text-xs font-bold ${m.onTrack ? 'text-emerald-700' : 'text-amber-600'}`}>
-                            {m.persentase}%
-                          </span>
+                  <React.Fragment key={m.bulan}>
+                    <tr
+                      onClick={() => setExpandedMonth(isExpanded ? null : m.idx)}
+                      className={`cursor-pointer transition-colors ${isExpanded ? 'bg-slate-50/50' : 'border-b border-slate-100 hover:bg-slate-50'}`}
+                    >
+                      <td className="py-3.5 px-4 text-slate-400 text-center font-medium">
+                        {m.idx + 1}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2 font-bold text-slate-800">
+                          {m.bulan}
+                          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-blue-500' : ''}`} />
                         </div>
-                      ) : <span className="text-gray-300 text-xs block text-center">-</span>}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <button
-                        onClick={() => handleOpenEditModal(i, m.bulan, m.target)}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                        title="Edit Target"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="py-3.5 px-6 text-right tabular-nums text-slate-700 font-bold">
+                        {m.target > 0 ? formatRp(m.target, true) : <span className="text-slate-300">-</span>}
+                      </td>
+                      <td className={`py-3.5 px-6 text-right tabular-nums font-bold ${m.persentase >= 80 ? 'text-emerald-600' : m.persentase >= 60 ? 'text-blue-600' : 'text-amber-500'}`}>
+                        {m.realization > 0 ? formatRp(m.realization, true) : <span className="text-slate-300">-</span>}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        {hasData ? (
+                          <div className="flex flex-col items-center gap-1.5">
+                            <div className="w-full max-w-[80px] bg-slate-100 rounded-full h-1.5 mx-auto overflow-hidden">
+                              <div className={`h-full rounded-full transition-all duration-500 ${m.persentase >= 80 ? 'bg-emerald-500' : m.persentase >= 60 ? 'bg-blue-500' : 'bg-amber-400'}`}
+                                style={{ width: `${Math.min(m.persentase, 100)}%` }} />
+                            </div>
+                            <span className={`text-[11px] font-bold ${m.persentase >= 80 ? 'text-emerald-600' : m.persentase >= 60 ? 'text-blue-600' : 'text-amber-500'}`}>
+                              {m.persentase}%
+                            </span>
+                          </div>
+                        ) : <span className="text-slate-300 text-xs block text-center">-</span>}
+                      </td>
+                    </tr>
+
+                    {/* Expanded Detail Per Bidang - Flat Rows */}
+                    {isExpanded && bidangList.map((bidang, bIdx) => {
+                      const t = currentYearTargetBidang[m.idx]?.[bidang.kode] || 0;
+                      const r = realizationBidangBulan[m.idx]?.[bidang.kode] || 0;
+                      const pct = t > 0 ? Math.round((r / t) * 100) : 0;
+                      const isLast = bIdx === bidangList.length - 1;
+
+                      return (
+                        <tr key={bidang.kode} className={`bg-slate-50/50 hover:bg-slate-100/50 transition-colors ${isLast ? 'border-b border-slate-200' : 'border-b border-slate-100/50'}`}>
+                          <td className="py-3 px-4 text-center"></td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2 pl-6 text-slate-600 font-medium">
+                              <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                              {bidang.uraian}
+                            </div>
+                          </td>
+                          <td className="py-3 px-6 text-right tabular-nums text-slate-700 font-medium">
+                            {t > 0 ? formatRp(t, true) : <span className="text-slate-300">-</span>}
+                          </td>
+                          <td className={`py-3 px-6 text-right tabular-nums font-medium ${pct >= 80 ? 'text-emerald-600' : pct >= 60 ? 'text-blue-600' : 'text-amber-500'}`}>
+                            {r > 0 ? formatRp(r, true) : <span className="text-slate-300">-</span>}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <button
+                              onClick={() => handleOpenEditBidangBulanModal(m.idx, m.bulan, bidang.kode, bidang.uraian, t)}
+                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                              title="Edit Target Bidang"
+                            >
+                              <Edit2 className="w-4 h-4 mx-auto" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </React.Fragment>
                 );
               })}
-              <tr className="bg-blue-50 font-bold border-t-2 border-blue-200">
-                <td colSpan={2} className="py-3 px-4 text-blue-800">TOTAL TAHUN {selectedYear}</td>
-                <td className="py-3 px-4 text-right text-blue-800">{formatRp(paguTotal, true)}</td>
+
+              <tr className="bg-blue-100 font-bold border-t-2 border-blue-300">
+                <td colSpan={2} className="py-3 px-4 text-blue-900 text-right">TOTAL {selectedYear}</td>
+                <td className="py-3 px-4 text-right text-blue-800">{formatRp(currentYearTargets.reduce((a, b) => a + b, 0), true)}</td>
                 <td className="py-3 px-4 text-right text-emerald-700">{formatRp(totalRealisasi, true)}</td>
                 <td className="py-3 px-4 text-center">
-                  <span className="text-base font-black text-blue-700">{pctSerapan}%</span>
+                  <span className="text-base font-black text-blue-800">{pctSerapan}%</span>
                 </td>
-                <td />
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Anggaran Per Bidang */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-800">Anggaran Per Bidang</h3>
-          <span className="text-xs text-gray-500">Target = Anggaran per bidang</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left py-3 px-4 font-semibold text-gray-600 w-8">No</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-600">Nama Bidang</th>
-                <th className="text-right py-3 px-4 font-semibold text-blue-600">Target (Anggaran)</th>
-                <th className="text-right py-3 px-4 font-semibold text-emerald-600">Realisasi</th>
-                <th className="text-right py-3 px-4 font-semibold text-gray-600">Sisa</th>
-                <th className="text-center py-3 px-4 font-semibold text-gray-600">% Capaian</th>
-                <th className="text-center py-3 px-4 font-semibold text-gray-600">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {perBidangData.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-gray-500">
-                    Tidak ada data bidang. Tambahkan bidang di Master Data.
-                  </td>
-                </tr>
-              ) : perBidangData.map((bidang, idx) => {
-                const sisa = bidang.target - bidang.realization;
-                const hasData = bidang.target > 0;
-
-                return (
-                  <tr key={bidang.kode} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4 text-gray-500">{idx + 1}</td>
-                    <td className="py-3 px-4 font-medium text-gray-800">{bidang.nama}</td>
-                    <td className="py-3 px-4 text-right tabular-nums text-blue-600 font-medium">
-                      {hasData ? formatRp(bidang.target, true) : '-'}
-                    </td>
-                    <td className="py-3 px-4 text-right tabular-nums text-emerald-700 font-semibold">
-                      {bidang.realization > 0 ? formatRp(bidang.realization, true) : '-'}
-                    </td>
-                    <td className={`py-3 px-4 text-right tabular-nums font-medium ${sisa < 0 ? 'text-red-600' : 'text-gray-700'}`}>
-                      {formatRp(Math.abs(sisa), true)}
-                      {sisa < 0 ? ' (Lebih)' : ''}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {hasData ? (
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${bidang.persentase >= 80 ? 'bg-emerald-100 text-emerald-700' : bidang.persentase >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
-                          {bidang.persentase}%
-                        </span>
-                      ) : '-'}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <button
-                        onClick={() => handleOpenEditBidangModal(bidang.kode, bidang.nama, bidang.target)}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                        title="Edit Target"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-              <tr className="bg-blue-50 font-bold border-t-2 border-blue-200">
-                <td colSpan={2} className="py-3 px-4 text-blue-800">TOTAL</td>
-                <td className="py-3 px-4 text-right text-blue-800">{formatRp(paguTotal, true)}</td>
-                <td className="py-3 px-4 text-right text-emerald-700">{formatRp(totalRealisasi, true)}</td>
-                <td className="py-3 px-4 text-right text-gray-700">{formatRp(totalSisa, true)}</td>
-                <td className="py-3 px-4 text-center">
-                  <span className="text-base font-black text-blue-700">{pctSerapan}%</span>
-                </td>
-                <td />
               </tr>
             </tbody>
           </table>
@@ -434,20 +401,20 @@ export function AnggaranRealisasi() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900">Set Pagu Anggaran</h2>
+              <h2 className="text-lg font-bold text-gray-900">Set Pagu Anggaran Global</h2>
               <button onClick={() => setShowPaguModal(false)} className="p-2 hover:bg-gray-100 rounded-xl text-gray-500"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                Masukkan total pagu anggaran. Target per bulan akan dibagi merata.
+                Masukkan total pagu anggaran keseluruhan untuk tahun yang dipilih.
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tahun Anggaran</label>
                 <select value={tahunAnggaranInput}
                   onChange={(e) => setTahunAnggaranInput(Number(e.target.value))}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  {[2024, 2025, 2026, 2027, 2028, 2029].map(y => (
+                  {availableYears.map(y => (
                     <option key={y} value={y}>{y}</option>
                   ))}
                 </select>
@@ -462,9 +429,8 @@ export function AnggaranRealisasi() {
                     className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                 </div>
                 {paguInput && Number(paguInput) > 0 && (
-                  <div className="mt-1.5 space-y-0.5 text-xs text-gray-600">
-                    <div>= <span className="font-semibold text-gray-800">{formatRp(Number(paguInput))}</span></div>
-                    <div>Target/bulan = <span className="font-semibold text-blue-700">{formatRp(Math.round(Number(paguInput) / 12))}</span> (dibagi merata 12 bulan)</div>
+                  <div className="mt-1.5 text-xs text-gray-600">
+                    = <span className="font-semibold text-gray-800">{formatRp(Number(paguInput))}</span>
                   </div>
                 )}
               </div>
@@ -473,7 +439,7 @@ export function AnggaranRealisasi() {
               <button onClick={() => setShowPaguModal(false)}
                 className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Batal</button>
               <button onClick={handleSavePagu}
-                disabled={!paguInput || Number(paguInput) <= 0}
+                disabled={!paguInput || Number(paguInput) < 0}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-40">
                 <Save className="w-4 h-4" /> Simpan
               </button>
@@ -482,64 +448,21 @@ export function AnggaranRealisasi() {
         </div>
       )}
 
-      {/* Modal: Edit Target Per Bulan */}
-      {showEditModal && editingBulan && (
+      {/* Modal: Edit Target Per Bidang Per Bulan */}
+      {showEditBidangModal && editingBidangBulan && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900">Edit Target {editingBulan.nama}</h2>
-              <button onClick={() => { setShowEditModal(false); setEditingBulan(null); }} className="p-2 hover:bg-gray-100 rounded-xl text-gray-500"><X className="w-5 h-5" /></button>
+              <h2 className="text-lg font-bold text-gray-900">Set Target Bidang</h2>
+              <button onClick={() => { setShowEditBidangModal(false); setEditingBidangBulan(null); }} className="p-2 hover:bg-gray-100 rounded-xl text-gray-500"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                Target untuk bulan {editingBulan.nama} saja (bukan kumulatif).
+                Mengatur target untuk {editingBidangBulan.nama} pada bulan {editingBidangBulan.monthNama}.
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Target {editingBulan.nama}</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">Rp</span>
-                  <input type="text"
-                    value={targetInput}
-                    onChange={(e) => setTargetInput(e.target.value.replace(/\D/g, ''))}
-                    placeholder="Masukkan target"
-                    className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                </div>
-                {targetInput && Number(targetInput) > 0 && (
-                  <div className="mt-1.5 text-xs text-gray-600">
-                    = <span className="font-semibold text-gray-800">{formatRp(Number(targetInput))}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-3 px-6 pb-6">
-              <button onClick={() => { setShowEditModal(false); setEditingBulan(null); }}
-                className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Batal</button>
-              <button onClick={handleSaveTarget}
-                disabled={!targetInput || Number(targetInput) < 0}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-40">
-                <Save className="w-4 h-4" /> Simpan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal: Edit Target Per Bidang */}
-      {showEditBidangModal && editingBidang && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900">Edit Target {editingBidang.nama}</h2>
-              <button onClick={() => { setShowEditBidangModal(false); setEditingBidang(null); }} className="p-2 hover:bg-gray-100 rounded-xl text-gray-500"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                Target adalah anggaran untuk bidang {editingBidang.nama}.
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Target {editingBidang.nama}</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Target {editingBidangBulan.monthNama}</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">Rp</span>
                   <input type="text"
@@ -556,7 +479,7 @@ export function AnggaranRealisasi() {
               </div>
             </div>
             <div className="flex gap-3 px-6 pb-6">
-              <button onClick={() => { setShowEditBidangModal(false); setEditingBidang(null); }}
+              <button onClick={() => { setShowEditBidangModal(false); setEditingBidangBulan(null); }}
                 className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Batal</button>
               <button onClick={handleSaveTargetBidang}
                 disabled={!bidangTargetInput || Number(bidangTargetInput) < 0}

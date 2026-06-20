@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router';
 import { ArrowLeft, Calendar, User, FileText, Clock, CheckCircle, Banknote } from 'lucide-react';
-import { SubSubKegiatan } from '../../lib/data';
+import { SubKegiatan } from '../../lib/data';
 import { UpdateProgressModal } from '../modals/UpdateProgressModal';
 import { SubKegiatanFormModal } from '../modals/SubKegiatanFormModal';
-import { useAppData } from '../../hooks/useAppData';
+import { useAppData } from '../../hooks/AppDataContext';
 
 export function DetailSubKegiatan() {
   const { id } = useParams();
@@ -51,7 +51,10 @@ export function DetailSubKegiatan() {
   }
 
 
-  const progressPercentage = subKegiatan.paguAnggaran > 0 ? (subKegiatan.realisasiAnggaran / subKegiatan.paguAnggaran) * 100 : 0;
+  const doneCount = subKegiatan.steps.filter((s) => s.selesai).length;
+  const physicalProgress = subKegiatan.steps.length > 0 ? (doneCount / subKegiatan.steps.length) * 100 : 0;
+  
+  const progressPercentage = subKegiatan.paguAnggaran > 0 ? (subKegiatan.realisasiAnggaran / subKegiatan.paguAnggaran) * 100 : physicalProgress;
 
   return (
     <div className="space-y-6">
@@ -155,25 +158,25 @@ export function DetailSubKegiatan() {
           <div>
             <div className="text-sm text-gray-600 mb-1">Pagu Anggaran</div>
             <div className="text-2xl font-bold text-gray-900">
-              Rp {subKegiatan.paguAnggaran.toLocaleString('id-ID')}
+              {subKegiatan.paguAnggaran > 0 ? `Rp ${subKegiatan.paguAnggaran.toLocaleString('id-ID')}` : '0'}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-600 mb-1">Anggaran Diminta</div>
             <div className="text-2xl font-bold text-indigo-600">
-              Rp {subKegiatan.anggaranDiminta?.toLocaleString('id-ID') || '0'}
+              {subKegiatan.anggaranDiminta && subKegiatan.anggaranDiminta > 0 ? `Rp ${subKegiatan.anggaranDiminta.toLocaleString('id-ID')}` : '0'}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-600 mb-1">Realisasi</div>
             <div className="text-2xl font-bold text-emerald-600">
-              Rp {subKegiatan.realisasiAnggaran.toLocaleString('id-ID')}
+              {subKegiatan.realisasiAnggaran > 0 ? `Rp ${subKegiatan.realisasiAnggaran.toLocaleString('id-ID')}` : '0'}
             </div>
           </div>
           <div>
             <div className="text-sm text-gray-600 mb-1">Sisa Anggaran</div>
             <div className="text-2xl font-bold text-amber-600">
-              Rp {(subKegiatan.paguAnggaran - subKegiatan.realisasiAnggaran).toLocaleString('id-ID')}
+              {(subKegiatan.paguAnggaran - subKegiatan.realisasiAnggaran) > 0 ? `Rp ${(subKegiatan.paguAnggaran - subKegiatan.realisasiAnggaran).toLocaleString('id-ID')}` : '0'}
             </div>
           </div>
         </div>
@@ -317,7 +320,7 @@ export function DetailSubKegiatan() {
           onClick={() => setShowProgressModal(true)}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium cursor-pointer animate-none"
         >
-          Update Progress
+          Progres
         </button>
 
         <button

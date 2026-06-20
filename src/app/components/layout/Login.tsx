@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { LogIn } from 'lucide-react';
 import logoJateng from '../../../imports/logo_jateng.png';
-import { useAppData } from '../../hooks/useAppData';
+import { useAppData } from '../../hooks/AppDataContext';
 
 export function Login() {
   const navigate = useNavigate();

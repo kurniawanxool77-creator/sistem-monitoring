@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Database, Plus, Edit, Trash2, ChevronDown, ChevronRight, DollarSign, X, Save, TrendingDown, Users, FolderTree, FileText, CheckSquare } from 'lucide-react';
 import { anggotaData } from '../../lib/data';
-import { useAppData } from '../../hooks/useAppData';
+import { useAppData } from '../../hooks/AppDataContext';
 
 type TabKey = 'bidang' | 'kegiatan' | 'subKegiatan' | 'subSubKegiatan' | 'anggota';
 
@@ -40,13 +40,28 @@ export function MasterData() {
     if (!newNama || newNama === oldNama) return;
     const newTargetStr = prompt("Masukkan pagu/target baru (opsional):", String(oldTarget));
     const newTarget = newTargetStr ? Number(newTargetStr) : oldTarget;
-    updateUraian(kode, newNama, newTarget, user?.nama || 'Unknown User');
+    
+    updateUraian(kode, {
+      uraian: newNama,
+      target: newTarget
+    });
+
+    addActivityLog({
+      user: user?.nama || 'Unknown User',
+      action: 'Edit Master Data',
+      details: `Mengubah Uraian ${kode} dari "${oldNama}" menjadi "${newNama}" dengan Pagu: ${newTarget}`
+    });
   }
 
   function handleDeleteUraian(kode: string, nama: string) {
     if (!isSuperadmin) return alert("Hanya Superadmin yang bisa menghapus Master Data.");
     if (confirm(`Peringatan: Menghapus "${nama}" akan ikut menghapus seluruh data turunannya secara permanen. Lanjutkan?`)) {
-      deleteUraian(kode, user?.nama || 'Unknown User');
+      deleteUraian(kode);
+      addActivityLog({
+        user: user?.nama || 'Unknown User',
+        action: 'Hapus Master Data',
+        details: `Menghapus Uraian ${kode}: "${nama}" beserta semua turunannya`
+      });
     }
   }
 
@@ -627,8 +642,23 @@ export function MasterData() {
                   if (activeTab === 'bidang') {
                     if (!isSuperadmin) return alert('Hanya Superadmin yang bisa menambah Bidang.');
                     if (!formNamaBidang.trim()) return;
-                    const nextKode = String(allBidang.length + 1);
-                    addUraianBaru(nextKode, formNamaBidang.trim(), 1, 0, user?.nama || 'Unknown');
+                    const maxKode = allBidang.reduce((max, b) => {
+                      const num = parseInt(b.id, 10);
+                      return (!isNaN(num) && num > max) ? num : max;
+                    }, 0);
+                    const nextKode = String(maxKode + 1);
+                    addUraianBaru({
+                      kode: nextKode,
+                      uraian: formNamaBidang.trim(),
+                      level: 1,
+                      target: 0,
+                      realisasi: 0
+                    });
+                    addActivityLog({
+                      user: user?.nama || 'Unknown',
+                      action: 'Tambah Bidang',
+                      details: `Menambah Bidang Baru: ${formNamaBidang.trim()} (${nextKode})`
+                    });
                     setFormNamaBidang('');
                     setActiveTab('bidang');
                     setShowAddModal(false);

@@ -286,6 +286,7 @@ export interface SubKegiatan {
   nama: string;
   bidang: string;
   kegiatan_parent: string;
+  subKegiatan_parent: string; // alias kegiatan_parent untuk kompatibilitas UI
   penanggungJawab: string;
   tanggalMulai: string;
   tanggalSelesai: string;
@@ -296,6 +297,10 @@ export interface SubKegiatan {
   deskripsi: string;
   step: 'Persiapan' | 'Koordinasi' | 'Pelaksanaan' | 'Evaluasi' | 'Verifikasi' | 'Closed';
   steps: KegiatanStep[];
+  isWadah?: boolean;
+  isApproved?: boolean;
+  sumberDana?: string;
+  anggaranDiminta?: number;
 }
 
 export interface Bagian {
@@ -386,10 +391,10 @@ export interface UraianAnggaran {
 export const PAGU_TOTAL = 559_427_180_000;
 
 export const BULAN_NAMES = [
-  'Januari','Februari','Maret','April','Mei','Juni',
-  'Juli','Agustus','September','Oktober','November','Desember',
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
 ];
-export const BULAN_SINGKAT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+export const BULAN_SINGKAT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
 
 // Realisasi per bulan – estimasi dari total s/d Mei Rp 246.791.918.544
 // (sumber: E-Controlling 2026, rata-rata ≈ Rp 49,4M per bulan)
@@ -417,115 +422,115 @@ export function buildMonthlyBudget(paguTotal: number, realisasi: number[]): Mont
 // Uraian anggaran – data nyata dari E-Controlling 2026, Sekretariat DPRD Prov. Jawa Tengah, s/d Mei 2026
 export const uraianAnggaran: UraianAnggaran[] = [
   // ── 1. SEKRETARIAT DPRD (Sekretariat) ──────────────────────────────────────
-  { kode: '1',     uraian: 'Sekretariat DPRD',                                              level: 1, target: 168_376_593_000, realisasi: 66_460_655_669 },
-  { kode: '1.1',   uraian: 'Perencanaan, Penganggaran & Evaluasi Kinerja',                  level: 2, target: 712_581_000,       realisasi: 436_597_100 },
-  { kode: '1.1.1', uraian: 'Penyusunan Dokumen Perencanaan Perangkat Daerah',               level: 3, target: 442_601_000,       realisasi: 300_242_400 },
-  { kode: '1.1.1.1', uraian: 'Dokumen perencanaan perangkat daerah ASB',                   level: 4, target: 11_082_000,         realisasi: 1_200_000 },
-  { kode: '1.1.1.2', uraian: 'Dokumen perencanaan perangkat daerah bukan ASB',             level: 4, target: 431_519_000,        realisasi: 299_042_400 },
-  { kode: '1.1.2', uraian: 'Evaluasi Kinerja Perangkat Daerah',                             level: 3, target: 219_980_000,       realisasi: 133_066_700 },
-  { kode: '1.1.2.1', uraian: 'Laporan evaluasi kinerja perangkat daerah',                  level: 4, target: 219_980_000,        realisasi: 133_066_700 },
-  { kode: '1.1.3', uraian: 'Pengumpulan Data Statistik Sektoral Daerah',                   level: 3, target: 25_000_000,         realisasi: 0 },
-  { kode: '1.1.4', uraian: 'Penyelenggaraan Walidata Pendukung Statistik Sektoral',        level: 3, target: 25_000_000,         realisasi: 3_288_000 },
-  { kode: '1.2',   uraian: 'Administrasi Keuangan Perangkat Daerah',                       level: 2, target: 19_550_589_000,    realisasi: 8_223_751_698 },
-  { kode: '1.2.1', uraian: 'Penyediaan Gaji dan Tunjangan ASN',                            level: 3, target: 18_570_007_000,    realisasi: 7_789_297_798 },
-  { kode: '1.2.1.1', uraian: 'Orang yang menerima gaji dan tunjangan ASN',                 level: 4, target: 18_570_007_000,    realisasi: 7_789_297_798 },
-  { kode: '1.2.2', uraian: 'Penyediaan Administrasi Pelaksanaan Tugas ASN',                level: 3, target: 980_582_000,        realisasi: 434_453_900 },
-  { kode: '1.2.2.1', uraian: 'Dokumen hasil penyediaan administrasi pelaksanaan tugas ASN',level: 4, target: 980_582_000,        realisasi: 434_453_900 },
-  { kode: '1.3',   uraian: 'Layanan Keuangan dan Kesejahteraan DPRD',                      level: 2, target: 148_113_423_000,   realisasi: 57_800_306_871 },
-  { kode: '1.3.1', uraian: 'Penyelenggaraan Administrasi Keuangan DPRD',                   level: 3, target: 148_113_423_000,   realisasi: 57_800_306_871 },
-  { kode: '1.3.1.1', uraian: 'Anggota DPRD yang menerima hak keuangan DPRD',               level: 4, target: 148_113_423_000,   realisasi: 57_800_306_871 },
+  { kode: '1', uraian: 'Sekretariat DPRD', level: 1, target: 168_376_593_000, realisasi: 66_460_655_669 },
+  { kode: '1.1', uraian: 'Perencanaan, Penganggaran & Evaluasi Kinerja', level: 2, target: 712_581_000, realisasi: 436_597_100 },
+  { kode: '1.1.1', uraian: 'Penyusunan Dokumen Perencanaan Perangkat Daerah', level: 3, target: 442_601_000, realisasi: 300_242_400 },
+  { kode: '1.1.1.1', uraian: 'Dokumen perencanaan perangkat daerah ASB', level: 4, target: 11_082_000, realisasi: 1_200_000 },
+  { kode: '1.1.1.2', uraian: 'Dokumen perencanaan perangkat daerah bukan ASB', level: 4, target: 431_519_000, realisasi: 299_042_400 },
+  { kode: '1.1.2', uraian: 'Evaluasi Kinerja Perangkat Daerah', level: 3, target: 219_980_000, realisasi: 133_066_700 },
+  { kode: '1.1.2.1', uraian: 'Laporan evaluasi kinerja perangkat daerah', level: 4, target: 219_980_000, realisasi: 133_066_700 },
+  { kode: '1.1.3', uraian: 'Pengumpulan Data Statistik Sektoral Daerah', level: 3, target: 25_000_000, realisasi: 0 },
+  { kode: '1.1.4', uraian: 'Penyelenggaraan Walidata Pendukung Statistik Sektoral', level: 3, target: 25_000_000, realisasi: 3_288_000 },
+  { kode: '1.2', uraian: 'Administrasi Keuangan Perangkat Daerah', level: 2, target: 19_550_589_000, realisasi: 8_223_751_698 },
+  { kode: '1.2.1', uraian: 'Penyediaan Gaji dan Tunjangan ASN', level: 3, target: 18_570_007_000, realisasi: 7_789_297_798 },
+  { kode: '1.2.1.1', uraian: 'Orang yang menerima gaji dan tunjangan ASN', level: 4, target: 18_570_007_000, realisasi: 7_789_297_798 },
+  { kode: '1.2.2', uraian: 'Penyediaan Administrasi Pelaksanaan Tugas ASN', level: 3, target: 980_582_000, realisasi: 434_453_900 },
+  { kode: '1.2.2.1', uraian: 'Dokumen hasil penyediaan administrasi pelaksanaan tugas ASN', level: 4, target: 980_582_000, realisasi: 434_453_900 },
+  { kode: '1.3', uraian: 'Layanan Keuangan dan Kesejahteraan DPRD', level: 2, target: 148_113_423_000, realisasi: 57_800_306_871 },
+  { kode: '1.3.1', uraian: 'Penyelenggaraan Administrasi Keuangan DPRD', level: 3, target: 148_113_423_000, realisasi: 57_800_306_871 },
+  { kode: '1.3.1.1', uraian: 'Anggota DPRD yang menerima hak keuangan DPRD', level: 4, target: 148_113_423_000, realisasi: 57_800_306_871 },
 
   // ── 2. BAGIAN UMUM ────────────────────────────────────────────────────────
-  { kode: '2',     uraian: 'Bagian Umum',                                                   level: 1, target: 61_506_114_000,    realisasi: 22_812_821_138 },
-  { kode: '2.1',   uraian: 'Administrasi Barang Milik Daerah',                             level: 2, target: 1_330_474_000,     realisasi: 422_997_547 },
-  { kode: '2.1.1', uraian: 'Pengamanan Barang Milik Daerah SKPD',                          level: 3, target: 1_330_474_000,     realisasi: 422_997_547 },
-  { kode: '2.1.1.1', uraian: 'Dokumen pengamanan barang milik daerah',                     level: 4, target: 1_330_474_000,     realisasi: 422_997_547 },
-  { kode: '2.2',   uraian: 'Administrasi Kepegawaian Perangkat Daerah',                    level: 2, target: 471_428_000,        realisasi: 52_919_800 },
-  { kode: '2.2.1', uraian: 'Pendataan dan Pengolahan Administrasi Kepegawaian',            level: 3, target: 141_168_000,        realisasi: 52_919_800 },
-  { kode: '2.2.1.1', uraian: 'Pendataan dan Pengolahan Administrasi Kepegawaian',          level: 4, target: 141_168_000,        realisasi: 52_919_800 },
-  { kode: '2.2.2', uraian: 'Pendidikan dan Pelatihan Pegawai',                             level: 3, target: 330_260_000,        realisasi: 0 },
-  { kode: '2.2.2.1', uraian: 'Pegawai yang mengikuti pendidikan dan pelatihan',            level: 4, target: 330_260_000,        realisasi: 0 },
-  { kode: '2.3',   uraian: 'Administrasi Umum Perangkat Daerah',                           level: 2, target: 7_464_110_000,     realisasi: 3_180_609_525 },
-  { kode: '2.3.1', uraian: 'Penyediaan Komponen Instalasi Listrik / Penerangan',           level: 3, target: 244_485_000,        realisasi: 93_495_800 },
-  { kode: '2.3.2', uraian: 'Penyediaan Bahan Logistik Kantor',                             level: 3, target: 187_269_000,        realisasi: 75_079_300 },
-  { kode: '2.3.3', uraian: 'Penyediaan Bahan Bacaan dan Peraturan Perundang-undangan',     level: 3, target: 96_565_000,         realisasi: 59_968_350 },
-  { kode: '2.3.4', uraian: 'Fasilitasi Kunjungan Tamu',                                    level: 3, target: 6_141_465_000,     realisasi: 2_518_246_300 },
-  { kode: '2.3.4.1', uraian: 'Laporan fasilitasi kunjungan tamu',                          level: 4, target: 6_141_465_000,     realisasi: 2_518_246_300 },
-  { kode: '2.3.5', uraian: 'Penyelenggaraan Rapat Koordinasi dan Konsultasi SKPD',         level: 3, target: 672_366_000,        realisasi: 328_210_575 },
-  { kode: '2.3.5.1', uraian: 'Penyelenggaraan Rapat Koordinasi dan Konsultasi SKPD',       level: 4, target: 672_366_000,        realisasi: 328_210_575 },
-  { kode: '2.3.6', uraian: 'Penatausahaan Arsip Dinamis pada SKPD',                        level: 3, target: 121_960_000,        realisasi: 105_609_200 },
-  { kode: '2.4',   uraian: 'Pengadaan Barang Milik Daerah Penunjang',                      level: 2, target: 10_309_086_000,    realisasi: 6_403_957_855 },
-  { kode: '2.4.1', uraian: 'Pengadaan Kendaraan Perorangan Dinas / Jabatan',               level: 3, target: 4_002_240_000,     realisasi: 3_943_200_004 },
-  { kode: '2.4.2', uraian: 'Pengadaan Mebel',                                              level: 3, target: 2_048_833_000,     realisasi: 26_375_000 },
-  { kode: '2.4.3', uraian: 'Pengadaan Peralatan dan Mesin Lainnya',                        level: 3, target: 1_443_188_000,     realisasi: 1_326_273_001 },
-  { kode: '2.4.4', uraian: 'Pengadaan Sarana dan Prasarana Gedung Kantor',                 level: 3, target: 2_814_825_000,     realisasi: 1_108_109_850 },
-  { kode: '2.5',   uraian: 'Penyediaan Jasa Penunjang Urusan Pemerintahan',                level: 2, target: 28_689_992_000,    realisasi: 9_374_333_179 },
-  { kode: '2.5.1', uraian: 'Penyediaan Jasa Surat Menyurat',                               level: 3, target: 145_708_000,        realisasi: 49_392_600 },
-  { kode: '2.5.2', uraian: 'Penyediaan Jasa Komunikasi, Air dan Listrik',                  level: 3, target: 4_474_000_000,     realisasi: 1_151_370_595 },
-  { kode: '2.5.3', uraian: 'Penyediaan Jasa Peralatan dan Perlengkapan Kantor',            level: 3, target: 900_761_000,        realisasi: 414_955_000 },
-  { kode: '2.5.4', uraian: 'Penyediaan Jasa Pelayanan Umum Kantor',                        level: 3, target: 23_169_523_000,    realisasi: 7_758_614_984 },
-  { kode: '2.5.4.1', uraian: 'Penyediaan Jasa Pelayanan Umum Kantor',                      level: 4, target: 20_134_371_484,    realisasi: 6_601_605_496 },
-  { kode: '2.5.4.2', uraian: 'Gaji PPPK Paruh Waktu Bagian Keuangan',                     level: 4, target: 180_000_000,        realisasi: 75_000_000 },
-  { kode: '2.5.4.3', uraian: 'Gaji PPPK Paruh Waktu Bagian Humas',                        level: 4, target: 925_380_000,        realisasi: 326_150_000 },
-  { kode: '2.5.4.4', uraian: 'Gaji PPPK Paruh Waktu Bagian Persidangan',                  level: 4, target: 86_460_000,         realisasi: 36_025_000 },
-  { kode: '2.5.4.5', uraian: 'Gaji PPPK Paruh Waktu Bagian Umum',                         level: 4, target: 1_658_400_000,     realisasi: 675_053_333 },
-  { kode: '2.6',   uraian: 'Pemeliharaan Barang Milik Daerah Penunjang',                   level: 2, target: 11_282_023_000,    realisasi: 2_871_833_232 },
-  { kode: '2.6.1', uraian: 'Pemeliharaan Kendaraan Dinas Jabatan',                         level: 3, target: 596_253_000,        realisasi: 244_867_099 },
-  { kode: '2.6.2', uraian: 'Pemeliharaan Kendaraan Dinas Operasional',                     level: 3, target: 2_712_428_000,     realisasi: 1_054_638_686 },
-  { kode: '2.6.3', uraian: 'Pemeliharaan Mebel',                                           level: 3, target: 86_425_000,         realisasi: 50_140_000 },
-  { kode: '2.6.4', uraian: 'Pemeliharaan / Rehabilitasi Gedung Kantor',                    level: 3, target: 5_191_084_000,     realisasi: 380_988_447 },
-  { kode: '2.6.5', uraian: 'Pemeliharaan / Rehabilitasi Sarana Prasarana Gedung',          level: 3, target: 2_695_833_000,     realisasi: 1_141_199_000 },
-  { kode: '2.7',   uraian: 'Layanan Keuangan dan Kesejahteraan DPRD (Umum)',               level: 2, target: 1_959_001_000,     realisasi: 506_170_000 },
-  { kode: '2.7.1', uraian: 'Penyediaan Pakaian Dinas dan Atribut DPRD',                    level: 3, target: 1_392_880_000,     realisasi: 506_170_000 },
-  { kode: '2.7.2', uraian: 'Pelaksanaan Medical Check Up DPRD',                            level: 3, target: 566_121_000,        realisasi: 0 },
+  { kode: '2', uraian: 'Bagian Umum', level: 1, target: 61_506_114_000, realisasi: 22_812_821_138 },
+  { kode: '2.1', uraian: 'Administrasi Barang Milik Daerah', level: 2, target: 1_330_474_000, realisasi: 422_997_547 },
+  { kode: '2.1.1', uraian: 'Pengamanan Barang Milik Daerah SKPD', level: 3, target: 1_330_474_000, realisasi: 422_997_547 },
+  { kode: '2.1.1.1', uraian: 'Dokumen pengamanan barang milik daerah', level: 4, target: 1_330_474_000, realisasi: 422_997_547 },
+  { kode: '2.2', uraian: 'Administrasi Kepegawaian Perangkat Daerah', level: 2, target: 471_428_000, realisasi: 52_919_800 },
+  { kode: '2.2.1', uraian: 'Pendataan dan Pengolahan Administrasi Kepegawaian', level: 3, target: 141_168_000, realisasi: 52_919_800 },
+  { kode: '2.2.1.1', uraian: 'Pendataan dan Pengolahan Administrasi Kepegawaian', level: 4, target: 141_168_000, realisasi: 52_919_800 },
+  { kode: '2.2.2', uraian: 'Pendidikan dan Pelatihan Pegawai', level: 3, target: 330_260_000, realisasi: 0 },
+  { kode: '2.2.2.1', uraian: 'Pegawai yang mengikuti pendidikan dan pelatihan', level: 4, target: 330_260_000, realisasi: 0 },
+  { kode: '2.3', uraian: 'Administrasi Umum Perangkat Daerah', level: 2, target: 7_464_110_000, realisasi: 3_180_609_525 },
+  { kode: '2.3.1', uraian: 'Penyediaan Komponen Instalasi Listrik / Penerangan', level: 3, target: 244_485_000, realisasi: 93_495_800 },
+  { kode: '2.3.2', uraian: 'Penyediaan Bahan Logistik Kantor', level: 3, target: 187_269_000, realisasi: 75_079_300 },
+  { kode: '2.3.3', uraian: 'Penyediaan Bahan Bacaan dan Peraturan Perundang-undangan', level: 3, target: 96_565_000, realisasi: 59_968_350 },
+  { kode: '2.3.4', uraian: 'Fasilitasi Kunjungan Tamu', level: 3, target: 6_141_465_000, realisasi: 2_518_246_300 },
+  { kode: '2.3.4.1', uraian: 'Laporan fasilitasi kunjungan tamu', level: 4, target: 6_141_465_000, realisasi: 2_518_246_300 },
+  { kode: '2.3.5', uraian: 'Penyelenggaraan Rapat Koordinasi dan Konsultasi SKPD', level: 3, target: 672_366_000, realisasi: 328_210_575 },
+  { kode: '2.3.5.1', uraian: 'Penyelenggaraan Rapat Koordinasi dan Konsultasi SKPD', level: 4, target: 672_366_000, realisasi: 328_210_575 },
+  { kode: '2.3.6', uraian: 'Penatausahaan Arsip Dinamis pada SKPD', level: 3, target: 121_960_000, realisasi: 105_609_200 },
+  { kode: '2.4', uraian: 'Pengadaan Barang Milik Daerah Penunjang', level: 2, target: 10_309_086_000, realisasi: 6_403_957_855 },
+  { kode: '2.4.1', uraian: 'Pengadaan Kendaraan Perorangan Dinas / Jabatan', level: 3, target: 4_002_240_000, realisasi: 3_943_200_004 },
+  { kode: '2.4.2', uraian: 'Pengadaan Mebel', level: 3, target: 2_048_833_000, realisasi: 26_375_000 },
+  { kode: '2.4.3', uraian: 'Pengadaan Peralatan dan Mesin Lainnya', level: 3, target: 1_443_188_000, realisasi: 1_326_273_001 },
+  { kode: '2.4.4', uraian: 'Pengadaan Sarana dan Prasarana Gedung Kantor', level: 3, target: 2_814_825_000, realisasi: 1_108_109_850 },
+  { kode: '2.5', uraian: 'Penyediaan Jasa Penunjang Urusan Pemerintahan', level: 2, target: 28_689_992_000, realisasi: 9_374_333_179 },
+  { kode: '2.5.1', uraian: 'Penyediaan Jasa Surat Menyurat', level: 3, target: 145_708_000, realisasi: 49_392_600 },
+  { kode: '2.5.2', uraian: 'Penyediaan Jasa Komunikasi, Air dan Listrik', level: 3, target: 4_474_000_000, realisasi: 1_151_370_595 },
+  { kode: '2.5.3', uraian: 'Penyediaan Jasa Peralatan dan Perlengkapan Kantor', level: 3, target: 900_761_000, realisasi: 414_955_000 },
+  { kode: '2.5.4', uraian: 'Penyediaan Jasa Pelayanan Umum Kantor', level: 3, target: 23_169_523_000, realisasi: 7_758_614_984 },
+  { kode: '2.5.4.1', uraian: 'Penyediaan Jasa Pelayanan Umum Kantor', level: 4, target: 20_134_371_484, realisasi: 6_601_605_496 },
+  { kode: '2.5.4.2', uraian: 'Gaji PPPK Paruh Waktu Bagian Keuangan', level: 4, target: 180_000_000, realisasi: 75_000_000 },
+  { kode: '2.5.4.3', uraian: 'Gaji PPPK Paruh Waktu Bagian Humas', level: 4, target: 925_380_000, realisasi: 326_150_000 },
+  { kode: '2.5.4.4', uraian: 'Gaji PPPK Paruh Waktu Bagian Persidangan', level: 4, target: 86_460_000, realisasi: 36_025_000 },
+  { kode: '2.5.4.5', uraian: 'Gaji PPPK Paruh Waktu Bagian Umum', level: 4, target: 1_658_400_000, realisasi: 675_053_333 },
+  { kode: '2.6', uraian: 'Pemeliharaan Barang Milik Daerah Penunjang', level: 2, target: 11_282_023_000, realisasi: 2_871_833_232 },
+  { kode: '2.6.1', uraian: 'Pemeliharaan Kendaraan Dinas Jabatan', level: 3, target: 596_253_000, realisasi: 244_867_099 },
+  { kode: '2.6.2', uraian: 'Pemeliharaan Kendaraan Dinas Operasional', level: 3, target: 2_712_428_000, realisasi: 1_054_638_686 },
+  { kode: '2.6.3', uraian: 'Pemeliharaan Mebel', level: 3, target: 86_425_000, realisasi: 50_140_000 },
+  { kode: '2.6.4', uraian: 'Pemeliharaan / Rehabilitasi Gedung Kantor', level: 3, target: 5_191_084_000, realisasi: 380_988_447 },
+  { kode: '2.6.5', uraian: 'Pemeliharaan / Rehabilitasi Sarana Prasarana Gedung', level: 3, target: 2_695_833_000, realisasi: 1_141_199_000 },
+  { kode: '2.7', uraian: 'Layanan Keuangan dan Kesejahteraan DPRD (Umum)', level: 2, target: 1_959_001_000, realisasi: 506_170_000 },
+  { kode: '2.7.1', uraian: 'Penyediaan Pakaian Dinas dan Atribut DPRD', level: 3, target: 1_392_880_000, realisasi: 506_170_000 },
+  { kode: '2.7.2', uraian: 'Pelaksanaan Medical Check Up DPRD', level: 3, target: 566_121_000, realisasi: 0 },
 
   // ── 3. BAGIAN HUMAS ─────────────────────────────────────────
-  { kode: '3',     uraian: 'Bagian Humas',                                    level: 1, target: 231_584_388_000,   realisasi: 121_817_534_227 },
-  { kode: '3.1',   uraian: 'Peningkatan Kapasitas DPRD',                                   level: 2, target: 130_044_388_000,   realisasi: 68_041_841_227 },
-  { kode: '3.1.1', uraian: 'Penyediaan Kelompok Pakar dan Tim Ahli',                       level: 3, target: 1_939_086_000,     realisasi: 776_400_000 },
-  { kode: '3.1.1.1', uraian: 'Orang dalam kelompok pakar dan tim ahli',                    level: 4, target: 1_939_086_000,     realisasi: 776_400_000 },
-  { kode: '3.1.2', uraian: 'Penyediaan Tenaga Ahli Fraksi',                                level: 3, target: 418_741_000,        realisasi: 150_527_446 },
-  { kode: '3.1.2.1', uraian: 'Tenaga Ahli Fraksi',                                         level: 4, target: 418_741_000,        realisasi: 150_527_446 },
-  { kode: '3.1.3', uraian: 'Penyelenggaraan Hubungan Masyarakat',                          level: 3, target: 12_166_561_000,    realisasi: 5_019_026_794 },
-  { kode: '3.1.3.1', uraian: 'Dokumen hasil penyelenggaraan hubungan masyarakat',          level: 4, target: 12_166_561_000,    realisasi: 5_019_026_794 },
-  { kode: '3.1.4', uraian: 'Penyusunan Program Kerja DPRD',                                level: 3, target: 115_520_000_000,   realisasi: 62_095_886_987 },
-  { kode: '3.1.4.1', uraian: 'Dokumen rencana kerja DPRD',                                 level: 4, target: 115_520_000_000,   realisasi: 62_095_886_987 },
-  { kode: '3.2',   uraian: 'Pembahasan Kerja Sama Daerah',                                 level: 2, target: 101_540_000_000,   realisasi: 53_775_693_000 },
-  { kode: '3.2.1', uraian: 'Penyusunan Bahan Komunikasi dan Publikasi',                    level: 3, target: 101_540_000_000,   realisasi: 53_775_693_000 },
-  { kode: '3.2.1.1', uraian: 'Dokumen bahan komunikasi dan publikasi yang disusun',        level: 4, target: 101_540_000_000,   realisasi: 53_775_693_000 },
+  { kode: '3', uraian: 'Bagian Humas', level: 1, target: 231_584_388_000, realisasi: 121_817_534_227 },
+  { kode: '3.1', uraian: 'Peningkatan Kapasitas DPRD', level: 2, target: 130_044_388_000, realisasi: 68_041_841_227 },
+  { kode: '3.1.1', uraian: 'Penyediaan Kelompok Pakar dan Tim Ahli', level: 3, target: 1_939_086_000, realisasi: 776_400_000 },
+  { kode: '3.1.1.1', uraian: 'Orang dalam kelompok pakar dan tim ahli', level: 4, target: 1_939_086_000, realisasi: 776_400_000 },
+  { kode: '3.1.2', uraian: 'Penyediaan Tenaga Ahli Fraksi', level: 3, target: 418_741_000, realisasi: 150_527_446 },
+  { kode: '3.1.2.1', uraian: 'Tenaga Ahli Fraksi', level: 4, target: 418_741_000, realisasi: 150_527_446 },
+  { kode: '3.1.3', uraian: 'Penyelenggaraan Hubungan Masyarakat', level: 3, target: 12_166_561_000, realisasi: 5_019_026_794 },
+  { kode: '3.1.3.1', uraian: 'Dokumen hasil penyelenggaraan hubungan masyarakat', level: 4, target: 12_166_561_000, realisasi: 5_019_026_794 },
+  { kode: '3.1.4', uraian: 'Penyusunan Program Kerja DPRD', level: 3, target: 115_520_000_000, realisasi: 62_095_886_987 },
+  { kode: '3.1.4.1', uraian: 'Dokumen rencana kerja DPRD', level: 4, target: 115_520_000_000, realisasi: 62_095_886_987 },
+  { kode: '3.2', uraian: 'Pembahasan Kerja Sama Daerah', level: 2, target: 101_540_000_000, realisasi: 53_775_693_000 },
+  { kode: '3.2.1', uraian: 'Penyusunan Bahan Komunikasi dan Publikasi', level: 3, target: 101_540_000_000, realisasi: 53_775_693_000 },
+  { kode: '3.2.1.1', uraian: 'Dokumen bahan komunikasi dan publikasi yang disusun', level: 4, target: 101_540_000_000, realisasi: 53_775_693_000 },
 
   // ── 4. BAGIAN PERSIDANGAN ─────────────────────────────────────────────────
-  { kode: '4',     uraian: 'Bagian Persidangan',                                            level: 1, target: 97_960_085_000,    realisasi: 35_700_907_510 },
-  { kode: '4.1',   uraian: 'Pembentukan Perda dan Peraturan DPRD',                         level: 2, target: 7_206_440_000,     realisasi: 3_595_312_350 },
-  { kode: '4.1.1', uraian: 'Penyusunan dan Pembahasan Program Pembentukan Perda',          level: 3, target: 4_262_440_000,     realisasi: 1_845_412_350 },
-  { kode: '4.1.1.1', uraian: 'Dokumen hasil penyusunan dan pembahasan Raperda',            level: 4, target: 4_262_440_000,     realisasi: 1_845_412_350 },
-  { kode: '4.1.2', uraian: 'Sosialisasi Peraturan Daerah Bersama DPRD dan Pemda',          level: 3, target: 2_944_000_000,     realisasi: 1_749_900_000 },
-  { kode: '4.1.2.1', uraian: 'Orang yang mengikuti sosialisasi Peraturan Daerah',          level: 4, target: 2_944_000_000,     realisasi: 1_749_900_000 },
-  { kode: '4.2',   uraian: 'Pembahasan Kebijakan Anggaran',                                level: 2, target: 2_210_534_000,     realisasi: 732_551_337 },
-  { kode: '4.2.1', uraian: 'Pembahasan APBD',                                              level: 3, target: 2_210_534_000,     realisasi: 732_551_337 },
-  { kode: '4.2.1.1', uraian: 'Dokumen hasil pembahasan APBD',                              level: 4, target: 2_210_534_000,     realisasi: 732_551_337 },
-  { kode: '4.3',   uraian: 'Pengawasan Penyelenggaraan Pemerintahan',                      level: 2, target: 12_515_582_000,    realisasi: 3_230_867_990 },
-  { kode: '4.3.1', uraian: 'Pengawasan Bidang Pemerintahan dan Hukum',                     level: 3, target: 1_850_000_000,     realisasi: 472_633_700 },
-  { kode: '4.3.2', uraian: 'Pengawasan Bidang Infrastruktur',                              level: 3, target: 1_850_000_000,     realisasi: 512_038_000 },
-  { kode: '4.3.3', uraian: 'Pengawasan Bidang Kesejahteraan Rakyat',                       level: 3, target: 1_850_000_000,     realisasi: 595_962_300 },
-  { kode: '4.3.4', uraian: 'Pengawasan Bidang Perekonomian',                               level: 3, target: 1_850_000_000,     realisasi: 529_423_550 },
-  { kode: '4.3.5', uraian: 'Pengawasan Bidang Sumber Daya Alam',                           level: 3, target: 1_850_000_000,     realisasi: 640_537_900 },
-  { kode: '4.3.6', uraian: 'Pengawasan Tindak Lanjut Hasil Pemeriksaan BPK',               level: 3, target: 1_169_722_000,     realisasi: 0 },
-  { kode: '4.3.7', uraian: 'Pengawasan Penggunaan Anggaran',                               level: 3, target: 2_095_860_000,     realisasi: 480_272_540 },
-  { kode: '4.4',   uraian: 'Peningkatan Kapasitas DPRD (Persidangan)',                     level: 2, target: 4_380_000_000,     realisasi: 818_416_022 },
-  { kode: '4.4.1', uraian: 'Pendalaman Tugas DPRD',                                        level: 3, target: 4_380_000_000,     realisasi: 818_416_022 },
-  { kode: '4.4.1.1', uraian: 'Dokumen hasil Pendalaman Tugas DPRD',                        level: 4, target: 4_380_000_000,     realisasi: 818_416_022 },
-  { kode: '4.5',   uraian: 'Penyerapan dan Penghimpunan Aspirasi Masyarakat',              level: 2, target: 49_184_524_000,    realisasi: 15_784_115_600 },
-  { kode: '4.5.1', uraian: 'Kunjungan Kerja dalam Daerah',                                 level: 3, target: 10_402_980_000,   realisasi: 3_745_743_400 },
-  { kode: '4.5.1.1', uraian: 'Laporan hasil Kunjungan Kerja DPRD',                         level: 4, target: 10_402_980_000,   realisasi: 3_745_743_400 },
-  { kode: '4.5.2', uraian: 'Penyusunan Pokok-Pokok Pikiran DPRD',                          level: 3, target: 175_000_000,        realisasi: 0 },
-  { kode: '4.5.3', uraian: 'Pelaksanaan Reses',                                            level: 3, target: 38_606_544_000,   realisasi: 12_038_372_200 },
-  { kode: '4.5.3.1', uraian: 'Dokumen hasil pelaksanaan Reses',                            level: 4, target: 38_606_544_000,   realisasi: 12_038_372_200 },
-  { kode: '4.6',   uraian: 'Pelaksanaan dan Pengawasan Kode Etik DPRD',                    level: 2, target: 1_152_000_000,     realisasi: 532_650_000 },
-  { kode: '4.6.1', uraian: 'Penyusunan Kode Etik DPRD',                                   level: 3, target: 1_152_000_000,     realisasi: 532_650_000 },
-  { kode: '4.7',   uraian: 'Fasilitasi Tugas DPRD',                                        level: 2, target: 21_311_005_000,    realisasi: 11_006_994_211 },
-  { kode: '4.7.1', uraian: 'Koordinasi dan Konsultasi Pelaksanaan Tugas DPRD',             level: 3, target: 21_311_005_000,    realisasi: 11_006_994_211 },
-  { kode: '4.7.1.1', uraian: 'Dokumen hasil Koordinasi dan Konsultasi Pelaksanaan Tugas', level: 4, target: 21_311_005_000,    realisasi: 11_006_994_211 },
+  { kode: '4', uraian: 'Bagian Persidangan', level: 1, target: 97_960_085_000, realisasi: 35_700_907_510 },
+  { kode: '4.1', uraian: 'Pembentukan Perda dan Peraturan DPRD', level: 2, target: 7_206_440_000, realisasi: 3_595_312_350 },
+  { kode: '4.1.1', uraian: 'Penyusunan dan Pembahasan Program Pembentukan Perda', level: 3, target: 4_262_440_000, realisasi: 1_845_412_350 },
+  { kode: '4.1.1.1', uraian: 'Dokumen hasil penyusunan dan pembahasan Raperda', level: 4, target: 4_262_440_000, realisasi: 1_845_412_350 },
+  { kode: '4.1.2', uraian: 'Sosialisasi Peraturan Daerah Bersama DPRD dan Pemda', level: 3, target: 2_944_000_000, realisasi: 1_749_900_000 },
+  { kode: '4.1.2.1', uraian: 'Orang yang mengikuti sosialisasi Peraturan Daerah', level: 4, target: 2_944_000_000, realisasi: 1_749_900_000 },
+  { kode: '4.2', uraian: 'Pembahasan Kebijakan Anggaran', level: 2, target: 2_210_534_000, realisasi: 732_551_337 },
+  { kode: '4.2.1', uraian: 'Pembahasan APBD', level: 3, target: 2_210_534_000, realisasi: 732_551_337 },
+  { kode: '4.2.1.1', uraian: 'Dokumen hasil pembahasan APBD', level: 4, target: 2_210_534_000, realisasi: 732_551_337 },
+  { kode: '4.3', uraian: 'Pengawasan Penyelenggaraan Pemerintahan', level: 2, target: 12_515_582_000, realisasi: 3_230_867_990 },
+  { kode: '4.3.1', uraian: 'Pengawasan Bidang Pemerintahan dan Hukum', level: 3, target: 1_850_000_000, realisasi: 472_633_700 },
+  { kode: '4.3.2', uraian: 'Pengawasan Bidang Infrastruktur', level: 3, target: 1_850_000_000, realisasi: 512_038_000 },
+  { kode: '4.3.3', uraian: 'Pengawasan Bidang Kesejahteraan Rakyat', level: 3, target: 1_850_000_000, realisasi: 595_962_300 },
+  { kode: '4.3.4', uraian: 'Pengawasan Bidang Perekonomian', level: 3, target: 1_850_000_000, realisasi: 529_423_550 },
+  { kode: '4.3.5', uraian: 'Pengawasan Bidang Sumber Daya Alam', level: 3, target: 1_850_000_000, realisasi: 640_537_900 },
+  { kode: '4.3.6', uraian: 'Pengawasan Tindak Lanjut Hasil Pemeriksaan BPK', level: 3, target: 1_169_722_000, realisasi: 0 },
+  { kode: '4.3.7', uraian: 'Pengawasan Penggunaan Anggaran', level: 3, target: 2_095_860_000, realisasi: 480_272_540 },
+  { kode: '4.4', uraian: 'Peningkatan Kapasitas DPRD (Persidangan)', level: 2, target: 4_380_000_000, realisasi: 818_416_022 },
+  { kode: '4.4.1', uraian: 'Pendalaman Tugas DPRD', level: 3, target: 4_380_000_000, realisasi: 818_416_022 },
+  { kode: '4.4.1.1', uraian: 'Dokumen hasil Pendalaman Tugas DPRD', level: 4, target: 4_380_000_000, realisasi: 818_416_022 },
+  { kode: '4.5', uraian: 'Penyerapan dan Penghimpunan Aspirasi Masyarakat', level: 2, target: 49_184_524_000, realisasi: 15_784_115_600 },
+  { kode: '4.5.1', uraian: 'Kunjungan Kerja dalam Daerah', level: 3, target: 10_402_980_000, realisasi: 3_745_743_400 },
+  { kode: '4.5.1.1', uraian: 'Laporan hasil Kunjungan Kerja DPRD', level: 4, target: 10_402_980_000, realisasi: 3_745_743_400 },
+  { kode: '4.5.2', uraian: 'Penyusunan Pokok-Pokok Pikiran DPRD', level: 3, target: 175_000_000, realisasi: 0 },
+  { kode: '4.5.3', uraian: 'Pelaksanaan Reses', level: 3, target: 38_606_544_000, realisasi: 12_038_372_200 },
+  { kode: '4.5.3.1', uraian: 'Dokumen hasil pelaksanaan Reses', level: 4, target: 38_606_544_000, realisasi: 12_038_372_200 },
+  { kode: '4.6', uraian: 'Pelaksanaan dan Pengawasan Kode Etik DPRD', level: 2, target: 1_152_000_000, realisasi: 532_650_000 },
+  { kode: '4.6.1', uraian: 'Penyusunan Kode Etik DPRD', level: 3, target: 1_152_000_000, realisasi: 532_650_000 },
+  { kode: '4.7', uraian: 'Fasilitasi Tugas DPRD', level: 2, target: 21_311_005_000, realisasi: 11_006_994_211 },
+  { kode: '4.7.1', uraian: 'Koordinasi dan Konsultasi Pelaksanaan Tugas DPRD', level: 3, target: 21_311_005_000, realisasi: 11_006_994_211 },
+  { kode: '4.7.1.1', uraian: 'Dokumen hasil Koordinasi dan Konsultasi Pelaksanaan Tugas', level: 4, target: 21_311_005_000, realisasi: 11_006_994_211 },
 ];
 
 // ── SSOT Wrapper & Helper Functions ──────────────────────────────────────────
@@ -538,7 +543,7 @@ export function addUraianItem(newItem: UraianAnggaran) {
 export function addRealisasi(kode: string, amount: number) {
   let currentKode = kode;
   const newData = [...uraianAnggaranData];
-  
+
   while (currentKode) {
     const index = newData.findIndex(u => u.kode === currentKode);
     if (index !== -1) {
@@ -551,7 +556,7 @@ export function addRealisasi(kode: string, amount: number) {
     parts.pop();
     currentKode = parts.join('.');
   }
-  
+
   uraianAnggaranData = newData;
 }
 
@@ -645,7 +650,7 @@ export const subKegiatanList: SubKegiatan[] = uraianAnggaran
     const parentSubBidang = uraianAnggaran.find(x => x.kode === subBidangKode);
     const bidangKode = u.kode.split('.').slice(0, 1).join('.');
     const parentBidang = uraianAnggaran.find(x => x.kode === bidangKode);
-    
+
     const progress = u.target > 0 ? Math.round((u.realisasi / u.target) * 100) : 0;
     const status = progress >= 100 ? 'Selesai' : progress > 0 ? 'Berjalan' : 'Belum Mulai';
     const step = progress >= 100 ? 'Closed' : progress > 50 ? 'Pelaksanaan' : 'Persiapan';
@@ -654,10 +659,11 @@ export const subKegiatanList: SubKegiatan[] = uraianAnggaran
       id: u.kode,
       nama: u.uraian,
       bidang: parentBidang?.uraian || 'Unknown',
-      subBidang: parentSubBidang?.uraian || 'Unknown',
+      kegiatan_parent: parentSubBidang?.uraian || 'Unknown',
+      subKegiatan_parent: parentSubBidang?.uraian || 'Unknown',
       penanggungJawab: 'Pejabat Pembuat Komitmen',
-      tanggalMulai: '2026-01-01',
-      tanggalSelesai: '2026-12-31',
+      tanggalMulai: `${new Date().getFullYear()}-01-01`,
+      tanggalSelesai: `${new Date().getFullYear()}-12-31`,
       status,
       progress,
       paguAnggaran: u.target,
@@ -668,7 +674,12 @@ export const subKegiatanList: SubKegiatan[] = uraianAnggaran
         { id: `s${i}-1`, nama: 'Persiapan', selesai: progress >= 20 },
         { id: `s${i}-2`, nama: 'Pelaksanaan', selesai: progress >= 60 },
         { id: `s${i}-3`, nama: 'Evaluasi', selesai: progress >= 100 },
-      ]
+        { id: `s${i}-4`, nama: 'Verifikasi Dokumen', selesai: false },
+      ],
+      isWadah: false,
+      isApproved: true,
+      sumberDana: 'APBD Provinsi',
+      anggaranDiminta: u.target,
     };
   });
 

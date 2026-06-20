@@ -11,7 +11,7 @@ import {
 import { Link } from 'react-router';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { notifikasiList } from '../../lib/data';
-import { useAppData } from '../../hooks/useAppData';
+import { useAppData } from '../../hooks/AppDataContext';
 
 const BIDANG_COLORS: Record<string, string> = {
   'Sekretariat DPRD': '#3b82f6', // blue
@@ -70,6 +70,8 @@ export function Dashboard() {
   }));
 
   const subKegiatanPerBagian = subKegiatanList.reduce((acc, k) => {
+    // Exclude Bidang (Level 1)
+    if (k.id.split('.').length === 1) return acc;
     if (!acc[k.bidang]) acc[k.bidang] = [];
     acc[k.bidang].push({
       id: k.id,
@@ -82,7 +84,13 @@ export function Dashboard() {
     return acc;
   }, {} as Record<string, any[]>);
 
-  const subKegiatanBerjalan = subKegiatanPerBagian[selectedBagian] ?? [];
+  const subKegiatanBerjalan = (subKegiatanPerBagian[selectedBagian] ?? [])
+    .filter(k => k.status !== 'Selesai')
+    .sort((a, b) => {
+      // Sort priority: Terlambat -> Belum Mulai -> Berjalan
+      const priority: Record<string, number> = { 'Terlambat': 1, 'Belum Mulai': 2, 'Berjalan': 3 };
+      return (priority[a.status] || 99) - (priority[b.status] || 99);
+    });
 
   const statsCards = [
     {
@@ -113,7 +121,7 @@ export function Dashboard() {
       detailColor: 'text-emerald-600',
       icon: CheckCircle,
       color: 'bg-amber-500',
-      path: '/laporan-subKegiatan',
+      path: '/laporan-kegiatan',
     },
     {
       title: 'BELUM MULAI / TERLAMBAT',
@@ -161,7 +169,7 @@ export function Dashboard() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="mb-5">
             <h2 className="text-base font-bold text-gray-900">PROGRESS KEGIATAN SEKRETARIAT DPRD</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Klik bagian untuk melihat subKegiatan berjalan</p>
+            <p className="text-xs text-gray-500 mt-0.5">Klik bagian untuk melihat Kegiatan berjalan</p>
           </div>
 
           <div className="space-y-3">
@@ -205,7 +213,7 @@ export function Dashboard() {
               <p className="text-xs text-blue-600 font-medium mt-0.5">{selectedBagian}</p>
             </div>
             <Link
-              to="/agenda"
+              to="/progress"
               className="text-xs text-blue-600 hover:text-blue-700 font-medium border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
             >
               Lihat Semua →
@@ -216,7 +224,7 @@ export function Dashboard() {
             {subKegiatanBerjalan.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-gray-400">
                 <CheckCircle className="w-10 h-10 mb-2 text-gray-300" />
-                <p className="text-sm">Tidak ada subKegiatan berjalan</p>
+                <p className="text-sm">Tidak ada Kegiatan berjalan</p>
               </div>
             ) : (
               subKegiatanBerjalan.map((kg) => (
@@ -294,7 +302,7 @@ export function Dashboard() {
         {/* Realisasi Anggaran */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="mb-5">
-            <h2 className="text-base font-bold text-gray-900">REALISASI ANGGARAN KEGIATAN</h2>
+            <h2 className="text-base font-bold text-gray-900">PAGU KEGIATAN</h2>
           </div>
           <div className="flex flex-col items-center">
             <div className="relative w-44 h-44">
@@ -342,7 +350,7 @@ export function Dashboard() {
                 <span className="text-xs font-semibold text-gray-500">Rp {Math.max(0, totalPagu - totalRealisasi).toLocaleString('id-ID')}</span>
               </div>
               <div className="flex items-center justify-between py-1.5 pt-2 mt-1 border-t-2 border-gray-200">
-                <span className="text-xs font-bold text-gray-800">Total Pagu</span>
+                <span className="text-xs font-bold text-gray-800">Pagu Kegiatan</span>
                 <span className="text-xs font-bold text-gray-800">Rp {totalPagu.toLocaleString('id-ID')}</span>
               </div>
             </div>
@@ -387,7 +395,7 @@ export function Dashboard() {
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                     <span className="text-xs text-gray-600">{item.name}</span>
                   </div>
-                  <span className="text-xs font-semibold text-gray-800">{item.value} subKegiatan</span>
+                  <span className="text-xs font-semibold text-gray-800">{item.value} Kegiatan</span>
                 </div>
               ))}
             </div>

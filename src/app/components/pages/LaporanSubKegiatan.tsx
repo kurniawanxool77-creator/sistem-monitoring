@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FileText, Download, Eye, Printer, Share2 } from 'lucide-react';
-import { useAppData } from '../../hooks/useAppData';
+import { useAppData } from '../../hooks/AppDataContext';
 
 export function LaporanSubKegiatan() {
   const { getSubKegiatanList } = useAppData();
@@ -180,7 +180,7 @@ export function LaporanSubKegiatan() {
               <div className="flex justify-between items-start">
                 <div className="text-sm text-gray-600">
                   <p>Dokumen ini digenerate secara otomatis</p>
-                  <p>Tanggal: 12 Juni 2026</p>
+                  <p>Tanggal: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-600 mb-12">Mengetahui,</p>

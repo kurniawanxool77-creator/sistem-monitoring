@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { AppDataProvider } from '../../hooks/AppDataContext';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router';
 import logoJateng from '../../../imports/logo_jateng.png';
 import {
@@ -22,7 +23,11 @@ import {
   Activity,
 } from 'lucide-react';
 
-const menuItems = [
+interface MenuItemChild { icon: any; label: string; path: string; }
+interface MenuItem { icon: any; label: string; path: string; children?: MenuItemChild[]; }
+interface MenuSection { section: string; items: MenuItem[]; }
+
+const menuItems: MenuSection[] = [
   {
     section: 'SISTEM PENGENDALIAN KEGIATAN',
     items: [
@@ -134,6 +139,7 @@ export function DashboardLayout() {
   if (!user) return null;
 
   return (
+    <AppDataProvider>
     <div className="h-screen flex overflow-hidden bg-gray-50">
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'w-72' : 'w-20'} bg-[#0f1623] text-white flex flex-col transition-all duration-300 flex-shrink-0`}>
@@ -217,7 +223,7 @@ export function DashboardLayout() {
                                 to={child.path}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
                                   isChildItemActive
-                                    ? 'bg-blue-500/20 text-blue-300 font-semibold'
+                                    ? 'bg-blue-600 text-white font-semibold shadow-md'
                                     : 'text-neutral-400 hover:bg-white/5 hover:text-neutral-200'
                                 }`}
                               >
@@ -306,5 +312,6 @@ export function DashboardLayout() {
         </main>
       </div>
     </div>
+    </AppDataProvider>
   );
 }
