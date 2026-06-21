@@ -190,6 +190,14 @@ export function MasterData() {
   // Form state untuk Tambah Bidang
   const [formNamaBidang, setFormNamaBidang] = useState('');
 
+  // Form state untuk Tambah level 2, 3, 4
+  const [formParentBidangKode, setFormParentBidangKode] = useState('');
+  const [formParentKegiatanKode, setFormParentKegiatanKode] = useState('');
+  const [formParentSubKegiatanKode, setFormParentSubKegiatanKode] = useState('');
+  const [formNamaKegiatan, setFormNamaKegiatan] = useState('');
+  const [formNamaSubKegiatan, setFormNamaSubKegiatan] = useState('');
+  const [formNamaSubSubKegiatan, setFormNamaSubSubKegiatan] = useState('');
+
   function toggleBidang(id: string) {
     setExpandedBidang(prev => {
       const next = new Set(prev);
@@ -612,14 +620,14 @@ export function MasterData() {
                 <>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
-                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select value={formParentBidangKode} onChange={e => setFormParentBidangKode(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="">Pilih Bidang</option>
                       {allBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Kegiatan <span className="text-red-500">*</span></label>
-                    <input type="text" placeholder="Nama kegiatan..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    <input type="text" value={formNamaKegiatan} onChange={e => setFormNamaKegiatan(e.target.value)} placeholder="Nama kegiatan..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                   </div>
                 </>
               )}
@@ -627,20 +635,23 @@ export function MasterData() {
                 <>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
-                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select value={formParentBidangKode} onChange={e => { setFormParentBidangKode(e.target.value); setFormParentKegiatanKode(''); }} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="">Pilih Bidang</option>
                       {allBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kegiatan <span className="text-red-500">*</span></label>
-                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select value={formParentKegiatanKode} onChange={e => setFormParentKegiatanKode(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="">Pilih Kegiatan</option>
+                      {allKegiatan.filter(k => k.bidangNama === allBidang.find(b => b.id === formParentBidangKode)?.nama).map(k => (
+                        <option key={k.id} value={k.id}>{k.nama}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama SubKegiatan <span className="text-red-500">*</span></label>
-                    <input type="text" placeholder="Nama subKegiatan..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    <input type="text" value={formNamaSubKegiatan} onChange={e => setFormNamaSubKegiatan(e.target.value)} placeholder="Nama subKegiatan..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                   </div>
                 </>
               )}
@@ -648,26 +659,32 @@ export function MasterData() {
                 <>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bidang <span className="text-red-500">*</span></label>
-                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select value={formParentBidangKode} onChange={e => { setFormParentBidangKode(e.target.value); setFormParentKegiatanKode(''); setFormParentSubKegiatanKode(''); }} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="">Pilih Bidang</option>
                       {allBidang.map(b => <option key={b.id} value={b.id}>{b.nama}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kegiatan <span className="text-red-500">*</span></label>
-                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select value={formParentKegiatanKode} onChange={e => { setFormParentKegiatanKode(e.target.value); setFormParentSubKegiatanKode(''); }} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="">Pilih Kegiatan</option>
+                      {allKegiatan.filter(k => k.bidangNama === allBidang.find(b => b.id === formParentBidangKode)?.nama).map(k => (
+                        <option key={k.id} value={k.id}>{k.nama}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">SubKegiatan <span className="text-red-500">*</span></label>
-                    <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select value={formParentSubKegiatanKode} onChange={e => setFormParentSubKegiatanKode(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="">Pilih SubKegiatan</option>
+                      {allSubKegiatan.filter(sk => sk.kegiatanNama === allKegiatan.find(k => k.id === formParentKegiatanKode)?.nama).map(sk => (
+                        <option key={sk.id} value={sk.id}>{sk.nama}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Sub SubKegiatan <span className="text-red-500">*</span></label>
-                    <input type="text" placeholder="Nama sub subKegiatan..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    <input type="text" value={formNamaSubSubKegiatan} onChange={e => setFormNamaSubSubKegiatan(e.target.value)} placeholder="Nama sub subKegiatan..." className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                   </div>
                 </>
               )}
@@ -714,23 +731,57 @@ export function MasterData() {
                       target: 0,
                       realisasi: 0
                     });
-                    addActivityLog({
-                      user: user?.nama || 'Unknown',
-                      action: 'Tambah Bidang',
-                      details: `Menambah Bidang Baru: ${formNamaBidang.trim()} (${nextKode})`
-                    });
+                    addActivityLog({ user: user?.nama || 'Unknown', action: 'Tambah Bidang', details: `Menambah Bidang Baru: ${formNamaBidang.trim()} (${nextKode})` });
                     setFormNamaBidang('');
-                    setActiveTab('bidang');
                     setShowAddModal(false);
-                    return;
                   }
-                  // Untuk tab lain: simulasi log saja
-                  addActivityLog({
-                    user: user?.nama || 'Unknown',
-                    action: 'Menambah Data Master',
-                    details: `Mencoba submit form tambah data di tab ${activeTab}`
-                  });
-                  setShowAddModal(false);
+                  else if (activeTab === 'kegiatan') {
+                    if (!formParentBidangKode || !formNamaKegiatan.trim()) return;
+                    const parentKode = formParentBidangKode;
+                    const siblings = dataUraian.filter(u => u.kode.startsWith(parentKode + '.') && u.kode.split('.').length === parentKode.split('.').length + 1);
+                    const maxKode = siblings.reduce((max, u) => {
+                      const num = parseInt(u.kode.split('.').pop() || '0', 10);
+                      return (!isNaN(num) && num > max) ? num : max;
+                    }, 0);
+                    const nextKode = `${parentKode}.${maxKode + 1}`;
+                    addUraianBaru({ kode: nextKode, uraian: formNamaKegiatan.trim(), level: 2, target: 0, realisasi: 0 });
+                    addActivityLog({ user: user?.nama || 'Unknown', action: 'Tambah Kegiatan', details: `Menambah: ${formNamaKegiatan.trim()} (${nextKode})` });
+                    setFormNamaKegiatan('');
+                    setShowAddModal(false);
+                  }
+                  else if (activeTab === 'subKegiatan') {
+                    if (!formParentKegiatanKode || !formNamaSubKegiatan.trim()) return;
+                    const parentKode = formParentKegiatanKode;
+                    const siblings = dataUraian.filter(u => u.kode.startsWith(parentKode + '.') && u.kode.split('.').length === parentKode.split('.').length + 1);
+                    const maxKode = siblings.reduce((max, u) => {
+                      const num = parseInt(u.kode.split('.').pop() || '0', 10);
+                      return (!isNaN(num) && num > max) ? num : max;
+                    }, 0);
+                    const nextKode = `${parentKode}.${maxKode + 1}`;
+                    addUraianBaru({ kode: nextKode, uraian: formNamaSubKegiatan.trim(), level: 3, target: 0, realisasi: 0 });
+                    addActivityLog({ user: user?.nama || 'Unknown', action: 'Tambah SubKegiatan', details: `Menambah: ${formNamaSubKegiatan.trim()} (${nextKode})` });
+                    setFormNamaSubKegiatan('');
+                    setShowAddModal(false);
+                  }
+                  else if (activeTab === 'subSubKegiatan') {
+                    if (!formParentSubKegiatanKode || !formNamaSubSubKegiatan.trim()) return;
+                    const parentKode = formParentSubKegiatanKode;
+                    const siblings = dataUraian.filter(u => u.kode.startsWith(parentKode + '.') && u.kode.split('.').length === parentKode.split('.').length + 1);
+                    const maxKode = siblings.reduce((max, u) => {
+                      const num = parseInt(u.kode.split('.').pop() || '0', 10);
+                      return (!isNaN(num) && num > max) ? num : max;
+                    }, 0);
+                    const nextKode = `${parentKode}.${maxKode + 1}`;
+                    addUraianBaru({ kode: nextKode, uraian: formNamaSubSubKegiatan.trim(), level: 4, target: 0, realisasi: 0 });
+                    addActivityLog({ user: user?.nama || 'Unknown', action: 'Tambah SubSubKegiatan', details: `Menambah: ${formNamaSubSubKegiatan.trim()} (${nextKode})` });
+                    setFormNamaSubSubKegiatan('');
+                    setShowAddModal(false);
+                  }
+                  else {
+                    // Untuk tab anggota, dsb
+                    addActivityLog({ user: user?.nama || 'Unknown', action: 'Menambah Data', details: `Mencoba submit form di tab ${activeTab}` });
+                    setShowAddModal(false);
+                  }
                 }}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
                 <Save className="w-4 h-4" /> Simpan

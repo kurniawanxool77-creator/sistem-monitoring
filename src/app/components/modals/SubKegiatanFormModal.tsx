@@ -21,7 +21,7 @@ const sumberDanaList = [
 ];
 
 export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
-  const { dataUraian, addUraianBaru, updateUraian, updateSubKegiatanMetadata, deleteSubKegiatanMetadata, addActivityLog, user, addRealisasi, subKegiatanMeta } = useAppData();
+  const { dataUraian, addUraianBaru, updateUraian, updateSubKegiatanMetadata, deleteSubKegiatanMetadata, addActivityLog, user, addRealisasi, subKegiatanMeta, duplicateSubKegiatan } = useAppData();
 
   const INITIAL_FORM = {
     bidangId: '',
@@ -61,7 +61,7 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
         tanggalMulai: initialData.tanggalMulai.split('T')[0],
         tanggalSelesai: initialData.tanggalSelesai.split('T')[0],
         sumberDana: initialData.sumberDana || '',
-        anggaranSubKegiatan: initialData.anggaranDiminta?.toString() || '',
+        anggaranSubKegiatan: (initialData.paguAnggaran || initialData.anggaranDiminta || '').toString(),
         realisasiAnggaran: initialData.realisasiAnggaran?.toString() || '0',
         customSteps: (() => {
           const steps = initialData.steps.map(s => s.nama);
@@ -97,7 +97,7 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
           tanggalMulai: initialData.tanggalMulai.split('T')[0],
           tanggalSelesai: initialData.tanggalSelesai.split('T')[0],
           sumberDana: initialData.sumberDana || '',
-          anggaranSubKegiatan: initialData.anggaranDiminta !== undefined ? initialData.anggaranDiminta.toString() : '0',
+          anggaranSubKegiatan: (initialData.paguAnggaran || initialData.anggaranDiminta || '').toString(),
           realisasiAnggaran: initialData.realisasiAnggaran?.toString() || '0',
           isWadah: (() => {
             if (initialData.id.split('.').length === 4) return false;
@@ -257,10 +257,20 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
       }
       const finalKode = form.subSubKegiatanId || form.subKegiatanTemplateId || form.kegiatanId || form.bidangId;
 
+      // VALIDASI: Tanggal Selesai tidak boleh mendahului Tanggal Mulai
+      if (new Date(form.tanggalSelesai) < new Date(form.tanggalMulai)) {
+        alert("Tanggal Selesai tidak boleh lebih awal dari Tanggal Mulai!");
+        return;
+      }
+
       // VALIDASI: Mencegah pembuatan ganda untuk Agenda/Kegiatan yang sudah ada
       const isAlreadyExists = subKegiatanMeta.some(m => m.id === finalKode);
       if (isAlreadyExists) {
-        alert("Kegiatan/Agenda ini sudah ditambahkan sebelumnya! Silakan gunakan menu Edit pada tabel untuk mengubah datanya.");
+        const confirmCopy = window.confirm("Kegiatan/Agenda ini sudah pernah dibuat sebelumnya.\n\nApakah Anda ingin MEN-DUPLIKASI (membuat salinan baru) kegiatan ini untuk tanggal/jadwal yang baru saja Anda masukkan?");
+        if (confirmCopy) {
+          duplicateSubKegiatan(finalKode, form.tanggalMulai, form.tanggalSelesai);
+          onClose();
+        }
         return;
       }
 
@@ -314,6 +324,12 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
       }
       const realisasi = Number(form.anggaranSubKegiatan) || 0;
       const finalKode = form.subSubKegiatanId || form.subKegiatanTemplateId || form.kegiatanId || form.bidangId;
+
+      // VALIDASI: Tanggal Selesai tidak boleh mendahului Tanggal Mulai
+      if (new Date(form.tanggalSelesai) < new Date(form.tanggalMulai)) {
+        alert("Tanggal Selesai tidak boleh lebih awal dari Tanggal Mulai!");
+        return;
+      }
 
       if (parentNode && realisasi > currentPagu) {
         alert("Anggaran Diminta melebihi Sisa Pagu Induk!");
@@ -387,8 +403,8 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
             <label className="block text-sm font-bold text-gray-800 mb-3">Pilih Peran Agenda <span className="text-red-500">*</span></label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none ${form.isWadah ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} ${isLevel4 ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                <input type="radio" name="role" value="wadah" className="sr-only" disabled={isLevel4}
+              <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none ${form.isWadah ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} ${(isLevel4 || mode === 'edit') ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <input type="radio" name="role" value="wadah" className="sr-only" disabled={isLevel4 || mode === 'edit'}
                   checked={form.isWadah}
                   onChange={() => setForm(f => ({ ...f, isWadah: true }))}
                 />
@@ -401,8 +417,8 @@ export function SubKegiatanFormModal({ mode, initialData, onClose }: Props) {
                 <Check className={`h-5 w-5 text-blue-600 ${form.isWadah ? 'block' : 'hidden'}`} />
               </label>
 
-              <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none ${!form.isWadah ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} ${(isLevel1 || dbHasChildren) ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                <input type="radio" name="role" value="riil" className="sr-only" disabled={isLevel1 || Boolean(dbHasChildren)}
+              <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none ${!form.isWadah ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} ${(isLevel1 || dbHasChildren || mode === 'edit') ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <input type="radio" name="role" value="riil" className="sr-only" disabled={isLevel1 || Boolean(dbHasChildren) || mode === 'edit'}
                   checked={!form.isWadah}
                   onChange={() => setForm(f => ({ ...f, isWadah: false }))}
                 />

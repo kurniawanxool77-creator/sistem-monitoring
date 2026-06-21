@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, AlertCircle, CheckCircle2, Plus, X, Wallet } from 'lucide-react';
+import { ChevronDown, ChevronRight, AlertCircle, CheckCircle2, Plus, X, Wallet, Filter, Search } from 'lucide-react';
 import { useAppData } from '../../hooks/AppDataContext';
 import { PAGU_TOTAL } from '../../lib/data';
 
@@ -13,13 +13,19 @@ function formatRp(n: number, short = false) {
 }
 
 export function UraianSubKegiatanTable() {
-  const { dataUraian: uraianAnggaran, updateUraian, addActivityLog } = useAppData();
+  const { dataUraian: uraianAnggaran, updateUraian, addActivityLog, subKegiatanMeta } = useAppData();
   const [expandedKode, setExpandedKode] = useState<Set<string>>(new Set(['1', '2', '3', '4', '5']));
   const [selectedBidang, setSelectedBidang] = useState<string | null>(null);
 
+  const [filterBulan, setFilterBulan] = useState(new Date().getMonth().toString());
+  const [filterTahun, setFilterTahun] = useState(new Date().getFullYear().toString());
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const BULAN_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+
   // Modal state
   const [showModal, setShowModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedKode, setSelectedKode] = useState<string>('');
   const [jumlah, setJumlah] = useState<string>('');
   const [keterangan, setKeterangan] = useState<string>('');
@@ -40,9 +46,98 @@ export function UraianSubKegiatanTable() {
     return expandedKode.has(parent) && isVisible(parent);
   }
 
+  let matchedKodes = new Set<string>();
+  const isDateFilterActive = filterBulan !== 'semua' || filterTahun !== 'semua';
+  const isSearchActive = searchQuery.trim().length > 0;
+  
+  if (isDateFilterActive || isSearchActive) {
+    uraianAnggaran.forEach(u => {
+      let matchDate = true;
+      if (isDateFilterActive) {
+        const meta = subKegiatanMeta.find(m => m.id === u.kode);
+        if (meta && meta.tanggalMulai && meta.tanggalSelesai) {
+          const startDate = new Date(meta.tanggalMulai);
+          const endDate = new Date(meta.tanggalSelesai);
+          const startMonth = startDate.getMonth();
+          const endMonth = endDate.getMonth();
+          const startYear = startDate.getFullYear().toString();
+          const endYear = endDate.getFullYear().toString();
+
+          if (filterBulan !== 'semua') {
+            const b = parseInt(filterBulan, 10);
+            if (!(b >= startMonth && b <= endMonth)) matchDate = false;
+          }
+          if (filterTahun !== 'semua') {
+            if (filterTahun !== startYear && filterTahun !== endYear) matchDate = false;
+          }
+        } else {
+          matchDate = false;
+        }
+      }
+
+      let matchSearch = true;
+      if (isSearchActive) {
+        if (!u.uraian.toLowerCase().includes(searchQuery.toLowerCase()) && !u.kode.includes(searchQuery)) {
+          matchSearch = false;
+        }
+      }
+
+      // Jika date filter aktif, dia HARUS match date.
+      // Jika search filter aktif, dia HARUS match search.
+      // Jika node ini match semua filter yang aktif:
+      if ((!isDateFilterActive || matchDate) && (!isSearchActive || matchSearch)) {
+        const parts = u.kode.split('.');
+        let currentKode = '';
+        for (const part of parts) {
+          currentKode = currentKode ? `${currentKode}.${part}` : part;
+          matchedKodes.add(currentKode);
+        }
+      }
+    });
+
+    // Pass 2: Jika search aktif, kita juga show children dari node yang di-search (tapi harus dicek juga datenya kalau date aktif)
+    if (isSearchActive) {
+      uraianAnggaran.forEach(u => {
+        const parts = u.kode.split('.');
+        if (parts.length > 1) {
+          const parentKode = parts.slice(0, -1).join('.');
+          if (matchedKodes.has(parentKode)) {
+             // Parent matched search (and date). Show child too, IF date matches (or date is not active)
+             let matchDate = true;
+             if (isDateFilterActive) {
+               const meta = subKegiatanMeta.find(m => m.id === u.kode);
+               if (meta && meta.tanggalMulai && meta.tanggalSelesai) {
+                 const startDate = new Date(meta.tanggalMulai);
+                 const endDate = new Date(meta.tanggalSelesai);
+                 const startMonth = startDate.getMonth();
+                 const endMonth = endDate.getMonth();
+                 const startYear = startDate.getFullYear().toString();
+                 const endYear = endDate.getFullYear().toString();
+       
+                 if (filterBulan !== 'semua') {
+                   const b = parseInt(filterBulan, 10);
+                   if (!(b >= startMonth && b <= endMonth)) matchDate = false;
+                 }
+                 if (filterTahun !== 'semua') {
+                   if (filterTahun !== startYear && filterTahun !== endYear) matchDate = false;
+                 }
+               } else {
+                 matchDate = false;
+               }
+             }
+             if (matchDate) {
+               matchedKodes.add(u.kode);
+             }
+          }
+        }
+      });
+    }
+  }
+
   const filteredData = uraianAnggaran.filter(u => {
-    if (!selectedBidang) return true;
-    return u.kode === selectedBidang || u.kode.startsWith(selectedBidang + '.');
+    if (selectedBidang && !(u.kode === selectedBidang || u.kode.startsWith(selectedBidang + '.'))) return false;
+    if ((isDateFilterActive || isSearchActive) && !matchedKodes.has(u.kode)) return false;
+    return true;
   });
 
   const uraianTotal = filteredData.reduce((a, u) => u.level === 1 ? a + u.target : a, 0);
@@ -120,11 +215,33 @@ export function UraianSubKegiatanTable() {
 
       {/* ── KARTU RINGKASAN PER BIDANG (tanpa judul) + Tombol Tambah ── */}
       <div>
-        {/* Header baris: tombol di kanan */}
-        <div className="flex items-center justify-end mb-3">
+        {/* Header baris: Filter & tombol */}
+        <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
+          <div className="flex flex-1 items-center gap-3 w-full md:w-auto">
+            {/* Search Input */}
+            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm flex-1 max-w-sm">
+              <Search className="w-4 h-4 text-gray-400" />
+              <input type="text" placeholder="Cari kode / uraian..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full text-sm font-medium focus:outline-none bg-transparent" />
+            </div>
+
+            {/* Date Filters */}
+            <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
+              <Filter className="w-4 h-4 text-gray-400 ml-2" />
+              <select value={filterBulan} onChange={e => setFilterBulan(e.target.value)} className="bg-transparent border-none text-sm font-medium focus:ring-0 cursor-pointer outline-none">
+                <option value="semua">Semua Bulan</option>
+                {BULAN_NAMES.map((b, i) => <option key={i} value={i}>{b}</option>)}
+              </select>
+              <div className="w-px h-4 bg-gray-300"></div>
+              <select value={filterTahun} onChange={e => setFilterTahun(e.target.value)} className="bg-transparent border-none text-sm font-medium focus:ring-0 cursor-pointer outline-none">
+                <option value="semua">Semua Tahun</option>
+                {years.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+          </div>
+
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold rounded-lg transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-blue-200 flex-shrink-0"
           >
             <Plus className="w-4 h-4" />
             Tambah Pagu Bidang

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import {
   Plus, Search, Edit, Trash2, Eye, X, UserPlus, Minus,
-  Check, CheckCircle2, FileCheck, ChevronRight, RefreshCw, RotateCcw,
+  Check, CheckCircle2, FileCheck, ChevronRight, RefreshCw, RotateCcw
 } from 'lucide-react';
 import { sumberDanaList, SubKegiatan, anggotaData } from '../../lib/data';
 import { UpdateProgressModal } from '../modals/UpdateProgressModal';
@@ -37,8 +37,8 @@ export function AgendaSubKegiatan() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('semua');
   const [filterBagian, setFilterBagian] = useState('semua');
-  const [filterBulan, setFilterBulan] = useState('semua');
-  const [filterTahun, setFilterTahun] = useState('semua');
+  const [filterBulan, setFilterBulan] = useState(new Date().getMonth().toString());
+  const [filterTahun, setFilterTahun] = useState(new Date().getFullYear().toString());
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [updateProgressFor, setUpdateProgressFor] = useState<string | null>(null);

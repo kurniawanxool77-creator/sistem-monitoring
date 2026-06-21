@@ -57,6 +57,7 @@ interface AppDataContextValue {
   setRealisasiToTarget: (kode: string) => void;
   updateSubKegiatanMetadata: (meta: SubKegiatanMeta) => void;
   approveSubKegiatan: (id: string, userName: string) => void;
+  duplicateSubKegiatan: (kode: string, newStart: string, newEnd: string) => string | null;
   addActivityLog: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => void;
   addUser: (user: AppUser) => void;
   updateUser: (id: string, updatedData: Partial<AppUser>) => void;
@@ -375,6 +376,52 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     setSubKegiatanMeta(prev => prev.filter(m => m.id !== kode && !m.id.startsWith(kode + '.')));
   };
 
+  const duplicateSubKegiatan = (kode: string, newStart: string, newEnd: string) => {
+    const node = allDataUraian.find(u => u.kode === kode);
+    if (!node) return null;
+
+    const parts = kode.split('.');
+    const parentKode = parts.slice(0, -1).join('.');
+    const siblings = allDataUraian.filter(u => {
+      const p = u.kode.split('.');
+      p.pop();
+      return p.join('.') === parentKode;
+    });
+    
+    let maxNum = 0;
+    siblings.forEach(s => {
+      const p = s.kode.split('.');
+      const num = parseInt(p[p.length - 1], 10);
+      if (!isNaN(num) && num > maxNum) maxNum = num;
+    });
+    
+    const newKode = parentKode ? `${parentKode}.${maxNum + 1}` : `${maxNum + 1}`;
+
+    const newUraian = {
+      ...node,
+      kode: newKode,
+      realisasi: 0
+    };
+
+    setAllDataUraian(prev => [...prev, newUraian]);
+
+    const meta = subKegiatanMeta.find(m => m.id === kode);
+    if (meta) {
+      const newMeta = {
+        ...meta,
+        id: newKode,
+        tanggalMulai: newStart,
+        tanggalSelesai: newEnd,
+        steps: meta.steps.map(s => ({ ...s, selesai: false, catatan: undefined })),
+        isApproved: false
+      };
+      setSubKegiatanMeta(prev => [...prev, newMeta]);
+    }
+
+    addActivityLog({ user: user?.nama || 'Unknown', action: 'Duplikat Kegiatan', details: `Menduplikasi kegiatan ${node.uraian} (${kode}) untuk tanggal baru` });
+    return newKode;
+  };
+
   const deleteSubKegiatan = (id: string) => {
     setSubKegiatanMeta(prev => prev.filter(m => m.id !== id && !m.id.startsWith(id + '.')));
     setAllDataUraian(prev => prev.map(u => {
@@ -458,6 +505,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     setRealisasiToTarget,
     updateSubKegiatanMetadata,
     approveSubKegiatan,
+    duplicateSubKegiatan,
     addActivityLog, addUser, updateUser, deleteUser,
     user,
   };
